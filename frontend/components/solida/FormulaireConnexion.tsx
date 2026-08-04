@@ -1,8 +1,15 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -12,6 +19,7 @@ export function FormulaireConnexion() {
   const identifiantRef = useRef<HTMLInputElement>(null);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [motDePasseVisible, setMotDePasseVisible] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,14 +62,27 @@ export function FormulaireConnexion() {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="mot_de_passe">Mot de passe</Label>
-        <Input
-          id="mot_de_passe"
-          name="mot_de_passe"
-          type="password"
-          autoComplete="current-password"
-          disabled={enCours}
-          required
-        />
+        <InputGroup>
+          <InputGroupInput
+            id="mot_de_passe"
+            name="mot_de_passe"
+            type={motDePasseVisible ? "text" : "password"}
+            autoComplete="current-password"
+            disabled={enCours}
+            required
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton
+              type="button"
+              aria-label={
+                motDePasseVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"
+              }
+              onClick={() => setMotDePasseVisible((v) => !v)}
+            >
+              {motDePasseVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
       </div>
       {erreur && (
         <p role="alert" className="text-sm text-decision-refus">

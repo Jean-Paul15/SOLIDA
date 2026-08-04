@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Suspense } from "react";
 import { FormulaireConnexion } from "@/components/solida/FormulaireConnexion";
 
@@ -5,7 +6,7 @@ export default function PageConnexion() {
   return (
     <div className="flex min-h-screen">
       <div className="hidden flex-col items-center justify-center gap-4 bg-solida-teal-900 px-12 text-center text-white lg:flex lg:w-[55%]">
-        <h1 className="font-serif-title text-xl font-semibold">SOLIDA</h1>
+        <Image src="/solida-logo.png" alt="SOLIDA" width={96} height={96} priority />
         <p className="max-w-sm text-sm text-white/80">
           Scoring d&rsquo;octroi pour coopératives financières
         </p>

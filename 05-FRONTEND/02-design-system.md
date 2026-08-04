@@ -122,13 +122,17 @@ conçue, pas générée. Si elle est activée, elle ne sert **qu'aux titres d'é
 | Jeton | Taille / interligne | Usage |
 |---|---|---|
 | `texte-xs` | 11 / 16 | Libellés de tableau, mentions |
-| `texte-sm` | 13 / 20 | Corps par défaut de l'interface |
-| `texte-base` | 15 / 22 | Corps de lecture, descriptions |
+| `texte-sm` | 14 / 20 | Corps par défaut de l'interface |
+| `texte-base` | 16 / 24 | Corps de lecture, descriptions |
 | `texte-lg` | 18 / 26 | Titres de section |
 | `texte-xl` | 22 / 30 | Titre d'écran |
 | `texte-score` | 56 / 60 | Affichage du score, IBM Plex Mono 500 |
 
 L'échelle est volontairement resserrée. Un outil dense n'a pas besoin de sept niveaux de titre.
+
+**`texte-sm` et `texte-base` révisés à la hausse** (initialement 13/15) après test réel de l'écran
+de connexion à 100 % de zoom sur écran standard : trop petit à la lecture. La densité reste
+gouvernée par l'espacement (section 4), pas par une taille de texte illisible.
 
 ### Règles numériques
 

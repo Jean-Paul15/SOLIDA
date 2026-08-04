@@ -64,6 +64,7 @@ export function NouvelleDemandeSheet({
   const [produitId, setProduitId] = useState(PRODUITS[0].id);
   const [montant, setMontant] = useState(500000);
   const [duree, setDuree] = useState(12);
+  const [dureePersonnalisee, setDureePersonnalisee] = useState(false);
   const [objet, setObjet] = useState<ObjetCredit>("fonds_roulement");
   const [actualisationOuverte, setActualisationOuverte] = useState(false);
   const [revenu, setRevenu] = useState(activite.revenu_mensuel_declare ?? 0);
@@ -155,7 +156,17 @@ export function NouvelleDemandeSheet({
 
           <div className="flex flex-col gap-1.5">
             <Label>Durée</Label>
-            <Select value={String(duree)} onValueChange={(v) => setDuree(Number(v))}>
+            <Select
+              value={dureePersonnalisee ? "autre" : String(duree)}
+              onValueChange={(v) => {
+                if (v === "autre") {
+                  setDureePersonnalisee(true);
+                } else {
+                  setDureePersonnalisee(false);
+                  setDuree(Number(v));
+                }
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -165,8 +176,22 @@ export function NouvelleDemandeSheet({
                     {d} mois
                   </SelectItem>
                 ))}
+                <SelectItem value="autre">Autre (préciser)</SelectItem>
               </SelectContent>
             </Select>
+            {dureePersonnalisee && (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={duree}
+                  onChange={(e) => setDuree(Number(e.target.value))}
+                  autoFocus
+                />
+                <span className="text-sm text-neutre-500">mois</span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
