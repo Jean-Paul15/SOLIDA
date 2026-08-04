@@ -28,7 +28,7 @@
 
 - [ ] Chaque membre a Docker fonctionnel
 - [ ] Chaque membre lance la pile complète en local
-- [ ] Chaque membre a accès aux quatre dépôts
+- [ ] Chaque membre a accès au dépôt (`SOLIDA`, monorepo — ADR-018)
 - [ ] Hooks Git installés chez tous
 - [ ] `.env` partagé sur un canal privé
 - [ ] CI verte sur `main`
@@ -38,7 +38,7 @@
 
 - [ ] Générateur CORE-SIM complet et paramétré
 - [ ] Contrôles de cohérence passants
-- [ ] Squelettes des quatre dépôts
+- [ ] Squelette du dépôt (`frontend/`, `backend/`, `infra/`, `simulateur/`)
 - [ ] Contrats d'interface implémentés avec doublures
 - [ ] Règles métier pures écrites et testées à 100 %
 - [ ] Design system et primitives front
@@ -79,7 +79,7 @@ heures que personne n'a. `docker save` la veille du départ.
 
 ## La veille
 
-- [ ] `git pull` sur tous les dépôts, CI verte
+- [ ] `git pull`, CI verte
 - [ ] `make demo` rejoué de zéro sur une machine propre
 - [ ] Sauvegarde complète sur disque externe
 - [ ] Images Docker exportées sur la clé USB

@@ -36,11 +36,13 @@ contrats qui gouvernent le code. Il a trois destinataires :
 
 ## Arborescence
 
+Monorepo unique (ADR-018) : le dossier de principes (« SOLIDA-FOUNDATION », les dossiers numérotés
+ci-dessous) et le code vivent dans le même dépôt, à la racine.
+
 ```
-SOLIDA-FOUNDATION/
+SOLIDA/
 ├── README.md                    Ce fichier
 ├── AGENTS.md                    Protocole obligatoire pour Claude Code et Codex
-├── .gitignore.template          À copier à la racine du dépôt de code
 ├── assets/                      Logo, note de présentation
 ├── 00-CONTEXTE/                 Projet, glossaire, périmètre, journal de décisions
 ├── 01-ARCHITECTURE/             Principes, Clean Architecture, SOLID, modules, contrats
@@ -53,7 +55,12 @@ SOLIDA-FOUNDATION/
 ├── 08-SECURITE/                 Principes, données perso, audit, secrets, inventaire, repos/transit/connexion
 ├── 09-DEVOPS/                   Git, hooks, CI, tests, definition of done
 ├── 10-PLAN-HACKATHON/           Priorités 72h, répartition, checklists, démo
-└── 99-QUESTIONS-OUVERTES.md     Ce qui reste à trancher — à lire en premier
+├── 99-QUESTIONS-OUVERTES.md     Ce qui reste à trancher — à lire en premier
+├── frontend/                    Application Next.js (voir docs/frontend/)
+├── backend/                     API FastAPI, Clean Architecture (voir docs/backend/)
+├── simulateur/                  Générateur CORE-SIM exécutable
+├── infra/                       Scripts d'initialisation Postgres
+└── docs/                        Documentation as-built (frontend/, backend/, infra/)
 ```
 
 ---
@@ -82,8 +89,10 @@ pas un détail d'implémentation.
 | Élément | État |
 |---|---|
 | Note de présentation (dossier de candidature) | Rédigée — `assets/note-presentation-solida.pdf` |
-| Schéma de données | Rédigé, **en attente de validation par un praticien IMF** |
+| Schéma de données | Rédigé ; corrigé sur le schéma exécutable réel (ADR-019). Calibrage métier **toujours en attente de validation par un praticien IMF** |
 | Principes et architecture | Ce dossier (auth FastAPI-Users, gouvernance, DVC, motion inclus) |
-| Code | Non démarré |
+| Simulateur CORE-SIM | Opérationnel — génère et charge des données réelles dans `postgres-coresim` |
+| Backend | Squelette Clean Architecture posé ; règles de domaine (scorecard, grille, cascade, progressif) écrites et testées à 100 % ; adaptateurs (persistance, auth, HTTP) à venir |
+| Frontend | Écrans E0 à E5 construits (connexion, recherche, dossier, demande, résultat, groupe de caution) sur données factices ; E6 à E8 en cours |
 
 **Date limite de dépôt du dossier de candidature : 23 août 2026, 23h59 GMT+0.**

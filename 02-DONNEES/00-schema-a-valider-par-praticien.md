@@ -1,5 +1,11 @@
 # SOLIDA — Schéma de données pour génération synthétique
 
+*Les sections 2 à 8 (structure des tables) sont un instantané pré-générateur : le schéma exécutable
+réel (`simulateur/`) diffère sur les noms de tables et leur découpage (ADR-019, voir
+`00-CONTEXTE/04-journal-de-decisions.md`). Schéma à jour : `02-DONNEES/01-schema-microfinance-simule.md`
+et `02-DONNEES/02-schema-solida.md`. Les sections 9 à 11 (calibrage, questions au praticien) restent
+d'actualité.*
+
 **Document de travail v1.0 — à faire valider par un professionnel exerçant en institution de microfinance**
 
 Hackathon National d'Innovation CIF / DigiCoop-WA+ — Thématique 02, Scoring Microcrédit

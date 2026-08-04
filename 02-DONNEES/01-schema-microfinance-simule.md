@@ -41,13 +41,12 @@ souffrance / 0 solde / -1 en cours, `statut`, `jours_retard_max`), pas trois tab
 
 | Table | Index | Motif |
 |---|---|---|
-| `societaire` | `nom_complet` avec `pg_trgm` (GIN) | Recherche tolérante à l'orthographe |
-| `societaire` | `numero_membre` unique | Recherche exacte |
-| `mouvement_epargne` | `(compte_id, date_operation)` | Agrégation par fenêtre |
-| `credit` | `(societaire_id, date_deblocage)` | Historique |
-| `echeance` | `(credit_id, date_echeance_prevue)` | Calcul des retards |
-| `garantie` | `garant_societaire_id`, `beneficiaire_societaire_id` | Distinction épargne nantie / caution GIE |
-| `appartenance_groupe` | `(groupe_id, date_entree, date_sortie)` | Historique de groupe à date |
+| `societaires` | `nom_complet` avec `pg_trgm` (GIN) | Recherche tolérante à l'orthographe |
+| `societaires` | `numero_membre` unique | Recherche exacte |
+| `mouvements_epargne` | `(compte_id, date_operation)` | Agrégation par fenêtre |
+| `credits` | `(societaire_id, date_deblocage)` | Historique et calcul des retards (échéancier fusionné) |
+| `garanties` | `garant_societaire_id`, `beneficiaire_societaire_id` | Distinction épargne nantie / caution GIE |
+| `appartenances_gie` | `(groupe_id, date_entree, date_sortie)` | Historique de groupe à date |
 
 L'extension `pg_trgm` est **obligatoire** : sans elle, la recherche par nom ne tolère aucune
 approximation, ce qui est rédhibitoire pour des noms togolais dont l'orthographe varie.
@@ -59,8 +58,8 @@ Le générateur n'est considéré comme correct que si ces contrôles passent.
 | Contrôle | Attendu |
 |---|---|
 | Aucune garantie ne pointe vers un sociétaire inexistant | 0 violation |
-| Aucun crédit sans demande associée | 0 |
-| Somme des remboursements ≤ total dû par crédit | 0 dépassement |
+| Aucun crédit sans sociétaire associé | 0 |
+| Capital remboursé ≤ montant octroyé par crédit | 0 dépassement |
 | Aucune date de remboursement antérieure au déblocage | 0 |
 | Aucun sociétaire membre de deux groupes simultanément | 0, sauf si le praticien indique le contraire |
 | Taux de défaut global | dans ±1 point de la cible du YAML |

@@ -41,16 +41,13 @@ fait le jour 2.
 
 ## Structurantes — répondre avant le hackathon
 
-### Q6. Un ou plusieurs dépôts ?
-Quatre dépôts séparés sont proposés. Un monorepo simplifierait le partage de types entre back et
-front, mais demande un outillage que nous n'avons pas.
-**Décision par défaut :** quatre dépôts.
+### Q6. Un ou plusieurs dépôts ? — Tranché (ADR-018)
+Monorepo unique (`SOLIDA`), pas quatre dépôts séparés. Voir
+`00-CONTEXTE/04-journal-de-decisions.md`.
 
-### Q7. Le dossier de principes non versionné, vraiment ?
-Vous l'avez demandé et c'est appliqué. Mais cela signifie qu'il ne se propage pas par `git pull`.
-Deux personnes travailleront tôt ou tard avec deux versions différentes.
-**Décision par défaut :** non versionné dans les dépôts de code, mais dans un dépôt privé séparé.
-Si vous préférez le versionner normalement dans un dépôt privé unique, dites-le.
+### Q7. Le dossier de principes non versionné, vraiment ? — Tranché (ADR-018)
+`SOLIDA-FOUNDATION` (les dossiers numérotés) est versionné dans le monorepo, avec le code. Voir
+`00-CONTEXTE/04-journal-de-decisions.md`.
 
 ### Q8. Quelle profondeur d'historique dans CORE-SIM ?
 Cinq ans est proposé. Trois ans suffiraient et allégeraient la génération ; sept ans donneraient

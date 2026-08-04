@@ -402,15 +402,12 @@ Toute modification est journalisée et versionnée (`version_grille`).
 
 ---
 
-## E9 — Supervision du modèle — P2
+## E9 — Supervision du modèle — Abandonné
 
-**Objectif :** montrer que le système est exploitable dans la durée.
-
-**Contenu :** modèle actif et sa version, date d'entraînement, métriques (AUC, Gini, KS), courbe de
-calibration, indicateur de dérive (PSI par variable), volume de scorings sur 30 jours.
-
-Écran réservé au rôle administrateur. Public technique : le vocabulaire ML y est autorisé, à la
-différence de tous les autres écrans.
+**Décision produit :** pas d'écran maison pour la supervision du modèle ou la dérive. Des outils
+spécialisés déjà éprouvés (MLflow, Prometheus/Grafana, Evidently) couvrent ce besoin sans
+réimplémentation partielle côté SOLIDA — voir `07-MLOPS/06-outils.md`. Aucune route frontend n'est
+prévue pour cet écran.
 
 ---
 
@@ -427,4 +424,4 @@ différence de tous les autres écrans.
 | E6 Fiche | P1 | `/scoring/[id]/fiche` | agent, superviseur |
 | E7 Registre | P2 | `/registre` | superviseur, auditeur |
 | E8 Grille | P2 | `/parametrage/grille` | superviseur |
-| E9 Modèle | P2 | `/parametrage/modele` | administrateur |
+| E9 Modèle | Abandonné | — | — (outils spécialisés, voir `07-MLOPS/06-outils.md`) |

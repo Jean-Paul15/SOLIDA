@@ -7,7 +7,7 @@ Colonne **P** : priorité selon `00-CONTEXTE/03-perimetre-hackathon.md`.
 
 ---
 
-## Bloc A — Simulateur (dépôt séparé)
+## Bloc A — Simulateur
 
 | # | Module | Responsabilité | Entrée | Sortie | P |
 |---|---|---|---|---|---|
