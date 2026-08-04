@@ -30,6 +30,11 @@ Toutes les identités sont inventées ; aucune ne correspond à une personne ré
 absents avant correction). La carte « Profil » de l'écran E2 les affiche désormais. Le statut du
 logement reste absent : il n'existe dans aucune source (ni contrat, ni générateur) — non affiché.
 
+`FicheJustification` (E6) : ajout de `demande` (l'`EntreeScoring` d'origine, nécessaire au « Bloc
+demande » — produit, montant, durée, objet — spécifié par `07-export-pdf.md`) et `numero_membre`
+(« Bloc identité »). Absents du contrat initial, qui ne prévoyait que le résultat et l'identité
+sommaire.
+
 ## Moteur de scoring factice
 
 `calculerScoring` produit une décomposition cohérente (la somme des points égale le score) à partir

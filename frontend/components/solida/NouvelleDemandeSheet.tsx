@@ -30,27 +30,17 @@ import {
   TAUX_MENSUEL_DEMONSTRATION,
 } from "@/lib/credit";
 import { formaterMontant } from "@/lib/format";
+import { LIBELLE_OBJET_CREDIT } from "@/lib/libelles";
+import { PRODUITS, trouverProduit } from "@/lib/produits";
 import { ErreurService } from "@/lib/services/erreur-service";
 import { calculerScore } from "@/lib/services/scoring";
 
-const PRODUITS = [
-  { id: "prod-commerce", nom: "Crédit commerce", plafond: 2000000 },
-  { id: "prod-agricole", nom: "Crédit agricole", plafond: 1500000 },
-  { id: "prod-equipement", nom: "Crédit équipement", plafond: 3000000 },
-];
-
 const DUREES = [3, 6, 9, 12, 18, 24];
 
-const OBJETS: { valeur: ObjetCredit; libelle: string }[] = [
-  { valeur: "fonds_roulement", libelle: "Fonds de roulement" },
-  { valeur: "equipement", libelle: "Équipement" },
-  { valeur: "intrants_agricoles", libelle: "Intrants agricoles" },
-  { valeur: "stock", libelle: "Stock" },
-  { valeur: "urgence_sante", libelle: "Urgence santé" },
-  { valeur: "scolarite", libelle: "Scolarité" },
-  { valeur: "habitat", libelle: "Habitat" },
-  { valeur: "autre", libelle: "Autre" },
-];
+const OBJETS = Object.entries(LIBELLE_OBJET_CREDIT).map(([valeur, libelle]) => ({
+  valeur: valeur as ObjetCredit,
+  libelle,
+}));
 
 interface NouvelleDemandeSheetProps {
   societaireId: string;
@@ -75,7 +65,7 @@ export function NouvelleDemandeSheet({
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const produit = PRODUITS.find((p) => p.id === produitId) ?? PRODUITS[0];
+  const produit = trouverProduit(produitId);
 
   const echeance = useMemo(
     () => calculerEcheanceMensuelle(montant, duree, TAUX_MENSUEL_DEMONSTRATION),

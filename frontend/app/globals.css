@@ -108,3 +108,23 @@
     outline-offset: 2px;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #fiche-apercu,
+  #fiche-apercu * {
+    visibility: visible;
+  }
+
+  #fiche-apercu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+}

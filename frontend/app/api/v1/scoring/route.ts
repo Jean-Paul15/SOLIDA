@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
   try {
     const resultatSansId = calculerScoring(entree);
-    const resultat = enregistrerDecision(entree.societaire_id, resultatSansId);
+    const resultat = enregistrerDecision(entree, resultatSansId);
     return NextResponse.json(resultat, { status: 201 });
   } catch {
     return NextResponse.json(

@@ -8,6 +8,7 @@
 | E3 Nouvelle demande | panneau sur E2 | `NouvelleDemandeSheet` |
 | E4 Résultat scoring | `/scoring/[id]` (id = decision_id, pas societaire_id) | `app/scoring/[id]/page.tsx` |
 | E5 Groupe de caution | modale sur E2 | `GroupeCautionDialog` |
+| E6 Fiche de justification | `/scoring/[id]/fiche` (id = decision_id) | `app/scoring/[id]/fiche/page.tsx`, `FicheApercu` |
 
 ## Simplifications connues
 
@@ -25,3 +26,9 @@
   `SyntheseGroupe.membres`, sans dossier `societaires[id]` complet propre (fixtures partielles).
   Cliquer sur une telle ligne mène à un 404 — limite des données de démonstration, pas un bug de
   navigation ; le sociétaire consulté lui-même a toujours un dossier complet.
+- **E6 (fiche)** : « Télécharger le PDF » (WeasyPrint côté serveur, voir `07-export-pdf.md`) et
+  « Archiver au dossier » (MinIO + journal d'audit) sont désactivés avec info-bulle — nécessitent
+  le backend, pas encore construit. « Imprimer » utilise `window.print()` avec une feuille
+  `@media print` dédiée : un repli explicitement autorisé par `07-export-pdf.md` (« sauf en
+  secours ») en attendant la génération serveur. Pas d'état de génération nommé (« Génération de
+  la fiche… ») : la fiche mock se construit en mémoire, sans latence à couvrir.

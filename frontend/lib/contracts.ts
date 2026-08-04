@@ -82,7 +82,9 @@ export interface ResultatScoring {
 export interface FicheJustification {
   fiche_id: string;
   resultat: ResultatScoring;
+  demande: EntreeScoring;
   societaire_nom: string;
+  numero_membre: string;
   agence: string;
   agent_nom: string;
   date_edition: string;

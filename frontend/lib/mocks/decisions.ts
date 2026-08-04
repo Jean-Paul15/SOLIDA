@@ -1,7 +1,8 @@
-import type { ResultatScoring } from "@/lib/contracts";
+import type { EntreeScoring, ResultatScoring } from "@/lib/contracts";
 
 interface DecisionEnregistree {
   societaireId: string;
+  demande: EntreeScoring;
   resultat: ResultatScoring;
 }
 
@@ -17,12 +18,12 @@ const decisions = globalThis.__solidaDecisionsMock ?? new Map<string, DecisionEn
 globalThis.__solidaDecisionsMock = decisions;
 
 export function enregistrerDecision(
-  societaireId: string,
+  demande: EntreeScoring,
   resultatSansId: Omit<ResultatScoring, "decision_id">
 ): ResultatScoring {
   const decisionId = crypto.randomUUID();
   const resultat: ResultatScoring = { ...resultatSansId, decision_id: decisionId };
-  decisions.set(decisionId, { societaireId, resultat });
+  decisions.set(decisionId, { societaireId: demande.societaire_id, demande, resultat });
   return resultat;
 }
 

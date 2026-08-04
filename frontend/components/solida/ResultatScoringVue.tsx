@@ -6,36 +6,7 @@ import { GraphiqueContributions } from "@/components/solida/GraphiqueContributio
 import { NumberTicker } from "@/components/solida/NumberTicker";
 import type { ResultatScoring } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
-
-const LIBELLE_TRANCHE = {
-  accord: "ACCORD",
-  accord_sous_condition: "ACCORD SOUS CONDITION",
-  comite_de_credit: "COMITÉ DE CRÉDIT",
-  refus: "REFUS",
-};
-
-const COULEUR_TRANCHE = {
-  accord: {
-    texte: "text-decision-accord",
-    fond: "bg-decision-accord-fond",
-    bordure: "border-l-decision-accord",
-  },
-  accord_sous_condition: {
-    texte: "text-decision-conditionnel",
-    fond: "bg-decision-conditionnel-fond",
-    bordure: "border-l-decision-conditionnel",
-  },
-  comite_de_credit: {
-    texte: "text-decision-comite",
-    fond: "bg-decision-comite-fond",
-    bordure: "border-l-decision-comite",
-  },
-  refus: {
-    texte: "text-decision-refus",
-    fond: "bg-decision-refus-fond",
-    bordure: "border-l-decision-refus",
-  },
-};
+import { COULEUR_TRANCHE, LIBELLE_TRANCHE } from "@/lib/libelles";
 
 const SCORE_MIN = 300;
 const SCORE_MAX = 850;
