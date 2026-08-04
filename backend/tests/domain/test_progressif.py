@@ -98,7 +98,7 @@ def test_un_dossier_sans_aucun_levier_bloquant_le_dit_explicitement() -> None:
     conditions = lister_conditions_reexamen(situation, SITUATION_PARAMETRES)
 
     assert conditions == [
-        "Aucun levier bloquant : le dossier peut etre reexamine des le prochain cycle."
+        "Aucun levier bloquant : le dossier peut être réexaminé dès le prochain cycle."
     ]
 
 
@@ -115,8 +115,8 @@ def test_un_dossier_avec_tous_les_leviers_actifs_liste_les_cinq_conditions() -> 
     conditions = lister_conditions_reexamen(situation, SITUATION_PARAMETRES)
 
     assert len(conditions) == 5
-    assert "depot" in conditions[0]
+    assert "dépôt" in conditions[0]
     assert "125 000 FCFA" in conditions[1]
     assert "endettement" in conditions[2] or "remboursement" in conditions[2]
-    assert "epargne" in conditions[3]
+    assert "épargne" in conditions[3]
     assert "caution" in conditions[4]

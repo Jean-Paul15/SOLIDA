@@ -1,30 +1,30 @@
 class ErreurSolida(Exception):
-    """Racine commune a toutes les exceptions du domaine SOLIDA."""
+    """Racine commune à toutes les exceptions du domaine SOLIDA."""
 
 
 class ErreurDomaine(ErreurSolida):
-    """Violation d'une regle metier."""
+    """Violation d'une règle métier."""
 
 
 class SocietaireIntrouvable(ErreurDomaine):
-    """Aucun societaire ne correspond a l'identifiant fourni."""
+    """Aucun sociétaire ne correspond à l'identifiant fourni."""
 
 
 class DonneesInsuffisantes(ErreurDomaine):
-    """Les donnees disponibles ne permettent pas de calculer un score."""
+    """Les données disponibles ne permettent pas de calculer un score."""
 
 
 class GrilleInvalide(ErreurDomaine):
-    """Les parametres de la grille de decision sont incoherents."""
+    """Les paramètres de la grille de décision sont incohérents."""
 
 
 class ModeleIndisponible(ErreurDomaine):
-    """Aucun modele de scoring (ni enrichi, ni socle) n'a pu produire une probabilite."""
+    """Aucun modèle de scoring (ni enrichi, ni socle) n'a pu produire une probabilité."""
 
 
 class AccesRefuse(ErreurDomaine):
-    """L'acteur courant n'a pas les droits necessaires pour cette action."""
+    """L'acteur courant n'a pas les droits nécessaires pour cette action."""
 
 
 class InvariantScoreViole(ErreurDomaine):
-    """La decomposition en points ne somme pas au score : le scoring est rejete."""
+    """La décomposition en points ne somme pas au score : le scoring est rejeté."""

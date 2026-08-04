@@ -7,11 +7,11 @@ from solida.domain.values.tranche import TrancheDecision
 
 @dataclass(frozen=True)
 class ParametresGrille:
-    """Seuils de la grille, fondes sur la matrice de couts.
+    """Seuils de la grille, fondés sur la matrice de coûts.
 
-    `marge` et `lgd` (perte en cas de defaut) ne sont pas un choix technique : ils
-    traduisent l'arbitrage risque/approbation de la cooperative. Les valeurs par
-    defaut de `simulateur/decision.py` sont un point de depart, pas la verite
+    `marge` et `lgd` (perte en cas de défaut) ne sont pas un choix technique : ils
+    traduisent l'arbitrage risque/approbation de la coopérative. Les valeurs par
+    défaut de `simulateur/decision.py` sont un point de départ, pas la vérité
     finale. Voir 03-MODELE/03-scorecard-et-grille.md.
     """
 
@@ -24,14 +24,14 @@ class ParametresGrille:
     def __post_init__(self) -> None:
         if self.marge <= 0 or self.lgd <= 0:
             raise GrilleInvalide(
-                "La marge et la perte en cas de defaut (LGD) doivent etre positives."
+                "La marge et la perte en cas de défaut (LGD) doivent être positives."
             )
         croissants = (
             self.multiplicateur_accord < self.multiplicateur_vigilance < self.multiplicateur_examen
         )
         if not croissants:
             raise GrilleInvalide(
-                "Les multiplicateurs de zone doivent etre strictement croissants."
+                "Les multiplicateurs de zone doivent être strictement croissants."
             )
 
     def seuil_economique(self) -> float:
@@ -39,10 +39,10 @@ class ParametresGrille:
 
 
 def decider(probabilite: ProbabiliteDefaut, parametres: ParametresGrille) -> TrancheDecision:
-    """Determine la tranche a partir du seuil economique marge / (marge + LGD).
+    """Détermine la tranche à partir du seuil économique marge / (marge + LGD).
 
-    Le seuil se traduit ensuite en score par la meme transformation PDO, pour
-    rester affichable, mais la decision se prend sur la probabilite.
+    Le seuil se traduit ensuite en score par la même transformation PDO, pour
+    rester affichable, mais la décision se prend sur la probabilité.
     """
     seuil = parametres.seuil_economique()
     p = probabilite.valeur

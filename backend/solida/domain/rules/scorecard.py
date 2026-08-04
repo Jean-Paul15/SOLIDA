@@ -11,7 +11,7 @@ TOLERANCE_INVARIANT = 1.0
 
 @dataclass(frozen=True)
 class ParametresScorecard:
-    """Mise a l'echelle PD -> score. Voir 03-MODELE/03-scorecard-et-grille.md."""
+    """Mise à l'échelle PD -> score. Voir 03-MODELE/03-scorecard-et-grille.md."""
 
     pdo: float
     score_reference: float
@@ -27,10 +27,10 @@ class ParametresScorecard:
 
 
 def calculer_score(probabilite: ProbabiliteDefaut, parametres: ParametresScorecard) -> Score:
-    """Transforme une probabilite de defaut en score.
+    """Transforme une probabilité de défaut en score.
 
-    Convention bancaire : score eleve = risque faible, donc le rapport est
-    (1 - p) / p, pas son inverse. Le resultat est borne a [score_min, score_max].
+    Convention bancaire : score élevé = risque faible, donc le rapport est
+    (1 - p) / p, pas son inverse. Le résultat est borné à [score_min, score_max].
     """
     log_odds = math.log((1 - probabilite.valeur) / probabilite.valeur)
     score_brut = parametres.decalage() + parametres.facteur() * log_odds
@@ -43,11 +43,11 @@ def decomposer_en_points(
     contributions_log_odds: list[tuple[str, float]],
     parametres: ParametresScorecard,
 ) -> tuple[float, list[PointsVariable]]:
-    """Repartit un log-odds en points de base et contributions par variable.
+    """Répartit un log-odds en points de base et contributions par variable.
 
     Suppose que `beta_0 + sum(f_j pour f_j dans contributions_log_odds)` est le
-    log-odds complet produit par le modele. La transformation etant affine, chaque
-    terme se met a l'echelle independamment par le meme facteur.
+    log-odds complet produit par le modèle. La transformation étant affine, chaque
+    terme se met à l'échelle indépendamment par le même facteur.
     """
     facteur = parametres.facteur()
     points_de_base = parametres.decalage() + facteur * beta_0
@@ -61,15 +61,15 @@ def decomposer_en_points(
 def verifier_invariant_decomposition(
     points_de_base: float, points: list[PointsVariable], score: Score
 ) -> None:
-    """Leve InvariantScoreViole si la decomposition ne somme pas au score rendu.
+    """Lève InvariantScoreViole si la décomposition ne somme pas au score rendu.
 
-    Une fiche de justification dont les points ne somment pas au score detruirait
-    toute la credibilite du produit devant un auditeur : mieux vaut rejeter le
-    scoring que le rendre incoherent.
+    Une fiche de justification dont les points ne somment pas au score détruirait
+    toute la crédibilité du produit devant un auditeur : mieux vaut rejeter le
+    scoring que le rendre incohérent.
     """
     somme = points_de_base + sum(p.points for p in points)
     if abs(somme - score.valeur) >= TOLERANCE_INVARIANT:
         raise InvariantScoreViole(
-            f"La decomposition en points ({somme:.2f}) ne correspond pas au score "
+            f"La décomposition en points ({somme:.2f}) ne correspond pas au score "
             f"rendu ({score.valeur:.2f})."
         )
