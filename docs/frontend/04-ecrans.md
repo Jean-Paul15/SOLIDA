@@ -6,7 +6,8 @@
 | E1 Recherche | `/` | `RechercheSocietaire` |
 | E2 Dossier | `/societaires/[id]` | `app/societaires/[id]/page.tsx` |
 | E3 Nouvelle demande | panneau sur E2 | `NouvelleDemandeSheet` |
-| E4 Résultat scoring | `/scoring/[id]` | `app/scoring/[id]/page.tsx` |
+| E4 Résultat scoring | `/scoring/[id]` (id = decision_id, pas societaire_id) | `app/scoring/[id]/page.tsx` |
+| E5 Groupe de caution | modale sur E2 | `GroupeCautionDialog` |
 
 ## Simplifications connues
 
@@ -20,5 +21,7 @@
   l'apparition du graphique est animée une seule fois, globalement.
 - **Épargne disponible (E2, hors segment groupement)** remplace « Épargne nantie » : le contrat gelé
   ne porte pas de champ « montant nanti ». Voir `02-contrats-et-mocks.md`.
-- **Écran E5** (groupe de caution) n'existe pas dans cette passe (P1) : le lien correspondant a été
-  retiré d'E2 plutôt que de pointer vers une route inexistante.
+- **E5 (groupe de caution)** : certains membres d'un groupe n'existent que comme entrée dans
+  `SyntheseGroupe.membres`, sans dossier `societaires[id]` complet propre (fixtures partielles).
+  Cliquer sur une telle ligne mène à un 404 — limite des données de démonstration, pas un bug de
+  navigation ; le sociétaire consulté lui-même a toujours un dossier complet.

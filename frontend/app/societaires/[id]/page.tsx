@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EnTete } from "@/components/solida/EnTete";
+import { GroupeCautionDialog } from "@/components/solida/GroupeCautionDialog";
 import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
 import { TrajectoireEpargne } from "@/components/solida/TrajectoireEpargne";
 import { formaterMontant } from "@/lib/format";
@@ -177,6 +178,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
                     suffisant. Le scoring s&rsquo;appuiera sur le profil individuel.
                   </span>
                 )}
+                <GroupeCautionDialog societaireId={id} />
               </div>
             ) : (
               <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
