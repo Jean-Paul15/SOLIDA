@@ -64,6 +64,26 @@ propre identifiant.
 `fetch` direct dans un composant) et navigue vers `/scoring/{decision_id}` une fois la décision
 obtenue — pas de calcul spéculatif côté page de destination.
 
+## Bascule vers le backend réel (task #33) — ce qui doit changer, et rien d'autre
+
+**Frontière côté client** : tout appel réseau depuis un composant client passe par
+`lib/services/*.ts` (`scoring.ts`, `societaires.ts`). Ces fichiers appellent des chemins relatifs
+(`/api/v1/...`). Le jour où le backend réel existe, un simple `rewrites()` dans `next.config.ts`
+vers `http://api:8000/api/v1/:path*` suffit : aucun composant n'a besoin de changer.
+
+**Frontière côté serveur** : les Server Components qui importent `lib/mocks/*` directement
+(`app/societaires/[id]/page.tsx`, `app/scoring/[id]/page.tsx`, `app/scoring/[id]/fiche/page.tsx`,
+`app/registre/page.tsx`, `app/parametrage/grille/page.tsx`) devront remplacer cet import par un
+appel `fetch` vers le backend. C'est la seule vraie réécriture ; elle est localisée à ces cinq
+fichiers, pas dispersée dans l'arbre des composants.
+
+**À retirer une fois le câblage vérifié bout en bout, pas avant** : `frontend/lib/mocks/**` et
+`frontend/app/api/v1/**`. Rien d'autre ne référence ces dossiers directement.
+
+**Installable, vérifié** : `npm ci` (donc `docker build --target deps`, sans cache) installe les
+758 paquets sans erreur ni vulnérabilité. Aucune dépendance non résolue, aucun paquet natif
+manquant.
+
 ## Authentification de démonstration
 
 `agents.ts` contient deux paires identifiant/mot de passe en clair, utilisées uniquement pour
