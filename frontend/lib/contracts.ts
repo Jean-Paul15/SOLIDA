@@ -61,6 +61,7 @@ export interface PalierProgression {
 }
 
 export interface ResultatScoring {
+  decision_id: string;
   score: number;
   tranche: Tranche;
   montant_recommande: number;

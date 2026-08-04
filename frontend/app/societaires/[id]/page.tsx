@@ -1,4 +1,5 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -54,6 +55,14 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
       <EnTete agence={session?.agence} utilisateur={session?.nom} />
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-6 px-6 py-6">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-sm text-neutre-500 hover:text-neutre-950"
+        >
+          <ArrowLeft className="size-4" />
+          Retour à la recherche
+        </Link>
+
         <div className="flex h-[88px] items-center justify-between rounded-lg border border-neutre-200 px-4">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">

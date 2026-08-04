@@ -41,8 +41,21 @@ Quatre étapes dans un seul fichier (`frontend/Dockerfile`) :
 - Télémétrie Next.js désactivée (`NEXT_TELEMETRY_DISABLED=1`) — aucun appel sortant non nécessaire.
 - Réseau Docker dédié (`solida`), seul `front` publie un port vers l'hôte.
 
+## Bug connu en amont : `next build` échoue sur `/_global-error`
+
+`npm run build` (donc la cible `builder`/`runner` du Dockerfile) échoue actuellement avec
+`TypeError: Cannot read properties of null (reading 'useContext')` pendant le prerendering de la
+page d'erreur globale interne `/_global-error`. Confirmé comme régression connue de Next.js 16
+(16.0.1 à 16.3.0, la dernière stable au moment d'écrire ceci), sans correctif ni contournement
+disponible côté application — voir
+[vercel/next.js#86178](https://github.com/vercel/next.js/issues/86178) et
+[discussion #94667](https://github.com/vercel/next.js/discussions/94667). N'affecte pas le mode
+développement (`next dev`, utilisé par `docker-compose.yml` et donc par la démo) ni
+`typecheck`/`lint`/`test`. Bloque uniquement un déploiement en image `runner` figée. À réessayer à
+chaque mise à jour de Next.js 16.
+
 ## Ce qui n'existe pas encore dans `docker-compose.yml`
 
-`postgres-coresim`, `postgres-solida`, `api`, `minio`, `mlflow` — voir
-`06-INFRA/01-stack-et-justifications.md` pour la liste complète. Ils seront ajoutés par les modules
-qui les construisent, pas anticipés ici.
+`api`, `minio`, `mlflow` — voir `06-INFRA/01-stack-et-justifications.md` pour la liste complète.
+`postgres-coresim` et `postgres-solida` existent déjà (voir `docs/infra/00-postgres-et-simulateur.md`).
+Les services restants seront ajoutés par les modules qui les construisent, pas anticipés ici.

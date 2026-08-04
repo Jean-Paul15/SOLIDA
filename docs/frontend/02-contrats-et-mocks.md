@@ -34,9 +34,30 @@ logement reste absent : il n'existe dans aucune source (ni contrat, ni générat
 
 `calculerScoring` produit une décomposition cohérente (la somme des points égale le score) à partir
 des données des fixtures, sans aucun modèle entraîné — l'équivalent frontend d'un modèle constant.
-Les seuils de tranche (700/600/500) sont des valeurs de travail, pas la grille réelle. Le résultat
-est conservé en mémoire côté serveur (process Node), le temps de la session de développement, pour
-que l'écran de fiche puisse le relire.
+Les seuils de tranche (700/600/500) sont des valeurs de travail, pas la grille réelle.
+
+## Décision persistée par identifiant opaque (`decision_id`)
+
+`ResultatScoring` porte désormais un `decision_id` (UUID généré à l'enregistrement). `POST
+/api/v1/scoring` calcule et persiste la décision (`lib/mocks/decisions.ts`, `Map` accrochée à
+`globalThis` — nécessaire car Turbopack en dev peut charger ce module dans plus d'une instance
+selon le graphe routeur/page, ce qui viderait une `Map` locale entre l'écriture et la lecture),
+puis renvoie le résultat complet incluant son `decision_id`. L'écran E4 (`/scoring/[id]`) prend
+ce `decision_id` comme paramètre de route — jamais les paramètres de la demande (montant, durée,
+objet) en clair dans l'URL.
+
+**Pourquoi ce choix, pas des paramètres de requête** : mettre `montant_demande`, `duree_demandee_mois`
+etc. dans l'URL (`?montant_demande=500000&...`) expose des données métier dans l'historique du
+navigateur, les journaux serveur et tout lien partagé, et permettrait de rejouer un scoring en
+modifiant les valeurs directement dans l'URL. Un identifiant opaque de décision déjà calculée et
+immuable élimine les deux problèmes : l'URL ne référence qu'un résultat déjà figé, elle ne permet
+pas de le falsifier. C'est aussi la forme que prendra l'intégration réelle : `decision_scoring`
+(`02-DONNEES/02-schema-solida.md`) est déjà pensée comme une table en insertion seule, avec son
+propre identifiant.
+
+`NouvelleDemandeSheet` appelle `POST /api/v1/scoring` (via `lib/services/scoring.ts`, jamais de
+`fetch` direct dans un composant) et navigue vers `/scoring/{decision_id}` une fois la décision
+obtenue — pas de calcul spéculatif côté page de destination.
 
 ## Authentification de démonstration
 

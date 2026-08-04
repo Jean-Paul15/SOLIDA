@@ -13,7 +13,7 @@ function trancheDepuisScore(score: number): ResultatScoring["tranche"] {
   return "refus";
 }
 
-export function calculerScoring(entree: EntreeScoring): ResultatScoring {
+export function calculerScoring(entree: EntreeScoring): Omit<ResultatScoring, "decision_id"> {
   const fiche = societaires[entree.societaire_id];
   if (!fiche) {
     throw new Error(`societaire introuvable: ${entree.societaire_id}`);
@@ -175,14 +175,4 @@ export function calculerScoring(entree: EntreeScoring): ResultatScoring {
     horodatage: new Date().toISOString(),
     avertissements,
   };
-}
-
-const resultatsCalcules = new Map<string, ResultatScoring>();
-
-export function enregistrerResultat(societaireId: string, resultat: ResultatScoring) {
-  resultatsCalcules.set(societaireId, resultat);
-}
-
-export function lireResultat(societaireId: string): ResultatScoring | undefined {
-  return resultatsCalcules.get(societaireId);
 }

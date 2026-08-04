@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,13 +23,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { ActiviteEconomique, ObjetCredit } from "@/lib/contracts";
+import type { ActiviteEconomique, EntreeScoring, ObjetCredit } from "@/lib/contracts";
 import {
   calculerEcheanceMensuelle,
   calculerTauxEndettement,
   TAUX_MENSUEL_DEMONSTRATION,
 } from "@/lib/credit";
 import { formaterMontant } from "@/lib/format";
+import { ErreurService } from "@/lib/services/erreur-service";
+import { calculerScore } from "@/lib/services/scoring";
 
 const PRODUITS = [
   { id: "prod-commerce", nom: "Crédit commerce", plafond: 2000000 },
@@ -70,6 +73,7 @@ export function NouvelleDemandeSheet({
   const [revenu, setRevenu] = useState(activite.revenu_mensuel_declare ?? 0);
   const [charges, setCharges] = useState(activite.charges_mensuelles ?? 0);
   const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   const produit = PRODUITS.find((p) => p.id === produitId) ?? PRODUITS[0];
 
@@ -84,25 +88,23 @@ export function NouvelleDemandeSheet({
 
   async function calculerLeScore() {
     setEnCours(true);
-    const reponse = await fetch("/api/v1/scoring", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        societaire_id: societaireId,
-        produit_id: produitId,
-        montant_demande: montant,
-        duree_demandee_mois: duree,
-        objet_credit: objet,
-        actualisation: actualisationOuverte
-          ? { revenu_mensuel_declare: revenu, charges_mensuelles: charges }
-          : undefined,
-      }),
-    });
-
-    if (reponse.ok) {
-      router.push(`/scoring/${societaireId}`);
-    } else {
+    setErreur(null);
+    const entree: EntreeScoring = {
+      societaire_id: societaireId,
+      produit_id: produitId,
+      montant_demande: montant,
+      duree_demandee_mois: duree,
+      objet_credit: objet,
+      actualisation: actualisationOuverte
+        ? { revenu_mensuel_declare: revenu, charges_mensuelles: charges }
+        : undefined,
+    };
+    try {
+      const resultat = await calculerScore(entree);
+      router.push(`/scoring/${resultat.decision_id}`);
+    } catch (e) {
       setEnCours(false);
+      setErreur(e instanceof ErreurService ? e.message : "Le calcul du score a échoué.");
     }
   }
 
@@ -265,6 +267,14 @@ export function NouvelleDemandeSheet({
             </div>
           </div>
         </div>
+
+        {erreur && (
+          <div className="px-4">
+            <Alert variant="destructive">
+              <AlertDescription>{erreur}</AlertDescription>
+            </Alert>
+          </div>
+        )}
 
         <SheetFooter className="flex-row justify-end gap-2">
           <Button variant="outline" disabled={enCours}>
