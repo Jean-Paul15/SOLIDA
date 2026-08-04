@@ -1,16 +1,25 @@
 import Image from "next/image";
 import { Suspense } from "react";
+import { FluxEpargneBeam } from "@/components/solida/FluxEpargneBeam";
 import { FormulaireConnexion } from "@/components/solida/FormulaireConnexion";
 
 export default function PageConnexion() {
   return (
     <div className="flex min-h-screen">
-      <div className="hidden flex-col items-center justify-center gap-4 bg-solida-teal-900 px-12 text-center text-white lg:flex lg:w-[55%]">
-        <Image src="/solida-logo.png" alt="SOLIDA" width={96} height={96} priority />
-        <p className="max-w-sm text-sm text-white/80">
+      <div className="relative hidden flex-col items-center justify-center gap-4 overflow-hidden bg-solida-teal-900 px-12 text-center text-white lg:flex lg:w-[55%]">
+        <FluxEpargneBeam />
+        <Image
+          src="/solida-logo.png"
+          alt="SOLIDA"
+          width={160}
+          height={122}
+          priority
+          className="relative"
+        />
+        <p className="max-w-sm text-base text-white/80">
           Scoring d&rsquo;octroi pour coopératives financières
         </p>
-        <p className="absolute bottom-8 text-xs text-white/50">Programme DigiCoop-WA+</p>
+        <p className="absolute bottom-8 text-sm text-white/50">Programme DigiCoop-WA+</p>
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center bg-blanc px-6">

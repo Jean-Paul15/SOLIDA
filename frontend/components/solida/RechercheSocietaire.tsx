@@ -85,7 +85,7 @@ export function RechercheSocietaire() {
                 <button
                   type="button"
                   onClick={() => setStatutRequete("idle")}
-                  className="text-solida-teal-800 underline"
+                  className="cursor-pointer text-solida-teal-800 underline"
                 >
                   Réessayer
                 </button>
@@ -136,7 +136,7 @@ export function RechercheSocietaire() {
               key={d.id}
               type="button"
               onClick={() => router.push(`/societaires/${d.id}`)}
-              className="rounded-sm border border-neutre-200 px-2.5 py-1 text-sm text-neutre-700 hover:bg-neutre-50"
+              className="cursor-pointer rounded-sm border border-neutre-200 px-2.5 py-1 text-sm text-neutre-700 hover:bg-neutre-50"
             >
               {d.nom}
             </button>

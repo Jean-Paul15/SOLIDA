@@ -119,7 +119,7 @@ export function NouvelleDemandeSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col gap-4 px-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4">
           <div className="flex flex-col gap-1.5">
             <Label>Produit de crédit</Label>
             <Select value={produitId} onValueChange={setProduitId}>
@@ -213,7 +213,7 @@ export function NouvelleDemandeSheet({
           <button
             type="button"
             onClick={() => setActualisationOuverte((v) => !v)}
-            className="flex items-center gap-1 text-left text-sm text-neutre-700"
+            className="flex cursor-pointer items-center gap-1 text-left text-sm text-neutre-700"
           >
             <ChevronRight
               className={

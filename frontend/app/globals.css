@@ -41,18 +41,18 @@
   --font-mono: var(--font-ibm-plex-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif-title: var(--font-source-serif-4), serif;
 
-  --text-xs: 11px;
-  --text-xs--line-height: 16px;
-  --text-sm: 14px;
-  --text-sm--line-height: 20px;
-  --text-base: 16px;
-  --text-base--line-height: 24px;
-  --text-lg: 18px;
-  --text-lg--line-height: 26px;
-  --text-xl: 22px;
-  --text-xl--line-height: 30px;
-  --text-score: 56px;
-  --text-score--line-height: 60px;
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.875rem;
+  --text-score: 3.5rem;
+  --text-score--line-height: 3.75rem;
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -100,6 +100,7 @@
 
   html {
     @apply font-sans;
+    font-size: 110%;
   }
 
   :focus-visible {

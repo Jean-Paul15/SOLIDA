@@ -100,7 +100,7 @@ export function GraphiqueContributions({
         <button
           type="button"
           onClick={() => setTousVisibles(true)}
-          className="self-start text-xs text-solida-teal-800 underline"
+          className="cursor-pointer self-start text-xs text-solida-teal-800 underline"
         >
           + {masques} autres facteurs
         </button>

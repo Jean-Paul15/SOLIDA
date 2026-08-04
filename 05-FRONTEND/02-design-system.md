@@ -134,6 +134,12 @@ L'échelle est volontairement resserrée. Un outil dense n'a pas besoin de sept 
 de connexion à 100 % de zoom sur écran standard : trop petit à la lecture. La densité reste
 gouvernée par l'espacement (section 4), pas par une taille de texte illisible.
 
+**Échelle globale à 110 %** : après comparaison de plusieurs niveaux de zoom navigateur par un
+testeur réel, le rendu à 110 % a été jugé plus confortable que 100 %. Plutôt que de dépendre d'un
+réglage de zoom, `html { font-size: 110%; }` reproduit cet effet par défaut, et les jetons `texte-*`
+sont exprimés en `rem` (pas en `px`) pour suivre ce changement. Les composants shadcn (hauteurs,
+espacements internes) suivent automatiquement puisqu'ils sont eux-mêmes en `rem`.
+
 ### Règles numériques
 
 Tous les chiffres alignables utilisent `font-variant-numeric: tabular-nums`. Sans cela, une colonne

@@ -20,9 +20,9 @@ export function EnTete({ agence, utilisateur }: EnTeteProps) {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-neutre-200 bg-blanc px-6">
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-neutre-200 bg-blanc px-6">
       <Link href="/" className="flex items-center gap-2">
-        <Image src="/solida-logo.png" alt="SOLIDA" width={28} height={28} priority />
+        <Image src="/solida-logo.png" alt="SOLIDA" width={32} height={24} priority />
         <span className="font-serif-title text-base font-semibold text-solida-teal-900">
           SOLIDA
         </span>
