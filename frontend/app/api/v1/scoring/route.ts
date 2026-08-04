@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { EntreeScoring } from "@/lib/contracts";
 import { enregistrerDecision } from "@/lib/mocks/decisions";
 import { calculerScoring } from "@/lib/mocks/scoring";
+import { lireSession } from "@/lib/session";
 
 export async function POST(request: Request) {
   const entree = (await request.json().catch(() => null)) as EntreeScoring | null;
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
 
   try {
     const resultatSansId = calculerScoring(entree);
-    const resultat = enregistrerDecision(entree, resultatSansId);
+    const session = await lireSession();
+    const resultat = enregistrerDecision(entree, resultatSansId, session?.nom ?? "Agent");
     return NextResponse.json(resultat, { status: 201 });
   } catch {
     return NextResponse.json(

@@ -9,6 +9,8 @@
 | E4 Résultat scoring | `/scoring/[id]` (id = decision_id, pas societaire_id) | `app/scoring/[id]/page.tsx` |
 | E5 Groupe de caution | modale sur E2 | `GroupeCautionDialog` |
 | E6 Fiche de justification | `/scoring/[id]/fiche` (id = decision_id) | `app/scoring/[id]/fiche/page.tsx`, `FicheApercu` |
+| E7 Registre des décisions | `/registre` | `RegistreDecisions` |
+| E8 Paramétrage de la grille | `/parametrage/grille` | `GrilleParametrage` |
 
 ## Simplifications connues
 
@@ -32,3 +34,11 @@
   `@media print` dédiée : un repli explicitement autorisé par `07-export-pdf.md` (« sauf en
   secours ») en attendant la génération serveur. Pas d'état de génération nommé (« Génération de
   la fiche… ») : la fiche mock se construit en mémoire, sans latence à couvrir.
+- **E7 (registre)** : historique de démonstration semé au démarrage (5 décisions fictives sur les
+  fixtures existantes), pas de vraie persistance. Un vrai registre viendrait de `decision_scoring`
+  (insertion seule).
+- **E8 (grille)** : l'aperçu en direct réinjecte chaque score historique dans la transformation PDO
+  inverse pour retrouver une probabilité implicite, puis reclasse avec les seuils courants —
+  approximation utile pour explorer l'effet d'un réglage, pas un recalcul exact (les scores de
+  l'historique n'ont pas été produits par cette même transformation à l'origine, faute de modèle
+  réel). « Enregistrer » incrémente un numéro de version en mémoire, ne persiste rien.

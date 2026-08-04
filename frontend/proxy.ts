@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/session";
 
-const ROUTES_PROTEGEES = ["/", "/societaires", "/scoring"];
+const ROUTES_PROTEGEES = ["/", "/societaires", "/scoring", "/registre", "/parametrage"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,5 +26,11 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/societaires/:path*", "/scoring/:path*"],
+  matcher: [
+    "/",
+    "/societaires/:path*",
+    "/scoring/:path*",
+    "/registre/:path*",
+    "/parametrage/:path*",
+  ],
 };
