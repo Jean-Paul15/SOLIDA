@@ -10,7 +10,7 @@ class ModeleConstant:
     sans ambiguïté hors du périmètre modèle tant que le vrai modèle (EBM
     entraîné) n'existe pas. Permet à toute la chaîne (scorecard, grille,
     cascade, plafond progressif, persistance, HTTP) d'être construite et
-    testée dès maintenant. Voir 10-PLAN-HACKATHON/02-repartition-modules.md.
+    testée dès maintenant.
     """
 
     def __init__(self, probabilite_constante: float = 0.09) -> None:

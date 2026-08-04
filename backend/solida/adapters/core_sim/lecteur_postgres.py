@@ -65,9 +65,8 @@ def _ligne_vers_credit(ligne: Any, aujourdhui: date) -> Credit:
 
 
 class LecteurCoreSimPostgres:
-    """Implémentation du port `LecteurCoreSim` contre le schéma exécutable réel
-    du générateur (`simulateur/`), pas contre `02-DONNEES/01` littéralement —
-    voir ADR-019. Connexion via le rôle `solida_lecteur` (lecture seule)."""
+    """Implémentation du port `LecteurCoreSim` contre le schéma réel produit
+    par `simulateur/`. Connexion via le rôle `solida_lecteur` (lecture seule)."""
 
     def __init__(self, moteur: Engine) -> None:
         self._moteur = moteur

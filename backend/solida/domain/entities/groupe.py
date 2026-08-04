@@ -19,9 +19,10 @@ class GroupeCaution:
     """Snapshot du groupe, calculé du point de vue d'un sociétaire donné.
 
     Les agrégats (`taux_remboursement_groupe`, `nb_cycles_completes`,
-    `nb_credits_anterieurs_soldes`) excluent toujours ce sociétaire : c'est la
-    règle de 03-MODELE/04-cascade-et-cold-start.md, appliquée uniformément à
-    l'affichage (E2, E5) et au calcul de la cascade, pas seulement au scoring.
+    `nb_credits_anterieurs_soldes`) excluent toujours ce sociétaire, appliqué
+    uniformément à l'affichage et au calcul de la cascade, pas seulement au
+    scoring — sinon un sociétaire verrait son propre historique compter dans
+    la réputation du groupe qui sert à l'évaluer.
     """
 
     groupe_id: str

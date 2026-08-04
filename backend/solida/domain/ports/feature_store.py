@@ -5,13 +5,11 @@ from solida.domain.values.features import FeaturesIndividuelles, FeaturesSolidai
 
 
 class FeatureStore(Protocol):
-    """Voir 01-ARCHITECTURE/05, section 6.
-
-    Simplification assumée pour cette passe (pas de batch, voir
-    04-BACKEND/04-batch-et-orchestration.md) : `ecrire_lot` n'existe pas encore
-    ici. Les features sont calculées à la demande à partir de CORE-SIM, pas
-    lues dans une table de features historisée. `date_dernier_rafraichissement`
-    reflète donc l'instant du calcul, pas un batch planifié.
+    """Simplification assumée pour cette passe, sans pipeline batch : `ecrire_lot`
+    n'existe pas encore ici. Les features sont calculées à la demande à partir
+    de CORE-SIM, pas lues dans une table de features historisée.
+    `date_dernier_rafraichissement` reflète donc l'instant du calcul, pas un
+    batch planifié.
     """
 
     def lire_individuelles(self, societaire_id: str) -> FeaturesIndividuelles | None: ...

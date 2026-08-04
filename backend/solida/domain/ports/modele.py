@@ -4,9 +4,7 @@ from solida.domain.values.probabilite import ProbabiliteDefaut
 
 
 class ModeleScoring(Protocol):
-    """Voir 01-ARCHITECTURE/05, section 6.
-
-    `ModeleConstant` (adapters/ml) est la seule implémentation existante pour
+    """`ModeleConstant` (adapters/ml) est la seule implémentation existante pour
     l'instant : ce port est ce qui permet au modèle réel (EBM entraîné) de
     remplacer `ModeleConstant` sans qu'aucun code au-dessus n'en soit informé.
     """

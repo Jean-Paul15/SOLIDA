@@ -3,8 +3,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FeaturesIndividuelles:
-    """Voir 01-ARCHITECTURE/05-contrats-interfaces.md, section 2."""
-
     anciennete_societaire_mois: int
     segment: str
     solde_epargne_moyen_6m: int
@@ -28,7 +26,7 @@ class FeaturesIndividuelles:
 
 @dataclass(frozen=True)
 class FeaturesSolidaires:
-    """Voir 01-ARCHITECTURE/05-contrats-interfaces.md, section 2. `None` hors segment de groupe."""
+    """`None` pour un sociétaire hors segment de groupe."""
 
     en_groupe: bool
     groupe_id: str | None

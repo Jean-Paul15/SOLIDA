@@ -12,7 +12,7 @@ class ParametresGrille:
     `marge` et `lgd` (perte en cas de défaut) ne sont pas un choix technique : ils
     traduisent l'arbitrage risque/approbation de la coopérative. Les valeurs par
     défaut de `simulateur/decision.py` sont un point de départ, pas la vérité
-    finale. Voir 03-MODELE/03-scorecard-et-grille.md.
+    finale.
     """
 
     marge: float

@@ -6,9 +6,8 @@ from datetime import date
 class Societaire:
     """Instantané des données brutes CORE-SIM pour un sociétaire.
 
-    Ne porte jamais le sexe ni le statut matrimonial : ce sont des variables
-    exclues du scoring par engagement de non-discrimination (03-MODELE/06),
-    même si elles existent dans le générateur.
+    Ne porte jamais le sexe ni le statut matrimonial : engagement de
+    non-discrimination, même si ces colonnes existent dans le générateur.
     """
 
     societaire_id: str

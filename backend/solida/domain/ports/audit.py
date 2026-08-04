@@ -2,9 +2,7 @@ from typing import Protocol
 
 
 class JournalAudit(Protocol):
-    """Voir 08-SECURITE/03-audit-et-tracabilite.md.
-
-    Chaque entrée : acteur, action, objet, horodatage. Jamais de mot de passe,
+    """Chaque entrée : acteur, action, objet, horodatage. Jamais de mot de passe,
     jeton, nom complet de sociétaire ou montant associé à un identifiant
     nominatif dans `details` — les identifiants opaques suffisent au diagnostic.
     """

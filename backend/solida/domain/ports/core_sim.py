@@ -11,7 +11,7 @@ from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
 
 
 class LecteurCoreSim(Protocol):
-    """Accès en lecture seule à CORE-SIM. Voir 01-ARCHITECTURE/05, section 6.
+    """Accès en lecture seule à CORE-SIM.
 
     Aucune implémentation de ce port n'écrit dans CORE-SIM : la garantie tient
     au rôle de base de données (`solida_lecteur`, `GRANT SELECT` uniquement),

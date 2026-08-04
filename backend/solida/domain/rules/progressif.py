@@ -8,7 +8,7 @@ from solida.domain.values.probabilite import ProbabiliteDefaut
 @dataclass(frozen=True)
 class ParametresProgressif:
     """Réglage du crédit progressif. Point de départ issu de `simulateur/decision.py`,
-    pas une vérité figée : voir 03-MODELE/03-scorecard-et-grille.md."""
+    pas une vérité figée."""
 
     coefficient_progression: float
     montant_plancher: Montant
@@ -85,7 +85,6 @@ def lister_conditions_reexamen(
     """Leviers concrets et vérifiables que le sociétaire peut activer.
 
     Le refus cesse d'être une porte fermée : il devient un parcours d'éligibilité.
-    Voir 03-MODELE/03-scorecard-et-grille.md, "Au-delà du refus".
     """
     conditions: list[str] = []
 

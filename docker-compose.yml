@@ -32,6 +32,7 @@ services:
       POSTGRES_PASSWORD: ${CORESIM_ADMIN_PASSWORD}
       SOLIDA_LECTEUR_PASSWORD: ${SOLIDA_LECTEUR_PASSWORD}
     volumes:
+      - pgdata_coresim:/var/lib/postgresql/data
       - ./infra/postgres/coresim-init.sh:/docker-entrypoint-initdb.d/coresim-init.sh:ro
     networks:
       - solida
@@ -43,8 +44,7 @@ services:
     # cap_drop/security_opt non appliques : l'entrypoint officiel Postgres a besoin de
     # CAP_CHOWN/CAP_SETUID pour demarrer en root puis basculer sur l'utilisateur postgres.
     # Isolation reelle assuree par le reseau interne (aucun port publie) et les roles a
-    # privilege minimal (08-SECURITE/06 §4).
-    # Volontairement non persistant (06-INFRA/02) : la base se regenere depuis la graine.
+    # privilege minimal.
 
   postgres-solida:
     image: postgres:16.14
@@ -77,14 +77,13 @@ services:
     profiles:
       - tools
 
-# Reserve a l'API (backend) a mesure qu'elle existe : minio, mlflow
-# (voir 06-INFRA/01-stack-et-justifications.md). Aucun n'est invente ici.
-# Aucun port Postgres n'est publie vers l'hote : seul le reseau interne
-# "solida" y a acces, conformement a 08-SECURITE/06 (isolation).
+# Reserve a l'API (backend) a mesure qu'elle existe : minio, mlflow. Aucun n'est invente ici.
+# Aucun port Postgres n'est publie vers l'hote : seul le reseau interne "solida" y a acces.
 
 volumes:
   front_node_modules:
   front_next_cache:
+  pgdata_coresim:
   pgdata_solida:
 
 networks:
