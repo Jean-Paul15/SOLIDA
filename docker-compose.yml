@@ -24,12 +24,68 @@ services:
       start_period: 20s
       retries: 5
 
-# Reserve aux autres services a mesure qu'ils existent : postgres-coresim, postgres-solida,
-# api, minio, mlflow (voir 06-INFRA/01-stack-et-justifications.md). Aucun n'est invente ici.
+  postgres-coresim:
+    image: postgres:16.14
+    environment:
+      POSTGRES_DB: coresim
+      POSTGRES_USER: ${CORESIM_ADMIN_USER}
+      POSTGRES_PASSWORD: ${CORESIM_ADMIN_PASSWORD}
+      SOLIDA_LECTEUR_PASSWORD: ${SOLIDA_LECTEUR_PASSWORD}
+    volumes:
+      - ./infra/postgres/coresim-init.sh:/docker-entrypoint-initdb.d/coresim-init.sh:ro
+    networks:
+      - solida
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # cap_drop/security_opt non appliques : l'entrypoint officiel Postgres a besoin de
+    # CAP_CHOWN/CAP_SETUID pour demarrer en root puis basculer sur l'utilisateur postgres.
+    # Isolation reelle assuree par le reseau interne (aucun port publie) et les roles a
+    # privilege minimal (08-SECURITE/06 §4).
+    # Volontairement non persistant (06-INFRA/02) : la base se regenere depuis la graine.
+
+  postgres-solida:
+    image: postgres:16.14
+    environment:
+      POSTGRES_DB: solida
+      POSTGRES_USER: ${SOLIDA_APP_USER}
+      POSTGRES_PASSWORD: ${SOLIDA_APP_PASSWORD}
+      SOLIDA_LECTURE_PASSWORD: ${SOLIDA_LECTURE_PASSWORD}
+    volumes:
+      - pgdata_solida:/var/lib/postgresql/data
+      - ./infra/postgres/solida-init.sh:/docker-entrypoint-initdb.d/solida-init.sh:ro
+    networks:
+      - solida
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  coresim-seed:
+    build:
+      context: ./simulateur
+    environment:
+      DATABASE_URL: postgresql://${CORESIM_ADMIN_USER}:${CORESIM_ADMIN_PASSWORD}@postgres-coresim:5432/coresim
+    networks:
+      - solida
+    depends_on:
+      postgres-coresim:
+        condition: service_healthy
+    profiles:
+      - tools
+
+# Reserve a l'API (backend) a mesure qu'elle existe : minio, mlflow
+# (voir 06-INFRA/01-stack-et-justifications.md). Aucun n'est invente ici.
+# Aucun port Postgres n'est publie vers l'hote : seul le reseau interne
+# "solida" y a acces, conformement a 08-SECURITE/06 (isolation).
 
 volumes:
   front_node_modules:
   front_next_cache:
+  pgdata_solida:
 
 networks:
   solida:

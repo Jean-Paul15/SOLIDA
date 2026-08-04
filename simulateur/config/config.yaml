@@ -1,0 +1,83 @@
+# ============================================================
+# SOLIDA -- Generateur CORE-SIM v3 (logique COOPEC / CIF)
+# Modele reel : caisse d'epargne d'abord. Tout le monde epargne,
+# ~25% des membres empruntent. L'epargne est la PORTE d'ENTREE du
+# credit et le signal central. La caution solidaire est un SEGMENT
+# (GIE femmes, agricole), pas le coeur.
+# Performance EMERGENTE, jamais ciblee. Reproductible. Dates <= 08/2026.
+# ============================================================
+
+graine: 42
+
+# --- Volumetrie et temps ---
+n_membres: 12000
+part_emprunteurs: 0.25          # ~25% des membres empruntent (bilan social FUCEC)
+date_fin: "2026-08-01"
+annees_credit_observe: 5
+anciennete_max_annees: 14
+epargne_min_mois_avant_credit: 6   # il faut avoir epargne >= 6 mois pour emprunter
+
+# --- Referentiels ---
+n_caisses: 8
+zones: [urbain, semi_urbain, rural]
+zones_poids: [0.34, 0.30, 0.36]
+
+# --- Segments de produit (parts de la population emprunteuse) ---
+segments:
+  salarie:      0.20    # revenus domicilies -> tres faible risque
+  individuel:   0.32    # petits metiers, commerce (individuel, epargne nantie)
+  jeune:        0.12    # YouthStart, primo, thin-file
+  femme_gie:    0.18    # groupement d'interet economique -> caution solidaire
+  agricole:     0.18    # agriculture, expose au choc sectoriel
+
+# --- Marginale REELLE : taux de "creances en souffrance" (PAR 90j) ~9% ---
+taux_defaut_cible: 0.09
+
+# --- Coefficients du log-odds (log des odds ratios, litterature) ---
+# Protecteurs (signe negatif dans le code)
+coef_epargne_regularite: 0.85   # regularite d'epargne : signal central COOPEC (fort)
+coef_epargne_anciennete: 0.40   # duree d'epargne avant credit (protecteur)
+coef_ratio_garantie:     0.55   # ratio epargne nantie / credit (protecteur)
+coef_salarie:            1.10   # revenus domicilies : tres protecteur
+coef_cycle:              0.30   # progression de cycle
+coef_anciennete:         0.20   # anciennete de membre
+coef_qualite_groupe:     0.90   # GIE : monitoring pairs / sort partage (segment)
+# Risque (signe positif)
+coef_endettement:        0.75   # charge de remboursement / revenu
+coef_incidents:          0.95   # impayes anterieurs (tres fort)
+coef_dependants:         0.15
+coef_rural:              0.25
+coef_jeune:              0.35    # primo jeune, thin-file (risque modere)
+coef_agricole_choc:      1.00    # exposition au choc sectoriel agricole
+
+# --- Contagion GIE (documentee) : defauts recents des pairs -> risque focal ---
+coef_contagion_gie:      0.80
+fenetre_contagion_mois:  12
+
+# --- Part d'imprevu reel (chocs non captes) : fixee par raisonnement metier ---
+ecart_idiosyncratique:   1.15
+
+# --- Choc sectoriel latent (agriculture surtout) ---
+secteur_autocorrelation: 0.88
+secteur_choc_ecart:      0.70
+secteur_episode_degradation_proba: 0.05
+
+# --- Groupes GIE (segment femme_gie seulement) ---
+taille_gie_min: 4
+taille_gie_max: 15
+taux_sortie_gie_annuel: 0.05
+
+# --- Credit ---
+montant_median_primo: 100000
+coefficient_progression: 1.5
+plafond_produit: 3000000
+duree_mois_choix: [3, 6, 9, 12, 18, 24]
+taux_interet_annuel: 0.16       # 16% degressif (FUCEC)
+
+# --- Epargne ---
+depot_mensuel_median: 10000
+
+# --- Valeurs manquantes ---
+manquant_revenu_rural: 0.35
+manquant_revenu_urbain: 0.10
+manquant_education: 0.30
