@@ -1,0 +1,36 @@
+services:
+  front:
+    build:
+      context: ./frontend
+      target: dev
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - front_node_modules:/app/node_modules
+      - front_next_cache:/app/.next
+    networks:
+      - solida
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/v1/sante').then(r=>{if(!r.ok)throw 0}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+# Reserve aux autres services a mesure qu'ils existent : postgres-coresim, postgres-solida,
+# api, minio, mlflow (voir 06-INFRA/01-stack-et-justifications.md). Aucun n'est invente ici.
+
+volumes:
+  front_node_modules:
+  front_next_cache:
+
+networks:
+  solida:
+    driver: bridge

@@ -39,6 +39,7 @@ out/
 .turbo/
 *.tsbuildinfo
 .eslintcache
+next-env.d.ts
 
 # --- Données ---
 # Aucune donnée, même synthétique, n'est versionnée. Elle se régénère.
@@ -74,6 +75,7 @@ reports/
 !.vscode/extensions.json
 !.vscode/settings.shared.json
 .idea/
+.claude/
 .DS_Store
 Thumbs.db
 *.swp
