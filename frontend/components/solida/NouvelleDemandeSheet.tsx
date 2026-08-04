@@ -105,7 +105,7 @@ export function NouvelleDemandeSheet({
       </SheetTrigger>
       <SheetContent className="w-[460px] gap-6 sm:max-w-[460px]">
         <SheetHeader>
-          <SheetTitle>Nouvelle demande — {nomComplet}</SheetTitle>
+          <SheetTitle>Nouvelle demande : {nomComplet}</SheetTitle>
           <SheetDescription className="sr-only">
             Saisie de la demande de crédit du jour
           </SheetDescription>

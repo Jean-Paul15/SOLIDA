@@ -5,7 +5,7 @@ import { ibmPlexMono, ibmPlexSans, sourceSerif4 } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SOLIDA — Scoring d'octroi",
+  title: "SOLIDA : Scoring d'octroi",
   description:
     "Scoring d'octroi de microcrédit fondé sur la trajectoire d'épargne et le comportement de remboursement des sociétaires.",
 };

@@ -121,7 +121,7 @@ export function RechercheSocietaire() {
 
             {etat === "resultats" && total > resultats.length && (
               <p className="py-2 text-center text-xs text-neutre-500">
-                {total - resultats.length} autres résultats — précisez votre recherche.
+                {total - resultats.length} autres résultats. Précisez votre recherche.
               </p>
             )}
           </CommandList>

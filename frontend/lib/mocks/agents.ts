@@ -1,4 +1,4 @@
-// Identifiants de démonstration uniquement — aucun compte réel, aucune donnée personnelle.
+// Identifiants de démonstration uniquement, aucun compte réel, aucune donnée personnelle.
 export interface AgentDemo {
   identifiant: string;
   mot_de_passe: string;

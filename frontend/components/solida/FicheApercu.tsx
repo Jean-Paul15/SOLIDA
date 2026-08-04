@@ -19,7 +19,7 @@ function BlocFacteurs({ titre, facteurs }: { titre: string; facteurs: Contributi
         {facteurs.map((f) => (
           <li key={f.code_variable} className="text-[11px] text-neutre-700">
             <span className="font-medium text-neutre-950">
-              {f.libelle} — {f.valeur}
+              {f.libelle} : {f.valeur}
             </span>
             <br />
             {f.explication}

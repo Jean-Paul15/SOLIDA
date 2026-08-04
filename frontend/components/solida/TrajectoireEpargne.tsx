@@ -74,7 +74,7 @@ export function TrajectoireEpargne({ epargne }: { epargne: SyntheseEpargne }) {
       </span>
 
       <span className="text-xs text-neutre-500">
-        Sociétaire depuis {epargne.anciennete_relation_mois} mois — relation d&rsquo;épargne
+        Sociétaire depuis {epargne.anciennete_relation_mois} mois, relation d&rsquo;épargne
         antérieure à toute demande de crédit.
       </span>
     </div>

@@ -198,7 +198,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
           <span className="text-xs font-medium text-neutre-500">Historique de crédit</span>
           {historique_credit.length === 0 ? (
             <p className="text-sm text-neutre-500">
-              Premier crédit — ce sociétaire n&rsquo;a pas d&rsquo;historique d&rsquo;emprunt.
+              Premier crédit : ce sociétaire n&rsquo;a pas d&rsquo;historique d&rsquo;emprunt.
             </p>
           ) : (
             <Table>

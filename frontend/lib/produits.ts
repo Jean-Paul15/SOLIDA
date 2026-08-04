@@ -7,7 +7,7 @@ export interface ProduitCredit {
 /**
  * Catalogue de produits, en dur côté frontend en attendant un vrai catalogue
  * backend. `plafond` est un plafond de produit (décidé par la coopérative),
- * pas une sortie du modèle — voir `domain.rules.progressif.ParametresProgressif.plafond_produit`
+ * pas une sortie du modèle, voir `domain.rules.progressif.ParametresProgressif.plafond_produit`
  * côté backend pour l'équivalent qui doit un jour piloter cette valeur.
  */
 export const PRODUITS: ProduitCredit[] = [

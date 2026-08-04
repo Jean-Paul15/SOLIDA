@@ -26,7 +26,7 @@ export function GraphiqueContributions({
   const masques = decomposition.length - visibles.length;
 
   const donnees = visibles.map((c) => ({
-    nom: `${c.libelle} — ${c.valeur}`,
+    nom: `${c.libelle} : ${c.valeur}`,
     points: c.points,
     sens: c.sens,
   }));

@@ -22,7 +22,7 @@ export function FicheActions() {
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          Génération PDF côté serveur (WeasyPrint) — nécessite le backend, pas encore construit.
+          Génération PDF côté serveur (WeasyPrint) : nécessite le backend, pas encore construit.
         </TooltipContent>
       </Tooltip>
 
@@ -36,7 +36,7 @@ export function FicheActions() {
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          Archivage MinIO et journal d&rsquo;audit — nécessite le backend, pas encore construit.
+          Archivage MinIO et journal d&rsquo;audit : nécessite le backend, pas encore construit.
         </TooltipContent>
       </Tooltip>
     </div>
