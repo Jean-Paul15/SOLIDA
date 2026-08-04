@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import type { ConfigurationGrilleApi } from "@/lib/contracts";
 import { LIBELLE_TRANCHE } from "@/lib/libelles";
+import { ErreurService, leverSiEnErreur } from "@/lib/services/erreur-service";
 import {
   probabiliteDepuisScore,
   scoreDepuisProbabilite,
@@ -14,29 +16,37 @@ import {
   trancheDepuisProbabilite,
 } from "@/lib/scorecard";
 
-const ODDS_REFERENCE = 50;
-
 interface GrilleParametrageProps {
   scoresHistoriques: number[];
-  versionInitiale: string;
+  configurationInitiale: ConfigurationGrilleApi;
 }
 
-export function GrilleParametrage({ scoresHistoriques, versionInitiale }: GrilleParametrageProps) {
-  const [marge, setMarge] = useState(0.15);
-  const [lgd, setLgd] = useState(0.75);
-  const [multiplicateurAccord, setMultiplicateurAccord] = useState(0.6);
-  const [multiplicateurExamen, setMultiplicateurExamen] = useState(1.6);
-  const [pdo, setPdo] = useState(20);
-  const [scoreReference, setScoreReference] = useState(600);
-  const [version, setVersion] = useState(versionInitiale);
+export function GrilleParametrage({
+  scoresHistoriques,
+  configurationInitiale,
+}: GrilleParametrageProps) {
+  const oddsReference = configurationInitiale.scorecard.odds_reference;
+  const [marge, setMarge] = useState(configurationInitiale.grille.marge);
+  const [lgd, setLgd] = useState(configurationInitiale.grille.lgd);
+  const [multiplicateurAccord, setMultiplicateurAccord] = useState(
+    configurationInitiale.grille.multiplicateur_accord
+  );
+  const [multiplicateurExamen, setMultiplicateurExamen] = useState(
+    configurationInitiale.grille.multiplicateur_examen
+  );
+  const [pdo, setPdo] = useState(configurationInitiale.scorecard.pdo);
+  const [scoreReference, setScoreReference] = useState(
+    configurationInitiale.scorecard.score_reference
+  );
+  const [version, setVersion] = useState(configurationInitiale.version_grille);
   const [enregistrementEnCours, setEnregistrementEnCours] = useState(false);
 
-  const parametresScorecard = { pdo, scoreReference, oddsReference: ODDS_REFERENCE };
+  const parametresScorecard = { pdo, scoreReference, oddsReference };
   const parametresGrille = { marge, lgd, multiplicateurAccord, multiplicateurExamen };
   const seuil = seuilEconomique(parametresGrille);
 
   const repartition = useMemo(() => {
-    const parametresScorecardLocaux = { pdo, scoreReference, oddsReference: ODDS_REFERENCE };
+    const parametresScorecardLocaux = { pdo, scoreReference, oddsReference };
     const parametresGrilleLocaux = { marge, lgd, multiplicateurAccord, multiplicateurExamen };
     const compte: Record<string, number> = {
       accord: 0,
@@ -57,6 +67,7 @@ export function GrilleParametrage({ scoresHistoriques, versionInitiale }: Grille
     multiplicateurExamen,
     pdo,
     scoreReference,
+    oddsReference,
   ]);
 
   function compte(tranche: string): number {
@@ -69,12 +80,33 @@ export function GrilleParametrage({ scoresHistoriques, versionInitiale }: Grille
 
   async function enregistrer() {
     setEnregistrementEnCours(true);
-    await new Promise((r) => setTimeout(r, 400));
     const [major, minor] = version.replace(/^v/, "").split(".").map(Number);
     const nouvelleVersion = `v${major}.${(minor ?? 0) + 1}`;
-    setVersion(nouvelleVersion);
-    setEnregistrementEnCours(false);
-    toast.success(`Grille ${nouvelleVersion} enregistrée`);
+    try {
+      const reponse = await fetch("/api/v1/parametrage/grille", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          version_grille: nouvelleVersion,
+          grille: {
+            marge,
+            lgd,
+            multiplicateur_accord: multiplicateurAccord,
+            multiplicateur_vigilance: configurationInitiale.grille.multiplicateur_vigilance,
+            multiplicateur_examen: multiplicateurExamen,
+          },
+          progressif: configurationInitiale.progressif,
+          scorecard: { pdo, score_reference: scoreReference, odds_reference: oddsReference },
+        }),
+      });
+      await leverSiEnErreur(reponse);
+      setVersion(nouvelleVersion);
+      toast.success(`Grille ${nouvelleVersion} enregistrée`);
+    } catch (e) {
+      toast.error(e instanceof ErreurService ? e.message : "L'enregistrement a échoué.");
+    } finally {
+      setEnregistrementEnCours(false);
+    }
   }
 
   return (

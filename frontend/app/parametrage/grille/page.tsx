@@ -1,11 +1,25 @@
 import { EnTete } from "@/components/solida/EnTete";
 import { GrilleParametrage } from "@/components/solida/GrilleParametrage";
-import { listerDecisions } from "@/lib/mocks/decisions";
+import { fetchBackend } from "@/lib/backend";
+import type { ConfigurationGrilleApi, DecisionRegistreApi } from "@/lib/contracts";
 import { lireSession } from "@/lib/session";
 
 export default async function PageGrille() {
   const session = await lireSession();
-  const scoresHistoriques = listerDecisions().map((d) => d.resultat.score);
+
+  const [reponseGrille, reponseRegistre] = await Promise.all([
+    fetchBackend("/api/v1/parametrage/grille"),
+    fetchBackend("/api/v1/registre?limite=100"),
+  ]);
+
+  const configurationInitiale: ConfigurationGrilleApi | null = reponseGrille.ok
+    ? await reponseGrille.json()
+    : null;
+  const scoresHistoriques: number[] = reponseRegistre.ok
+    ? ((await reponseRegistre.json()) as { elements: DecisionRegistreApi[] }).elements.map(
+        (d) => d.resultat.score
+      )
+    : [];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -20,7 +34,17 @@ export default async function PageGrille() {
             l&rsquo;historique en direct.
           </p>
         </div>
-        <GrilleParametrage scoresHistoriques={scoresHistoriques} versionInitiale="v0.1" />
+        {configurationInitiale ? (
+          <GrilleParametrage
+            configurationInitiale={configurationInitiale}
+            scoresHistoriques={scoresHistoriques}
+          />
+        ) : (
+          <p className="text-sm text-neutre-500">
+            Le paramétrage de la grille est réservé à la supervision, à l&rsquo;audit et à
+            l&rsquo;administration.
+          </p>
+        )}
       </main>
     </div>
   );

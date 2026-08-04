@@ -15,8 +15,9 @@ import { EnTete } from "@/components/solida/EnTete";
 import { GroupeCautionDialog } from "@/components/solida/GroupeCautionDialog";
 import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
 import { TrajectoireEpargne } from "@/components/solida/TrajectoireEpargne";
+import { fetchBackend } from "@/lib/backend";
+import type { DossierSocietaire } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
-import { societaires } from "@/lib/mocks/societaires";
 import { lireSession } from "@/lib/session";
 
 const LIBELLE_SEGMENT: Record<string, string> = {
@@ -44,11 +45,12 @@ const LIBELLE_STATUT_CREDIT: Record<string, string> = {
 
 export default async function PageDossier({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const fiche = societaires[id];
-  if (!fiche) notFound();
+  const reponse = await fetchBackend(`/api/v1/societaires/${id}/dossier`);
+  if (!reponse.ok) notFound();
+  const dossier: DossierSocietaire = await reponse.json();
 
   const session = await lireSession();
-  const { identite, activite, epargne, historique_credit, alertes } = fiche.dossier;
+  const { identite, activite, epargne, historique_credit, alertes, groupe } = dossier;
   const anciennete = `${Math.floor(identite.anciennete_mois / 12)} an(s) ${identite.anciennete_mois % 12} mois`;
 
   return (
@@ -162,15 +164,13 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="col-span-3">
-            {identite.segment === "femme_gie" && fiche.groupe ? (
+            {identite.segment === "femme_gie" && groupe ? (
               <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
                 <span className="text-xs font-medium text-neutre-500">Groupe de caution</span>
-                <span className="text-sm font-medium text-neutre-950">
-                  {fiche.groupe.nom_groupe}
-                </span>
-                {fiche.groupe.taux_remboursement_groupe !== null ? (
+                <span className="text-sm font-medium text-neutre-950">{groupe.nom_groupe}</span>
+                {groupe.taux_remboursement_groupe !== null ? (
                   <span className="font-mono text-lg text-neutre-950">
-                    {Math.round(fiche.groupe.taux_remboursement_groupe * 100)}%
+                    {Math.round(groupe.taux_remboursement_groupe * 100)}%
                   </span>
                 ) : (
                   <span className="text-sm text-neutre-500">

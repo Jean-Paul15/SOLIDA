@@ -9,12 +9,6 @@ import type { ResultatRechercheSocietaire } from "@/lib/contracts";
 type Etat = "repos" | "chargement" | "resultats" | "vide" | "erreur";
 type StatutRequete = "idle" | "erreur" | "vide" | "resultats";
 
-const DOSSIERS_RECENTS = [
-  { id: "soc-adjo", nom: "ADJO Kokou Mensah" },
-  { id: "soc-akossiwa", nom: "AKOSSIWA Delali Kponvi" },
-  { id: "soc-kossi", nom: "KOSSI Ama Efua" },
-];
-
 export function RechercheSocietaire() {
   const router = useRouter();
   const [terme, setTerme] = useState("");
@@ -127,22 +121,6 @@ export function RechercheSocietaire() {
           </CommandList>
         )}
       </Command>
-
-      <div className="flex w-full flex-col gap-2">
-        <span className="text-sm text-neutre-700">Dossiers récents</span>
-        <div className="flex flex-wrap gap-2">
-          {DOSSIERS_RECENTS.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              onClick={() => router.push(`/societaires/${d.id}`)}
-              className="cursor-pointer rounded-sm border border-neutre-200 px-2.5 py-1 text-sm text-neutre-700 hover:bg-neutre-50"
-            >
-              {d.nom}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

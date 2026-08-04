@@ -1,24 +1,27 @@
 import { EnTete } from "@/components/solida/EnTete";
+import type { DecisionRegistreVue } from "@/components/solida/RegistreDecisions";
 import { RegistreDecisions } from "@/components/solida/RegistreDecisions";
-import type { DecisionRegistreVue } from "@/lib/mocks/decisions";
-import { listerDecisions } from "@/lib/mocks/decisions";
-import { societaires } from "@/lib/mocks/societaires";
+import { fetchBackend } from "@/lib/backend";
+import type { DecisionRegistreApi } from "@/lib/contracts";
 import { lireSession } from "@/lib/session";
 
 export default async function PageRegistre() {
   const session = await lireSession();
 
-  const decisions: DecisionRegistreVue[] = listerDecisions().flatMap((d) => {
-    const fiche = societaires[d.societaireId];
-    if (!fiche) return [];
-    return [
-      {
-        ...d,
-        societaireNom: fiche.dossier.identite.nom_complet,
-        agence: fiche.dossier.identite.agence,
-      },
-    ];
-  });
+  const reponse = await fetchBackend("/api/v1/registre?limite=100");
+  const { elements }: { elements: DecisionRegistreApi[]; total: number } = reponse.ok
+    ? await reponse.json()
+    : { elements: [], total: 0 };
+
+  const decisions: DecisionRegistreVue[] = elements.map((d) => ({
+    decisionId: d.decision_id,
+    societaireId: d.societaire_id,
+    societaireNom: d.societaire_nom,
+    agence: d.agence,
+    resultat: d.resultat,
+    horodatage: d.horodatage,
+    agentNom: d.agent_nom,
+  }));
 
   return (
     <div className="flex min-h-screen flex-col">

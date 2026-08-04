@@ -62,6 +62,7 @@ export interface PalierProgression {
 
 export interface ResultatScoring {
   decision_id: string;
+  societaire_id: string;
   score: number;
   tranche: Tranche;
   montant_recommande: number;
@@ -189,4 +190,50 @@ export interface ErreurApi {
   code: string;
   message: string;
   details?: unknown;
+}
+
+export interface DecisionRegistreApi {
+  decision_id: string;
+  societaire_id: string;
+  societaire_nom: string;
+  agence: string;
+  demande: EntreeScoring;
+  resultat: ResultatScoring;
+  horodatage: string;
+  agent_nom: string;
+}
+
+export interface ParametresGrilleApi {
+  marge: number;
+  lgd: number;
+  multiplicateur_accord: number;
+  multiplicateur_vigilance: number;
+  multiplicateur_examen: number;
+}
+
+export interface ParametresProgressifApi {
+  coefficient_progression: number;
+  montant_plancher: number;
+  plafond_produit: number;
+  plafond_primo_emprunteur: number;
+  modulation_base: number;
+  modulation_pente: number;
+  modulation_min: number;
+  modulation_max: number;
+}
+
+export interface ParametresScorecardApi {
+  pdo: number;
+  score_reference: number;
+  odds_reference: number;
+}
+
+export interface ConfigurationGrilleApi {
+  version_grille: string;
+  grille: ParametresGrilleApi;
+  progressif: ParametresProgressifApi;
+  scorecard: ParametresScorecardApi;
+  auteur: string;
+  date_activation: string;
+  active: boolean;
 }

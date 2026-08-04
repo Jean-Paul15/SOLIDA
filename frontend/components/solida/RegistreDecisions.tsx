@@ -18,9 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { DecisionRegistreVue } from "@/lib/mocks/decisions";
+import type { ResultatScoring } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
 import { LIBELLE_TRANCHE } from "@/lib/libelles";
+
+export interface DecisionRegistreVue {
+  decisionId: string;
+  societaireId: string;
+  societaireNom: string;
+  agence: string;
+  resultat: ResultatScoring;
+  horodatage: string;
+  agentNom: string;
+  /** Toujours `undefined` : la finalisation d'une décision (montant réellement accordé)
+   * n'est pas encore modélisée côté backend (`decision_finale`, voir
+   * docs/backend/02-persistance-et-migrations.md). */
+  montantAccorde?: number;
+}
 
 const PERIODES = [
   { valeur: "7", libelle: "7 derniers jours" },

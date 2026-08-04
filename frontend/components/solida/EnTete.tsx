@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface EnTeteProps {
-  agence?: string;
+  agence?: string | null;
   utilisateur?: string;
 }
 

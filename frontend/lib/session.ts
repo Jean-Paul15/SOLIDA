@@ -1,36 +1,19 @@
-import { cookies } from "next/headers";
+import { fetchBackend } from "@/lib/backend";
 
 export const SESSION_COOKIE = "solida_session";
 
 export interface Session {
-  identifiant: string;
   nom: string;
-  agence: string;
+  agence: string | null;
 }
 
-export async function creerSession(session: Session) {
-  const store = await cookies();
-  store.set(SESSION_COOKIE, Buffer.from(JSON.stringify(session)).toString("base64url"), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
-}
-
+/**
+ * Relit la session depuis le backend (`GET /api/v1/auth/moi`) plutôt que de décoder le
+ * cookie côté frontend : le cookie est un jeton opaque géré par FastAPI-Users, le frontend
+ * n'a aucun moyen de le lire ni de lui faire confiance directement.
+ */
 export async function lireSession(): Promise<Session | null> {
-  const store = await cookies();
-  const valeur = store.get(SESSION_COOKIE)?.value;
-  if (!valeur) return null;
-  try {
-    return JSON.parse(Buffer.from(valeur, "base64url").toString("utf-8"));
-  } catch {
-    return null;
-  }
-}
-
-export async function detruireSession() {
-  const store = await cookies();
-  store.delete(SESSION_COOKIE);
+  const reponse = await fetchBackend("/api/v1/auth/moi");
+  if (!reponse.ok) return null;
+  return reponse.json();
 }
