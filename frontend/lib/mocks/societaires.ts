@@ -65,6 +65,8 @@ export const societaires: Record<string, FicheMock> = {
         date_adhesion: "2019-03-14",
         anciennete_mois: 64,
         statut: "actif",
+        age: 47,
+        niveau_instruction: "secondaire",
       },
       activite: {
         secteur: "commerce",
@@ -72,6 +74,8 @@ export const societaires: Record<string, FicheMock> = {
         revenu_mensuel_declare: 185000,
         charges_mensuelles: 72000,
         capacite_remboursement_estimee: 113000,
+        nb_personnes_a_charge: 3,
+        parts_sociales_montant: 45000,
       },
       epargne: {
         solde_moyen_6m: 312000,
@@ -107,6 +111,8 @@ export const societaires: Record<string, FicheMock> = {
         date_adhesion: "2025-01-20",
         anciennete_mois: 19,
         statut: "actif",
+        age: 26,
+        niveau_instruction: "superieur",
       },
       activite: {
         secteur: "artisanat",
@@ -114,6 +120,8 @@ export const societaires: Record<string, FicheMock> = {
         revenu_mensuel_declare: 95000,
         charges_mensuelles: 40000,
         capacite_remboursement_estimee: 55000,
+        nb_personnes_a_charge: 0,
+        parts_sociales_montant: 15000,
       },
       epargne: {
         solde_moyen_6m: 68000,
@@ -149,6 +157,8 @@ export const societaires: Record<string, FicheMock> = {
         date_adhesion: "2021-06-02",
         anciennete_mois: 50,
         statut: "actif",
+        age: 39,
+        niveau_instruction: "primaire",
       },
       activite: {
         secteur: "agriculture",
@@ -156,6 +166,8 @@ export const societaires: Record<string, FicheMock> = {
         revenu_mensuel_declare: 130000,
         charges_mensuelles: 58000,
         capacite_remboursement_estimee: 72000,
+        nb_personnes_a_charge: 4,
+        parts_sociales_montant: 30000,
       },
       epargne: {
         solde_moyen_6m: 145000,
@@ -258,6 +270,8 @@ export const societaires: Record<string, FicheMock> = {
         date_adhesion: "2022-02-11",
         anciennete_mois: 42,
         statut: "actif",
+        age: 33,
+        niveau_instruction: "aucun",
       },
       activite: {
         secteur: "agriculture",
@@ -265,6 +279,8 @@ export const societaires: Record<string, FicheMock> = {
         revenu_mensuel_declare: 78000,
         charges_mensuelles: 41000,
         capacite_remboursement_estimee: 37000,
+        nb_personnes_a_charge: 5,
+        parts_sociales_montant: 10000,
       },
       epargne: {
         solde_moyen_6m: 41000,
@@ -331,11 +347,15 @@ export const societaires: Record<string, FicheMock> = {
         date_adhesion: "2024-05-06",
         anciennete_mois: 15,
         statut: "actif",
+        age: 24,
+        niveau_instruction: "secondaire",
       },
       activite: {
         secteur: "commerce",
         anciennete_activite_mois: 20,
         capacite_remboursement_estimee: 48000,
+        nb_personnes_a_charge: 1,
+        parts_sociales_montant: 10000,
       },
       epargne: {
         solde_moyen_6m: 89000,

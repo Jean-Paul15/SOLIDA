@@ -101,6 +101,8 @@ export interface ResultatRechercheSocietaire {
   a_credit_en_cours: boolean;
 }
 
+export type NiveauInstruction = "aucun" | "primaire" | "secondaire" | "superieur";
+
 export interface IdentiteSocietaire {
   societaire_id: string;
   numero_membre: string;
@@ -110,6 +112,8 @@ export interface IdentiteSocietaire {
   date_adhesion: string;
   anciennete_mois: number;
   statut: StatutSocietaire;
+  age: number;
+  niveau_instruction?: NiveauInstruction;
 }
 
 export interface ActiviteEconomique {
@@ -118,6 +122,8 @@ export interface ActiviteEconomique {
   revenu_mensuel_declare?: number;
   charges_mensuelles?: number;
   capacite_remboursement_estimee: number;
+  nb_personnes_a_charge: number;
+  parts_sociales_montant: number;
 }
 
 export interface PointSolde {

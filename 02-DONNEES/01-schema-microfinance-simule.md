@@ -13,12 +13,18 @@ Le schéma détaillé, avec toutes les colonnes et les proportions de générati
 
 ## Tables
 
+**Noms réels (ADR-019, le générateur exécutable fait loi) :** `societaires`, `comptes_epargne`,
+`mouvements_epargne`, `groupes_gie`, `appartenances_gie`, `garanties`, `credits`, `choc_secteur`.
+Le générateur fusionne demande/échéancier/remboursement dans `credits` (colonnes `defaut` : 1 en
+souffrance / 0 solde / -1 en cours, `statut`, `jours_retard_max`), pas trois tables séparées.
+
 | Famille | Tables |
 |---|---|
-| Référentiels | `agence`, `agent_credit`, `produit_credit` |
-| Sociétaires | `societaire`, `compte_epargne`, `mouvement_epargne` |
-| Solidaire (segment) | `groupe_caution`, `appartenance_groupe`, `garantie` |
-| Crédit | `demande_credit`, `credit`, `echeance`, `remboursement` |
+| Référentiels | *(à couvrir par le générateur — non présent dans la version actuelle)*. Taux d'intérêt observé dans `config/config.yaml` du générateur : `taux_interet_annuel: 0,16` dégressif (pratique FUCEC) — valeur de travail à confirmer par une vraie table de taux produit, absente par ailleurs de toute documentation SOLIDA-FOUNDATION. |
+| Sociétaires | `societaires`, `comptes_epargne`, `mouvements_epargne` |
+| Solidaire (segment) | `groupes_gie`, `appartenances_gie`, `garanties` |
+| Crédit | `credits` (demande + échéancier + remboursement fusionnés) |
+| Sectoriel | `choc_secteur` |
 
 ## Conventions
 

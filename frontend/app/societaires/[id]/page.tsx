@@ -25,6 +25,13 @@ const LIBELLE_SEGMENT: Record<string, string> = {
   agricole: "Agricole",
 };
 
+const LIBELLE_NIVEAU_INSTRUCTION: Record<string, string> = {
+  aucun: "Non renseigné",
+  primaire: "Primaire",
+  secondaire: "Secondaire",
+  superieur: "Supérieur",
+};
+
 const LIBELLE_STATUT_CREDIT: Record<string, string> = {
   en_cours: "En cours",
   solde: "Solde",
@@ -87,6 +94,24 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
 
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-5 flex flex-col gap-4">
+            <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
+              <span className="text-xs font-medium text-neutre-500">Profil</span>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <span className="text-neutre-500">Âge</span>
+                <span className="text-neutre-950">{identite.age} ans</span>
+                <span className="text-neutre-500">Personnes à charge</span>
+                <span className="text-neutre-950">{activite.nb_personnes_a_charge}</span>
+                <span className="text-neutre-500">Niveau d&rsquo;instruction</span>
+                <span className="text-neutre-950">
+                  {LIBELLE_NIVEAU_INSTRUCTION[identite.niveau_instruction ?? "aucun"]}
+                </span>
+                <span className="text-neutre-500">Parts sociales</span>
+                <span className="font-mono text-neutre-950">
+                  {formaterMontant(activite.parts_sociales_montant)}
+                </span>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
               <span className="text-xs font-medium text-neutre-500">Activité économique</span>
               <div className="grid grid-cols-2 gap-2 text-sm">

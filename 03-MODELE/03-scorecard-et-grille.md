@@ -92,35 +92,44 @@ La calibration est apprise sur le jeu de validation, jamais sur le jeu d'entraî
 
 ## Grille de décision
 
-Valeurs par défaut, **paramétrables par institution** :
+**Mécanisme** (aligné sur `simulateur/decision.py`, qui sert de prototype pour la forme du calcul) :
+les seuils se calculent à partir de la matrice de coûts, en probabilité, pas comme des points de
+score fixés arbitrairement à l'avance :
 
-| Tranche | Score | Décision recommandée | Montant recommandé |
-|---|---|---|---|
-| Accord | ≥ 620 | Accord | 100 % du montant sollicité |
-| Accord sous condition | 560 – 619 | Accord avec plafond réduit | 70 % |
-| Comité de crédit | 500 – 559 | Passage en comité | À arbitrer |
-| Refus | < 500 | Refus motivé | — |
+```
+seuil_economique = marge / (marge + LGD)
+accord      : p < 0,6 × seuil_economique
+vigilance   : p < seuil_economique          (Accord sous condition)
+examen      : p < 1,6 × seuil_economique    (Comité de crédit)
+sinon       : Défavorable (Refus)
+```
 
-**Les seuils ne sont pas un choix technique.** Ils traduisent l'arbitrage entre taux
-d'approbation et risque accepté, qui appartient à la coopérative. L'écran E8 permet de les
-ajuster en visualisant l'effet sur l'historique.
+Ces probabilités se traduisent ensuite en score par la même transformation PDO que ci-dessus, pour
+rester affichables sous forme de score.
+
+**Mais les seuils ne sont pas un choix technique.** `marge`, `LGD` et les multiplicateurs de zone
+(0,6 / 1 / 1,6) traduisent l'arbitrage entre taux d'approbation et risque accepté, qui **appartient
+à la coopérative**, pas au code. Les valeurs de `decision.py` (`marge = 0,15`, `LGD = 0,75`) sont un
+point de départ pour construire et tester la mécanique — pas la vérité finale. L'écran E8 permet à
+la coopérative de les ajuster en visualisant l'effet sur l'historique, et le calibrage définitif
+dépend aussi du modèle réellement entraîné (calibration de `p`, voir plus haut) : une partie de
+cette décision **se prend au moment du hackathon**, pas avant.
 
 ## Plafond progressif
 
-Le montant recommandé est ensuite borné par la règle de crédit progressif :
+Le montant recommandé est ensuite borné par la règle de crédit progressif. Le mécanisme suit la
+forme de `simulateur/decision.py` — il module le plafond par le niveau de risque, pas seulement par
+l'historique — mais ses paramètres restent, de la même façon, un réglage de la coopérative :
 
 ```
-plafond_progressif = max(
-    plafond_primo_emprunteur,
-    montant_max_rembourse × coefficient_progression
-)
-
-montant_recommande = min(
-    montant_demande × taux_de_tranche,
-    plafond_progressif,
-    plafond_du_produit
-)
+base       = max(montant_max_rembourse × coefficient_progression, montant_plancher)
+modulation = clip(1,3 − 2 × p, 0,4, 1,2)
+plafond_progressif = min(base × modulation, plafond_du_produit, montant_demande)
+montant_recommande = max(plafond_progressif, montant_plancher)
 ```
+
+Paramètres par défaut du générateur : `coefficient_progression = 1,5`, `montant_plancher =
+50 000 FCFA`, `plafond_du_produit = 3 000 000 FCFA`.
 
 | Paramètre | Défaut |
 |---|---|

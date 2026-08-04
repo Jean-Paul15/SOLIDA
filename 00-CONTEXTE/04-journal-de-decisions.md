@@ -272,6 +272,38 @@ module » de `09-DEVOPS/01` continue de s'appliquer à l'intérieur du dépôt u
 
 ---
 
+## ADR-019 — Le générateur exécutable fait loi sur les référentiels et le schéma de données
+
+**Statut :** Acceptée. Portée volontairement limitée aux données et au schéma — voir « Hors
+périmètre » ci-dessous.
+**Contexte :** À l'implémentation du backend, les noms de tables de
+`02-DONNEES/01-schema-microfinance-simule.md` (`societaire`, `compte_epargne`, `groupe_caution`,
+`demande_credit`/`echeance`/`remboursement`) se sont révélés différents de ceux réellement produits
+par `solida-simulateur` (`societaires`, `comptes_epargne`, `groupes_gie`, `credits` —
+demande/échéance/remboursement fusionnées), de même pour des champs du contrat gelé (`age`,
+`niveau_instruction`, `nb_personnes_a_charge`, `parts_sociales_montant`, réellement présents dans
+`societaires.parquet` mais absents de `01-ARCHITECTURE/05`).
+**Décision :** pour les **référentiels, le schéma de données et les champs disponibles**, en cas de
+désaccord entre un document écrit et le générateur exécutable, **le générateur fait loi** — c'est
+lui qui produit les données, le backend construit ses tables et ses contrats contre cette réalité.
+`02-DONNEES/01` et `01-ARCHITECTURE/05` sont corrigés en conséquence.
+**Hors périmètre — précision importante :** cette décision ne s'étend **pas** aux paramètres de
+décision métier (seuils de la grille, `marge`, `LGD`, coefficients du crédit progressif). Ceux-ci
+restent un arbitrage de la coopérative, pas une vérité technique imposée par le prototype
+`decision.py` — voir `03-MODELE/03-scorecard-et-grille.md`. Le générateur peut inspirer la **forme**
+du calcul (mécanisme, structure), jamais figer ses **valeurs** comme définitives ; une partie du
+calibrage se décide seulement une fois le modèle réellement entraîné, au hackathon.
+**Alternatives écartées :** faire évoluer le générateur pour se conformer aux documents (rejeté :
+le générateur a été construit et validé après les documents, il est la version la plus récente et la
+plus concrète de la structure de données) ; laisser les deux sources coexister sans arbitrage
+(rejeté : source d'erreurs silencieuses à l'implémentation).
+**Conséquences :** le générateur n'est pas une vérité absolue au sens où il pourrait contenir des
+raccourcis — mais entre lui et un document non exécuté, sur les données et le schéma, c'est lui qui
+prévaut. Sur les paramètres de décision métier, c'est l'inverse : le document et l'arbitrage humain
+prévalent sur les valeurs par défaut codées dans le prototype.
+
+---
+
 ## ADR-0XX — Titre court
 
 **Statut :** Proposée | Acceptée | Remplacée par ADR-0YY

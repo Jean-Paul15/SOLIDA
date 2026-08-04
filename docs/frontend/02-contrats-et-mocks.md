@@ -23,13 +23,12 @@
 
 Toutes les identités sont inventées ; aucune ne correspond à une personne réelle.
 
-## Écart constaté avec le contrat gelé
+## Écart avec le contrat gelé — résolu (ADR-019)
 
-`ActiviteEconomique` et `IdentiteSocietaire` (contrat gelé) ne portent ni l'âge, ni le statut du
-logement, ni le niveau d'instruction, ni les parts sociales — alors que l'écran E2 les affiche. Les
-types de ce projet n'ajoutent pas ces champs pour rester alignés avec le contrat existant ; la carte
-« Profil » de l'écran E2 se limite donc, dans cette passe, aux champs réellement présents dans le
-contrat. Ce manque est à trancher avec l'équipe avant l'implémentation backend.
+`age`, `niveau_instruction`, `nb_personnes_a_charge` et `parts_sociales_montant` ont été ajoutés à
+`IdentiteSocietaire`/`ActiviteEconomique` (présents dans le générateur, attendus par l'écran E2,
+absents avant correction). La carte « Profil » de l'écran E2 les affiche désormais. Le statut du
+logement reste absent : il n'existe dans aucune source (ni contrat, ni générateur) — non affiché.
 
 ## Moteur de scoring factice
 

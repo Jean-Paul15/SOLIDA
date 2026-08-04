@@ -224,6 +224,8 @@ agence                   : texte
 date_adhesion            : date
 anciennete_mois          : entier
 statut                   : enum       # actif | inactif | radie
+age                      : entier               # ADR-019 : present dans le generateur, absent ici avant correction
+niveau_instruction       : optionnel<enum>       # aucun | primaire | secondaire | superieur
 ```
 
 ### `ActiviteEconomique`
@@ -233,7 +235,13 @@ anciennete_activite_mois : entier
 revenu_mensuel_declare   : optionnel<entier>
 charges_mensuelles       : optionnel<entier>
 capacite_remboursement_estimee: entier
+nb_personnes_a_charge    : entier               # ADR-019
+parts_sociales_montant   : entier               # ADR-019
 ```
+
+**ADR-019 :** `age`, `niveau_instruction`, `nb_personnes_a_charge`, `parts_sociales_montant`
+ajoutés — présents dans le générateur (`societaires.parquet`) et attendus par l'écran E2, absents
+de ce contrat avant correction. Le générateur fait loi.
 
 ### `CreditResume`
 ```
