@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+sujet=$(head -n 1 "$1")
+
+motif='^(feat|fix|refactor|test|docs|chore|perf)(\([a-z0-9_-]+\))?: .{1,72}$'
+
+if ! echo "$sujet" | grep -Eq "$motif"; then
+  echo "Message de commit invalide : \"$sujet\""
+  echo "Format attendu : type(portee): description au present, sans accents, 72 caracteres max"
+  echo "Types acceptes : feat fix refactor test docs chore perf"
+  exit 1
+fi
+
+if echo "$sujet" | grep -qP '[àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ]'; then
+  echo "Le sujet du commit ne doit pas contenir d'accents (compatibilite des outils)."
+  exit 1
+fi

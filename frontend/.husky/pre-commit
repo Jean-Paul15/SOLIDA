@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+racine=$(git rev-parse --show-toplevel)
+export MSYS_NO_PATHCONV=1
+
+docker run --rm \
+  -v "$racine:/repo" \
+  -v solida_frontend_node_modules:/repo/frontend/node_modules \
+  -w /repo/frontend \
+  node:22 \
+  sh -c "npm install --no-audit --no-fund --silent && npx lint-staged"
