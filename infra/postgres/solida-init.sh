@@ -1,6 +1,5 @@
 #!/bin/sh
 # Extension et role de lecture (rapports) pour la base SOLIDA.
-# Voir 06-INFRA/03-postgresql.md.
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-SQL

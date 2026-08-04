@@ -19,8 +19,13 @@ class LecteurCoreSim(Protocol):
     """
 
     def rechercher_societaires(
-        self, terme: str, limite: int
-    ) -> list[ResultatRechercheSocietaire]: ...
+        self, terme: str, limite: int, agence_id: str | None = None
+    ) -> list[ResultatRechercheSocietaire]:
+        """`agence_id` restreint la recherche à une agence : cloisonnement du rôle
+        `agent`, appliqué dans la requête plutôt qu'en filtrant après coup pour ne
+        pas perdre de résultats valides à cause de la limite.
+        """
+        ...
 
     def charger_societaire(self, societaire_id: str) -> Societaire | None: ...
 

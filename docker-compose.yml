@@ -5,6 +5,8 @@ services:
       target: dev
     env_file:
       - ./frontend/.env
+    environment:
+      BACKEND_INTERNAL_URL: http://api:8000
     ports:
       - "3000:3000"
     volumes:
@@ -13,6 +15,9 @@ services:
       - front_next_cache:/app/.next
     networks:
       - solida
+    depends_on:
+      api:
+        condition: service_healthy
     cap_drop:
       - ALL
     security_opt:
@@ -63,6 +68,35 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      SOLIDA_DATABASE_URL: ${SOLIDA_DATABASE_URL}
+      SOLIDA_DATABASE_URL_ASYNC: ${SOLIDA_DATABASE_URL_ASYNC}
+      CORESIM_DATABASE_URL: ${CORESIM_DATABASE_URL}
+      SECRET_AUTH: ${SECRET_AUTH}
+      ENVIRONNEMENT: ${ENVIRONNEMENT}
+    ports:
+      - "8000:8000"
+    networks:
+      - solida
+    depends_on:
+      postgres-solida:
+        condition: service_healthy
+      postgres-coresim:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/sante')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
 
   coresim-seed:
     build:

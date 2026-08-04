@@ -72,7 +72,7 @@ class LecteurCoreSimPostgres:
         self._moteur = moteur
 
     def rechercher_societaires(
-        self, terme: str, limite: int
+        self, terme: str, limite: int, agence_id: str | None = None
     ) -> list[ResultatRechercheSocietaire]:
         requete = text("""
             SELECT s.societaire_id, s.nom_complet, s.numero_membre, s.caisse_id, s.zone,
@@ -81,12 +81,15 @@ class LecteurCoreSimPostgres:
                        WHERE c.societaire_id = s.societaire_id AND c.statut = 'en_cours'
                    ) AS a_credit_en_cours
             FROM societaires s
-            WHERE s.nom_complet ILIKE '%' || :terme || '%' OR s.numero_membre = :terme
+            WHERE (s.nom_complet ILIKE '%' || :terme || '%' OR s.numero_membre = :terme)
+              AND (CAST(:agence_id AS text) IS NULL OR s.caisse_id = :agence_id)
             ORDER BY similarity(s.nom_complet, :terme) DESC
             LIMIT :limite
         """)
         with self._moteur.connect() as connexion:
-            lignes = connexion.execute(requete, {"terme": terme, "limite": limite})
+            lignes = connexion.execute(
+                requete, {"terme": terme, "limite": limite, "agence_id": agence_id}
+            )
             return [
                 ResultatRechercheSocietaire(
                     societaire_id=ligne.societaire_id,

@@ -62,3 +62,21 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   — est déjà pleinement assurée par ce choix unique.
 - **Fiche de justification : pas de génération PDF.** L'écran restitue le contenu en JSON/HTML ; la
   génération PDF (rendu serveur, archivage) reste à construire.
+- **`utilisateur.agence_id` porte le code `caisse_id` brut de CORE-SIM** ("CAI-00"), pas un
+  libellé affichable ni une table `agence` séparée — nécessaire pour que le cloisonnement par
+  agence du rôle `agent` compare des identifiants réels, mais la connexion affiche donc ce code
+  brut plutôt qu'un nom de quartier. À corriger le jour où une vraie table de correspondance
+  code → libellé existe (ni CORE-SIM ni le schéma `solida` n'en ont une aujourd'hui).
+- **Cinq comptes de démonstration semés par migration** (`agent.be`, `agent.agoe`,
+  `superviseur.reseau`, `auditeur.interne`, `administrateur.systeme`, mot de passe unique
+  `solida-demo`). À supprimer avant tout déploiement réel — ce sont des comptes de hackathon, pas
+  un provisioning de production.
+- **Un seul `plafond_produit` global**, alors que le catalogue de produits du frontend
+  (`frontend/lib/produits.ts`) affiche trois plafonds différents par produit (crédit commerce,
+  agricole, équipement). `produit_id` est aujourd'hui seulement transmis pour l'audit
+  (`decision_scoring.entree`), il n'influence pas encore le calcul du plafond. Il faudrait un
+  plafond par produit dans `grille_decision.seuils` pour refléter le catalogue.
+- **`/registre` et `/parametrage/grille`** ont été câblés directement sur ces nouveaux endpoints
+  (pas de contrat frontend préexistant à respecter, voir `06-cablage-frontend.md`) : leur forme
+  (nommage `snake_case`, `{elements, total}`) reste une convention posée pour l'occasion, pas la
+  reprise d'une spécification externe.

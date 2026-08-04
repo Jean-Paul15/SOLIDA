@@ -78,6 +78,7 @@ class DecisionScoring(Base):
     montant_recommande: Mapped[int] = mapped_column(Integer)
     mode_calcul: Mapped[str] = mapped_column(String(20))
     decomposition: Mapped[dict] = mapped_column(JSONB)
+    resultat_complementaire: Mapped[dict] = mapped_column(JSONB, default=dict)
     version_modele: Mapped[str] = mapped_column(String(30))
     version_grille: Mapped[str] = mapped_column(String(30))
     horodatage: Mapped[datetime] = mapped_column(
