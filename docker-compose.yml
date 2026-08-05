@@ -142,7 +142,10 @@ services:
     # l'utilisateur nginx avant de demarrer, ce qui exige CAP_CHOWN. Meme cas que les
     # Postgres ci-dessus.
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/api/v1/sante"]
+      # 127.0.0.1, pas "localhost" : wget le resout en ::1 dans l'image alpine, or nginx.conf
+      # n'ecoute qu'en IPv4 (`listen 80;` sans le pendant [::]:80) — service reellement sain,
+      # healthcheck faussement rouge sinon.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/v1/sante"]
       interval: 10s
       timeout: 5s
       start_period: 10s
