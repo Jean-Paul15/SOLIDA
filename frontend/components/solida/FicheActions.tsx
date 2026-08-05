@@ -1,10 +1,33 @@
 "use client";
 
-import { Download, Printer, Save } from "lucide-react";
+import { Download, Loader2, Printer, Save } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { archiverFiche } from "@/lib/services/fiche";
+import { ErreurService } from "@/lib/services/erreur-service";
 
-export function FicheActions() {
+interface FicheActionsProps {
+  decisionId: string;
+}
+
+export function FicheActions({ decisionId }: FicheActionsProps) {
+  const [archivageEnCours, setArchivageEnCours] = useState(false);
+  const [archivee, setArchivee] = useState(false);
+
+  async function surArchiver() {
+    setArchivageEnCours(true);
+    try {
+      await archiverFiche(decisionId);
+      toast.success("Fiche archivée.");
+      setArchivee(true);
+    } catch (e) {
+      toast.error(e instanceof ErreurService ? e.message : "L'archivage a échoué.");
+    } finally {
+      setArchivageEnCours(false);
+    }
+  }
+
   return (
     <div className="flex w-[220px] flex-col gap-2">
       <Button variant="outline" className="justify-start gap-2" onClick={() => window.print()}>
@@ -12,33 +35,26 @@ export function FicheActions() {
         Imprimer
       </Button>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            <Button variant="outline" className="w-full justify-start gap-2" disabled>
-              <Download className="size-4" />
-              Télécharger le PDF
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          Génération PDF côté serveur (WeasyPrint) : nécessite le backend, pas encore construit.
-        </TooltipContent>
-      </Tooltip>
+      <Button variant="outline" className="justify-start gap-2" asChild>
+        <a href={`/api/v1/scoring/${decisionId}/fiche/pdf`} download>
+          <Download className="size-4" />
+          Télécharger le PDF
+        </a>
+      </Button>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            <Button variant="outline" className="w-full justify-start gap-2" disabled>
-              <Save className="size-4" />
-              Archiver au dossier
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          Archivage MinIO et journal d&rsquo;audit : nécessite le backend, pas encore construit.
-        </TooltipContent>
-      </Tooltip>
+      <Button
+        variant="outline"
+        className="justify-start gap-2"
+        onClick={surArchiver}
+        disabled={archivageEnCours || archivee}
+      >
+        {archivageEnCours ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Save className="size-4" />
+        )}
+        {archivee ? "Archivée" : "Archiver au dossier"}
+      </Button>
     </div>
   );
 }

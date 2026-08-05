@@ -166,7 +166,7 @@ export function RegistreDecisions({ decisions }: RegistreDecisionsProps) {
                 <TableCell className="text-right font-mono">
                   {formaterMontant(d.resultat.montant_demande)}
                 </TableCell>
-                <TableCell className="font-mono">{d.resultat.score}</TableCell>
+                <TableCell className="font-mono">{Math.round(d.resultat.score)}</TableCell>
                 <TableCell>
                   <Badge variant={d.resultat.tranche === "refus" ? "destructive" : "secondary"}>
                     {LIBELLE_TRANCHE[d.resultat.tranche]}

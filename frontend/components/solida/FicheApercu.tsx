@@ -78,7 +78,7 @@ export function FicheApercu({ fiche, versionApplication }: FicheApercuProps) {
       >
         <span className="text-[11px] text-neutre-500">Résultat</span>
         <div className="flex items-baseline gap-3">
-          <span className="font-mono text-xl">{resultat.score}</span>
+          <span className="font-mono text-xl">{Math.round(resultat.score)}</span>
           <span className={`text-sm font-semibold ${couleurs.texte}`}>
             {LIBELLE_TRANCHE[resultat.tranche]}
           </span>

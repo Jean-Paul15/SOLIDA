@@ -9,3 +9,7 @@ class Configuration(BaseSettings):
     coresim_database_url: str
     secret_auth: str
     environnement: str = "developpement"
+    seaweedfs_endpoint: str = "seaweedfs:8333"
+    seaweedfs_access_key: str = ""
+    seaweedfs_secret_key: str = ""
+    seaweedfs_bucket: str = "solida-fiches"

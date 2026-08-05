@@ -28,9 +28,11 @@ class ActiviteEconomique:
 
 
 @dataclass(frozen=True)
-class PointSolde:
-    mois: str
-    solde: int
+class MouvementEpargneAffiche:
+    date_operation: date
+    sens: str
+    """`depot` | `retrait`."""
+    montant: int
 
 
 @dataclass(frozen=True)
@@ -41,7 +43,9 @@ class SyntheseEpargne:
     volatilite: float
     ratio_epargne_revenu: float
     anciennete_relation_mois: int
-    serie_solde_12m: list[PointSolde]
+    # Échantillon réel de mouvements récents (pas une courbe de solde reconstruite, voir
+    # docs/backend/03-decisions-provisoires-a-revoir.md) : pas une série complète.
+    mouvements_recents: list[MouvementEpargneAffiche]
 
 
 @dataclass(frozen=True)

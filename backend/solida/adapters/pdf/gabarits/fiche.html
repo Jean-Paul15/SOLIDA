@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page { size: A4; margin: 2cm; }
+      body { font-family: "DejaVu Sans", sans-serif; font-size: 11pt; color: #1a1a1a; }
+      h1 { font-size: 16pt; margin-bottom: 0.2cm; }
+      h2 { font-size: 12pt; margin-top: 0.8cm; margin-bottom: 0.2cm; border-bottom: 1px solid #ccc; }
+      .entete { display: flex; justify-content: space-between; margin-bottom: 0.6cm; }
+      .tranche { display: inline-block; padding: 0.2cm 0.4cm; font-weight: bold; border-radius: 4px; }
+      .tranche-accord { background: #d7f0dd; color: #1e6b34; }
+      .tranche-accord_sous_condition { background: #fdeecb; color: #8a5a10; }
+      .tranche-comite_de_credit { background: #fdeecb; color: #8a5a10; }
+      .tranche-refus { background: #f7d7d7; color: #8a1f1f; }
+      table { width: 100%; border-collapse: collapse; margin-top: 0.2cm; }
+      td, th { text-align: left; padding: 0.1cm 0.3cm; font-size: 10pt; }
+      th { color: #666; font-weight: normal; }
+      .favorable { color: #1e6b34; }
+      .defavorable { color: #8a1f1f; }
+      .mention { margin-top: 1cm; font-size: 8pt; color: #666; }
+    </style>
+  </head>
+  <body>
+    <div class="entete">
+      <div>
+        <h1>Fiche de justification — {{ fiche.societaire_nom }}</h1>
+        <div>N° {{ fiche.numero_membre }} — {{ fiche.agence }}</div>
+      </div>
+      <div style="text-align: right">
+        <div>Édité le {{ fiche.date_edition }}</div>
+        <div>Agent : {{ fiche.agent_nom }}</div>
+      </div>
+    </div>
+
+    <div>
+      <span class="tranche tranche-{{ fiche.resultat.tranche }}">{{ libelle_tranche }}</span>
+      — Score {{ "%.0f"|format(fiche.resultat.score) }} / 850
+    </div>
+    {% if fiche.resultat.tranche != "refus" %}
+    <p>Montant recommandé : {{ "{:,}".format(fiche.resultat.montant_recommande).replace(",", " ") }} FCFA
+      sur {{ "{:,}".format(fiche.resultat.montant_demande).replace(",", " ") }} FCFA sollicités.</p>
+    {% endif %}
+
+    <h2>Facteurs favorables</h2>
+    <table>
+      {% for f in fiche.facteurs_favorables %}
+      <tr>
+        <td>{{ f.libelle }}</td>
+        <td>{{ f.valeur }}</td>
+        <td class="favorable">+{{ "%.1f"|format(f.points) }} pt</td>
+      </tr>
+      {% else %}
+      <tr><td>Aucun facteur favorable déterminant.</td></tr>
+      {% endfor %}
+    </table>
+
+    <h2>Facteurs défavorables</h2>
+    <table>
+      {% for f in fiche.facteurs_defavorables %}
+      <tr>
+        <td>{{ f.libelle }}</td>
+        <td>{{ f.valeur }}</td>
+        <td class="defavorable">{{ "%.1f"|format(f.points) }} pt</td>
+      </tr>
+      {% else %}
+      <tr><td>Aucun facteur défavorable déterminant.</td></tr>
+      {% endfor %}
+    </table>
+
+    {% if fiche.conditions_reexamen %}
+    <h2>Conditions de réexamen</h2>
+    <ul>
+      {% for c in fiche.conditions_reexamen %}
+      <li>{{ c }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <p class="mention">{{ fiche.mention_legale }}</p>
+    <p class="mention">Modèle {{ fiche.resultat.version_modele }} — Grille {{ fiche.resultat.version_grille }}</p>
+  </body>
+</html>

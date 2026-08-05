@@ -1,9 +1,10 @@
 import { EnTete } from "@/components/solida/EnTete";
 import { RechercheSocietaire } from "@/components/solida/RechercheSocietaire";
-import { lireSession } from "@/lib/session";
+import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
 
 export default async function PageRecherche() {
   const session = await lireSession();
+  exigerMotDePasseAJour(session);
 
   return (
     <div className="flex min-h-screen flex-col">

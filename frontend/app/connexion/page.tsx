@@ -11,13 +11,13 @@ export default function PageConnexion() {
         <Image
           src="/solida-logo.png"
           alt="SOLIDA"
-          width={160}
-          height={122}
+          width={220}
+          height={168}
           priority
           className="relative"
         />
-        <p className="max-w-sm text-base text-white/80">
-          Scoring d&rsquo;octroi pour coopératives financières
+        <p className="max-w-lg text-2xl leading-relaxed text-white/85">
+          L&rsquo;épargne d&rsquo;aujourd&rsquo;hui trace le crédit de demain.
         </p>
         <p className="absolute bottom-8 text-sm text-white/50">Programme DigiCoop-WA+</p>
       </div>

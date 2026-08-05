@@ -22,6 +22,15 @@ export function GraphiqueContributions({
   decomposition: ContributionVariable[];
 }) {
   const [tousVisibles, setTousVisibles] = useState(false);
+
+  if (decomposition.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-neutre-500 italic">
+        Aucune contribution significative identifiée pour ce dossier.
+      </p>
+    );
+  }
+
   const visibles = tousVisibles ? decomposition : decomposition.slice(0, LIMITE_VISIBLE);
   const masques = decomposition.length - visibles.length;
 

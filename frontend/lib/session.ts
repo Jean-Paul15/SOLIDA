@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { fetchBackend } from "@/lib/backend";
 
 export const SESSION_COOKIE = "solida_session";
@@ -5,6 +6,7 @@ export const SESSION_COOKIE = "solida_session";
 export interface Session {
   nom: string;
   agence: string | null;
+  doit_changer_mot_de_passe: boolean;
 }
 
 /**
@@ -16,4 +18,15 @@ export async function lireSession(): Promise<Session | null> {
   const reponse = await fetchBackend("/api/v1/auth/moi");
   if (!reponse.ok) return null;
   return reponse.json();
+}
+
+/**
+ * À appeler en tête de toute page protégée (hors /changer-mot-de-passe elle-même) :
+ * tant que le mot de passe par défaut n'a pas été changé, aucun autre écran n'est
+ * accessible.
+ */
+export function exigerMotDePasseAJour(session: Session | null): void {
+  if (session?.doit_changer_mot_de_passe) {
+    redirect("/changer-mot-de-passe");
+  }
 }

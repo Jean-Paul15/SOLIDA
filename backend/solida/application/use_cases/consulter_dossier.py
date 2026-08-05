@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date, timedelta
 
 from solida.domain.entities.compte_epargne import CompteEpargne
 from solida.domain.entities.groupe import GroupeCaution
@@ -10,9 +11,12 @@ from solida.domain.values.dossier import (
     DossierSocietaire,
     IdentiteSocietaire,
     MembreGroupeAffiche,
+    MouvementEpargneAffiche,
     SyntheseEpargne,
     SyntheseGroupe,
 )
+
+DUREE_HISTORIQUE_MOUVEMENTS = timedelta(days=365)
 
 STATUT_SOCIETAIRE_PAR_DEFAUT = "actif"
 """Le générateur ne modélise ni churn ni radiation, voir `LecteurCoreSimPostgres`."""
@@ -82,6 +86,9 @@ class ConsulterDossier:
         credits = self.lecteur.charger_historique_credit(societaire_id)
         compte = self.lecteur.charger_compte_epargne(societaire_id)
         groupe = _groupe_affiche(self.lecteur.charger_groupe(societaire_id))
+        mouvements = self.lecteur.charger_mouvements_epargne(
+            societaire_id, depuis=date.today() - DUREE_HISTORIQUE_MOUVEMENTS
+        )
 
         historique = [
             CreditResume(
@@ -128,10 +135,16 @@ class ConsulterDossier:
                     compte, societaire.revenu_mensuel_declare
                 ),
                 anciennete_relation_mois=societaire.anciennete_mois,
-                # CORE-SIM n'expose que des agregats (moyenne 6 mois, croissance 12 mois),
-                # jamais un solde mensuel absolu : une serie reconstruite a partir des seuls
-                # mouvements, sans point d'ancrage, serait fabriquee, pas mesuree.
-                serie_solde_12m=[],
+                # CORE-SIM n'expose pas de solde mensuel absolu, seulement des agregats
+                # (moyenne 6 mois, croissance 12 mois) : reconstruire une courbe de solde a
+                # partir des seuls mouvements, sans point d'ancrage, serait fabrique, pas
+                # mesure. On affiche donc les mouvements reels tels qu'ils sont observes.
+                mouvements_recents=[
+                    MouvementEpargneAffiche(
+                        date_operation=m.date_operation, sens=m.sens, montant=m.montant
+                    )
+                    for m in mouvements
+                ],
             ),
             historique_credit=historique,
             groupe=groupe,

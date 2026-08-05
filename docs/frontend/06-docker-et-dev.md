@@ -39,7 +39,8 @@ Quatre étapes dans un seul fichier (`frontend/Dockerfile`) :
 - Aucun secret dans l'image : tout passe par `frontend/.env` (non versionné, généré depuis
   `.env.example`).
 - Télémétrie Next.js désactivée (`NEXT_TELEMETRY_DISABLED=1`) — aucun appel sortant non nécessaire.
-- Réseau Docker dédié (`solida`), seul `front` publie un port vers l'hôte.
+- Réseau Docker dédié (`solida`) ; seul `nginx` publie un port vers l'hôte, `front` n'est plus
+  atteignable directement (voir `infra/nginx/nginx.conf`).
 
 ## Bug connu en amont : `next build` échoue sur `/_global-error`
 
@@ -54,8 +55,16 @@ développement (`next dev`, utilisé par `docker-compose.yml` et donc par la dé
 `typecheck`/`lint`/`test`. Bloque uniquement un déploiement en image `runner` figée. À réessayer à
 chaque mise à jour de Next.js 16.
 
+## Bug connu en amont : panique Turbopack en HMR
+
+Observé en vérification bout en bout : `next dev` (Turbopack, mode conteneur) peut paniquer
+(`turbo-tasks: an internal panic occurred outside the per-task panic boundary`) après plusieurs
+cycles de compilation à chaud rapprochés — pas une régression du code applicatif. `front` a donc
+`restart: unless-stopped` dans `docker-compose.yml` pour se relever seul sans intervention. À
+réessayer à chaque mise à jour de Next.js 16.
+
 ## Ce qui n'existe pas encore dans `docker-compose.yml`
 
-`api`, `minio`, `mlflow` — voir `06-INFRA/01-stack-et-justifications.md` pour la liste complète.
-`postgres-coresim` et `postgres-solida` existent déjà (voir `docs/infra/00-postgres-et-simulateur.md`).
-Les services restants seront ajoutés par les modules qui les construisent, pas anticipés ici.
+`mlflow` reste à construire par le module qui le nécessite. `api`, `postgres-coresim`,
+`postgres-solida`, `nginx` et `seaweedfs` (stockage objet des fiches archivées, remplace le MinIO
+initialement prévu — voir `docs/backend/03-decisions-provisoires-a-revoir.md`) existent déjà.

@@ -3,10 +3,7 @@
 # À copier à la racine du dépôt de code sous le nom .gitignore
 # ===========================================================
 
-# --- Dossier de principes et d'instructions ---
-# Décision ADR-018 (00-CONTEXTE/04-journal-de-decisions.md) : dépôt unique, SOLIDA-FOUNDATION/
-# est versionné avec le code. Remplace la stratégie multi-dépôts précédente.
-# Voir 09-DEVOPS/01-git-workflow.md, section "Diffusion du dossier de principes".
+_archive-instructions/
 
 # --- Secrets et configuration locale ---
 .env
@@ -67,7 +64,7 @@ miniodata/
 # --- Sorties générées ---
 exports/
 *.pdf
-!SOLIDA-FOUNDATION/assets/*.pdf
+!assets/*.pdf
 reports/
 
 # --- Éditeurs et OS ---

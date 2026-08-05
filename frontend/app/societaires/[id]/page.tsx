@@ -14,11 +14,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EnTete } from "@/components/solida/EnTete";
 import { GroupeCautionDialog } from "@/components/solida/GroupeCautionDialog";
 import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
-import { TrajectoireEpargne } from "@/components/solida/TrajectoireEpargne";
+import { MouvementsEpargne } from "@/components/solida/MouvementsEpargne";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
-import { lireSession } from "@/lib/session";
+import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
 
 const LIBELLE_SEGMENT: Record<string, string> = {
   salarie: "Salarié",
@@ -50,6 +50,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
   const dossier: DossierSocietaire = await reponse.json();
 
   const session = await lireSession();
+  exigerMotDePasseAJour(session);
   const { identite, activite, epargne, historique_credit, alertes, groupe } = dossier;
   const anciennete = `${Math.floor(identite.anciennete_mois / 12)} an(s) ${identite.anciennete_mois % 12} mois`;
 
@@ -160,7 +161,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="col-span-4">
-            <TrajectoireEpargne epargne={epargne} />
+            <MouvementsEpargne epargne={epargne} />
           </div>
 
           <div className="col-span-3">

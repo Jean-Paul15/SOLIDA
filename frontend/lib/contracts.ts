@@ -130,9 +130,12 @@ export interface ActiviteEconomique {
   parts_sociales_montant: number;
 }
 
-export interface PointSolde {
-  mois: string;
-  solde: number;
+export type SensMouvementEpargne = "depot" | "retrait";
+
+export interface MouvementEpargne {
+  date_operation: string;
+  sens: SensMouvementEpargne;
+  montant: number;
 }
 
 export interface SyntheseEpargne {
@@ -142,7 +145,7 @@ export interface SyntheseEpargne {
   volatilite: number;
   ratio_epargne_revenu: number;
   anciennete_relation_mois: number;
-  serie_solde_12m: PointSolde[];
+  mouvements_recents: MouvementEpargne[];
 }
 
 export interface CreditResume {

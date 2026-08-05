@@ -31,9 +31,10 @@ import {
 } from "@/lib/credit";
 import { formaterMontant } from "@/lib/format";
 import { LIBELLE_OBJET_CREDIT } from "@/lib/libelles";
+import { usePrevisualisation } from "@/lib/previsualisation-context";
 import { PRODUITS, trouverProduit } from "@/lib/produits";
 import { ErreurService } from "@/lib/services/erreur-service";
-import { calculerScore } from "@/lib/services/scoring";
+import { previsualiserScore } from "@/lib/services/scoring";
 
 const DUREES = [3, 6, 9, 12, 18, 24];
 
@@ -54,6 +55,8 @@ export function NouvelleDemandeSheet({
   activite,
 }: NouvelleDemandeSheetProps) {
   const router = useRouter();
+  const { definirPrevisualisation } = usePrevisualisation();
+  const [sheetOuvert, setSheetOuvert] = useState(false);
   const [produitId, setProduitId] = useState(PRODUITS[0].id);
   const [montant, setMontant] = useState(500000);
   const [duree, setDuree] = useState(12);
@@ -90,16 +93,19 @@ export function NouvelleDemandeSheet({
         : undefined,
     };
     try {
-      const resultat = await calculerScore(entree);
-      router.push(`/scoring/${resultat.decision_id}`);
+      const resultat = await previsualiserScore(entree);
+      definirPrevisualisation({ entree, resultat, societaireNom: nomComplet });
+      setSheetOuvert(false);
+      router.push("/scoring/previsualisation");
     } catch (e) {
-      setEnCours(false);
       setErreur(e instanceof ErreurService ? e.message : "Le calcul du score a échoué.");
+    } finally {
+      setEnCours(false);
     }
   }
 
   return (
-    <Sheet>
+    <Sheet open={sheetOuvert} onOpenChange={setSheetOuvert}>
       <SheetTrigger asChild>
         <Button>Nouvelle demande</Button>
       </SheetTrigger>

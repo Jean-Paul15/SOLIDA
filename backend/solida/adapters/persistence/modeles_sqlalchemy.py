@@ -24,6 +24,11 @@ class Utilisateur(SQLAlchemyBaseUserTableUUID, Base):
     nom_complet: Mapped[str] = mapped_column(String(200))
     role: Mapped[str] = mapped_column(String(20))
     agence_id: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    doit_changer_mot_de_passe: Mapped[bool] = mapped_column(Boolean, default=True)
+    mot_de_passe_modifie_le: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    desactive_le: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
@@ -31,7 +36,10 @@ class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
 
     # Le mixin cible "user.id" en dur ; notre table utilisateur s'appelle "utilisateur".
     user_id: Mapped[uuid.UUID] = mapped_column(
-        GUID, ForeignKey("utilisateur.id", ondelete="cascade"), nullable=False
+        GUID, ForeignKey("utilisateur.id", ondelete="cascade"), nullable=False, index=True
+    )
+    derniere_activite_le: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
     )
 
 
@@ -82,6 +90,23 @@ class DecisionScoring(Base):
     version_modele: Mapped[str] = mapped_column(String(30))
     version_grille: Mapped[str] = mapped_column(String(30))
     horodatage: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class FicheArchivee(Base):
+    """Métadonnées seulement — le PDF lui-même vit dans le stockage objet (SeaweedFS),
+    jamais en base, pour ne pas alourdir `solida` d'un contenu binaire volumineux."""
+
+    __tablename__ = "fiche_archivee"
+
+    fiche_id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    decision_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("decision_scoring.decision_id"), index=True
+    )
+    chemin_objet: Mapped[str] = mapped_column(String(200))
+    archive_par: Mapped[str] = mapped_column(String(200))
+    archive_le: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 

@@ -4,12 +4,19 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from solida.adapters.http import mappers
 from solida.adapters.http.schemas.societaires import DossierSocietaire, ResultatRechercheSocietaire
+from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.consulter_dossier import ConsulterDossier
+from solida.application.use_cases.lister_societaires_recents import ListerSocietairesRecents
 from solida.application.use_cases.rechercher_societaire import RechercherSocietaire
 from solida.domain.erreurs import AccesRefuse
 from solida.infrastructure.auth import current_active_user
-from solida.infrastructure.dependances import consulter_dossier, rechercher_societaire
+from solida.infrastructure.dependances import (
+    consulter_dossier,
+    journal_audit,
+    lister_societaires_recents,
+    rechercher_societaire,
+)
 
 routeur = APIRouter(prefix="/api/v1/societaires", tags=["societaires"])
 
@@ -33,11 +40,21 @@ def rechercher(
     }
 
 
+@routeur.get("/recents")
+def recents(
+    utilisateur: Utilisateur = Depends(current_active_user),
+    cas_usage: ListerSocietairesRecents = Depends(lister_societaires_recents),
+) -> dict[str, object]:
+    resultats = cas_usage.executer(str(utilisateur.id))
+    return {"elements": [ResultatRechercheSocietaire.model_validate(asdict(r)) for r in resultats]}
+
+
 @routeur.get("/{societaire_id}/dossier", response_model=DossierSocietaire)
 def dossier(
     societaire_id: str,
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: ConsulterDossier = Depends(consulter_dossier),
+    audit: JournalAuditSql = Depends(journal_audit),
 ) -> DossierSocietaire:
     resultat = cas_usage.executer(societaire_id)
     if resultat is None:
@@ -53,6 +70,7 @@ def dossier(
     if agence_agent is not None and resultat.identite.agence != agence_agent:
         raise AccesRefuse("Ce sociétaire n'appartient pas à votre agence.")
 
+    audit.enregistrer_evenement("consultation_dossier", str(utilisateur.id), societaire_id, {})
     return mappers.dossier_vers_schema(resultat)
 
 

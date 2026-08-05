@@ -1,19 +1,24 @@
 import uuid
 from collections.abc import AsyncGenerator, Callable, Coroutine
+from datetime import UTC, datetime, timedelta
+from functools import lru_cache
+from pathlib import Path
 from typing import cast
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, Request, status
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, exceptions
 from fastapi_users.authentication import AuthenticationBackend, CookieTransport
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase, DatabaseStrategy
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from solida.adapters.persistence.modeles_sqlalchemy import AccessToken, Utilisateur
 from solida.domain.erreurs import AccesRefuse
 from solida.infrastructure.config import Configuration
+
+_FICHIER_MOTS_DE_PASSE_COURANTS = Path(__file__).with_name("mots_de_passe_courants.txt")
 
 DUREE_SESSION_SECONDES = 8 * 60 * 60
 """Session révocable de 8 heures — une journée de travail en agence."""
@@ -82,11 +87,37 @@ class GestionnaireUtilisateurs(UUIDIDMixin, BaseUserManager[Utilisateur, uuid.UU
             raise exceptions.UserNotExists()
         return utilisateur
 
+    async def changer_mot_de_passe(
+        self, utilisateur: Utilisateur, nouveau_mot_de_passe: str
+    ) -> None:
+        hachage = self.password_helper.hash(nouveau_mot_de_passe)
+        await self.user_db.update(
+            utilisateur,
+            {
+                "hashed_password": hachage,
+                "doit_changer_mot_de_passe": False,
+                "mot_de_passe_modifie_le": datetime.now(UTC),
+            },
+        )
+
 
 async def obtenir_gestionnaire_utilisateurs(
     bdd_utilisateurs: SQLAlchemyUserDatabase = Depends(obtenir_bdd_utilisateurs),
 ) -> AsyncGenerator[GestionnaireUtilisateurs, None]:
     yield GestionnaireUtilisateurs(bdd_utilisateurs)
+
+
+@lru_cache(maxsize=1)
+def charger_mots_de_passe_courants() -> frozenset[str]:
+    lignes = _FICHIER_MOTS_DE_PASSE_COURANTS.read_text(encoding="utf-8").splitlines()
+    return frozenset(ligne.strip().lower() for ligne in lignes if ligne.strip())
+
+
+async def revoquer_jetons_utilisateur(session: AsyncSession, utilisateur_id: uuid.UUID) -> None:
+    """Détruit tous les jetons actifs d'un utilisateur — une seule session à la fois,
+    et un changement de mot de passe invalide les sessions ouvertes ailleurs."""
+    await session.execute(delete(AccessToken).where(AccessToken.user_id == utilisateur_id))
+    await session.commit()
 
 
 transport_cookie = CookieTransport(
@@ -114,7 +145,35 @@ fastapi_users = FastAPIUsers[Utilisateur, uuid.UUID](
     obtenir_gestionnaire_utilisateurs, [backend_authentification]
 )
 
-current_active_user = fastapi_users.current_user(active=True)
+DUREE_INACTIVITE_MAX = timedelta(minutes=15)
+"""Expiration par inactivité, vérifiée côté serveur à chaque requête — un minuteur
+côté client seul se contourne (l'attaquant qui a volé la session simule l'activité)."""
+
+_utilisateur_actif_brut = fastapi_users.current_user(active=True)
+
+
+async def current_active_user(
+    requete: Request,
+    utilisateur: Utilisateur = Depends(_utilisateur_actif_brut),
+    bdd_jetons: SQLAlchemyAccessTokenDatabase = Depends(obtenir_bdd_jetons),
+) -> Utilisateur:
+    """Comme `fastapi_users.current_user(active=True)`, avec en plus l'expiration par
+    inactivité : au-delà de `DUREE_INACTIVITE_MAX` sans requête, la session est détruite
+    même si elle n'a pas atteint sa durée de vie absolue de `DUREE_SESSION_SECONDES`."""
+    jeton_str = requete.cookies.get(transport_cookie.cookie_name)
+    jeton = await bdd_jetons.get_by_token(jeton_str) if jeton_str else None
+    if jeton is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session invalide.")
+
+    maintenant = datetime.now(UTC)
+    if maintenant - jeton.derniere_activite_le > DUREE_INACTIVITE_MAX:
+        await bdd_jetons.delete(jeton)
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "Session expirée par inactivité, reconnectez-vous."
+        )
+
+    await bdd_jetons.update(jeton, {"derniere_activite_le": maintenant})
+    return utilisateur
 
 
 def exige_role(*roles_autorises: str) -> Callable[..., Coroutine[None, None, Utilisateur]]:

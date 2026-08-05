@@ -2,7 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/session";
 
-const ROUTES_PROTEGEES = ["/", "/societaires", "/scoring", "/registre", "/parametrage"];
+const ROUTES_PROTEGEES = [
+  "/",
+  "/societaires",
+  "/scoring",
+  "/registre",
+  "/parametrage",
+  "/changer-mot-de-passe",
+];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -32,5 +39,6 @@ export const config = {
     "/scoring/:path*",
     "/registre/:path*",
     "/parametrage/:path*",
+    "/changer-mot-de-passe",
   ],
 };

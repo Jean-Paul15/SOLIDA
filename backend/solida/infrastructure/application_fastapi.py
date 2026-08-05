@@ -9,6 +9,7 @@ from solida.domain.erreurs import (
     SocietaireIntrouvable,
 )
 from solida.infrastructure import routeur_auth
+from solida.infrastructure.journalisation import configurer_journalisation
 from solida.infrastructure.routeurs import parametrage, registre, scoring, societaires
 
 # Traduction des exceptions du domaine vers un statut HTTP : la plus specifique
@@ -22,6 +23,7 @@ _STATUTS_PAR_ERREUR: list[tuple[type[ErreurDomaine], int, str]] = [
 
 
 def creer_application() -> FastAPI:
+    configurer_journalisation()
     application = FastAPI(title="SOLIDA API")
     application.include_router(sante.routeur)
     application.include_router(routeur_auth.routeur)

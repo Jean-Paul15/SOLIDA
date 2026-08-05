@@ -45,9 +45,10 @@ class ActiviteEconomique(BaseModel):
     parts_sociales_montant: int
 
 
-class PointSolde(BaseModel):
-    mois: str
-    solde: int
+class MouvementEpargne(BaseModel):
+    date_operation: str
+    sens: Literal["depot", "retrait"]
+    montant: int
 
 
 class SyntheseEpargne(BaseModel):
@@ -57,7 +58,7 @@ class SyntheseEpargne(BaseModel):
     volatilite: float
     ratio_epargne_revenu: float
     anciennete_relation_mois: int
-    serie_solde_12m: list[PointSolde]
+    mouvements_recents: list[MouvementEpargne]
 
 
 class CreditResume(BaseModel):

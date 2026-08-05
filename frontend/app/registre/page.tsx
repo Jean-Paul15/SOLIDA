@@ -1,12 +1,15 @@
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { EnTete } from "@/components/solida/EnTete";
 import type { DecisionRegistreVue } from "@/components/solida/RegistreDecisions";
 import { RegistreDecisions } from "@/components/solida/RegistreDecisions";
 import { fetchBackend } from "@/lib/backend";
 import type { DecisionRegistreApi } from "@/lib/contracts";
-import { lireSession } from "@/lib/session";
+import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
 
 export default async function PageRegistre() {
   const session = await lireSession();
+  exigerMotDePasseAJour(session);
 
   const reponse = await fetchBackend("/api/v1/registre?limite=100");
   const { elements }: { elements: DecisionRegistreApi[]; total: number } = reponse.ok
@@ -27,6 +30,13 @@ export default async function PageRegistre() {
     <div className="flex min-h-screen flex-col">
       <EnTete agence={session?.agence} utilisateur={session?.nom} />
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-4 px-6 py-6">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-sm text-neutre-500 hover:text-neutre-950"
+        >
+          <ArrowLeft className="size-4" />
+          Retour à la recherche
+        </Link>
         <h1 className="font-serif-title text-lg font-semibold text-neutre-950">
           Registre des décisions
         </h1>

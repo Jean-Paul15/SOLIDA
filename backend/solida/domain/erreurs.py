@@ -28,3 +28,7 @@ class AccesRefuse(ErreurDomaine):
 
 class InvariantScoreViole(ErreurDomaine):
     """La décomposition en points ne somme pas au score : le scoring est rejeté."""
+
+
+class MotDePasseInvalide(ErreurDomaine):
+    """Le mot de passe proposé ne respecte pas la politique en vigueur."""

@@ -7,8 +7,6 @@ services:
       - ./frontend/.env
     environment:
       BACKEND_INTERNAL_URL: http://api:8000
-    ports:
-      - "3000:3000"
     volumes:
       - ./frontend:/app
       - front_node_modules:/app/node_modules
@@ -22,6 +20,10 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # Turbopack (mode dev) peut paniquer sporadiquement sur des cycles HMR répétés (bug
+    # connu de Next.js 16.3.0, pas du code applicatif) — redémarrage automatique pour
+    # rester disponible sans intervention manuelle.
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/v1/sante').then(r=>{if(!r.ok)throw 0}).catch(()=>process.exit(1))"]
       interval: 10s
@@ -69,6 +71,27 @@ services:
       timeout: 5s
       retries: 10
 
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.40
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        mkdir -p /etc/seaweedfs && cat > /etc/seaweedfs/s3.json <<EOF
+        {"identities":[{"name":"solida","credentials":[{"accessKey":"$$SEAWEEDFS_ACCESS_KEY","secretKey":"$$SEAWEEDFS_SECRET_KEY"}],"actions":["Admin","Read","Write","List","Tagging"]}]}
+        EOF
+        exec weed server -dir=/data -s3 -s3.config=/etc/seaweedfs/s3.json -ip.bind=0.0.0.0 -master.volumeSizeLimitMB=256
+    environment:
+      SEAWEEDFS_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY}
+      SEAWEEDFS_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY}
+    volumes:
+      - seaweedfs_data:/data
+    networks:
+      - solida
+    # cap_drop non applique : /data et /etc/seaweedfs appartiennent a l'utilisateur "seaweed"
+    # dans l'image, pas root — l'entrypoint (qui ecrit s3.json puis demarre "weed" en root)
+    # a besoin de CAP_DAC_OVERRIDE pour y ecrire malgre tout. Meme cas que les Postgres
+    # ci-dessus. Isolation reelle assuree par le reseau interne (port non publie a l'hote).
+
   api:
     build:
       context: ./backend
@@ -78,8 +101,10 @@ services:
       CORESIM_DATABASE_URL: ${CORESIM_DATABASE_URL}
       SECRET_AUTH: ${SECRET_AUTH}
       ENVIRONNEMENT: ${ENVIRONNEMENT}
-    ports:
-      - "8000:8000"
+      SEAWEEDFS_ENDPOINT: seaweedfs:8333
+      SEAWEEDFS_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY}
+      SEAWEEDFS_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY}
+      SEAWEEDFS_BUCKET: solida-fiches
     networks:
       - solida
     depends_on:
@@ -87,12 +112,37 @@ services:
         condition: service_healthy
       postgres-coresim:
         condition: service_healthy
+      seaweedfs:
+        condition: service_started
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/sante')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+
+  nginx:
+    image: nginx:1.30.4-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - solida
+    depends_on:
+      front:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    # cap_drop non applique : l'entrypoint officiel doit chown /var/cache/nginx/* vers
+    # l'utilisateur nginx avant de demarrer, ce qui exige CAP_CHOWN. Meme cas que les
+    # Postgres ci-dessus.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/api/v1/sante"]
       interval: 10s
       timeout: 5s
       start_period: 10s
@@ -111,14 +161,18 @@ services:
     profiles:
       - tools
 
-# Reserve a l'API (backend) a mesure qu'elle existe : minio, mlflow. Aucun n'est invente ici.
-# Aucun port Postgres n'est publie vers l'hote : seul le reseau interne "solida" y a acces.
+# Reserve a l'API (backend) a mesure qu'elle existe : mlflow. Aucun n'est invente ici.
+# Seul nginx publie un port sur l'hote (80) : front et api ne sont joignables que par le
+# reseau interne "solida", pareil pour postgres et seaweedfs. Pas de TLS ici (usage LAN/demo
+# de hackathon assume) : a ajouter (certificat + Strict-Transport-Security) avant tout
+# deploiement reel, voir docs/backend/03-decisions-provisoires-a-revoir.md.
 
 volumes:
   front_node_modules:
   front_next_cache:
   pgdata_coresim:
   pgdata_solida:
+  seaweedfs_data:
 
 networks:
   solida:

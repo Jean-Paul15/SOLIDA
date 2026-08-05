@@ -4,18 +4,53 @@ Centralisé ici plutôt que dispersé dans chaque routeur : un seul endroit à v
 un champ du contrat frontend change.
 """
 
+from datetime import UTC, datetime
+
+from solida.adapters import libelles_variables
 from solida.adapters.http.schemas import fiche as schema_fiche
 from solida.adapters.http.schemas import grille as schema_grille
 from solida.adapters.http.schemas import registre as schema_registre
 from solida.adapters.http.schemas import scoring as schema_scoring
 from solida.adapters.http.schemas import societaires as schema_societaires
-from solida.domain.values.decision import DecisionEnregistree, DecisionRegistreAffichee
+from solida.domain.values.decision import (
+    DecisionAEnregistrer,
+    DecisionEnregistree,
+    DecisionRegistreAffichee,
+)
 from solida.domain.values.dossier import DossierSocietaire, SyntheseGroupe
 from solida.domain.values.fiche import EnTeteFiche
 from solida.domain.values.grille import ConfigurationGrille
+from solida.domain.values.points_variable import PointsVariable
 
 
-def decision_vers_resultat_scoring(decision: DecisionEnregistree) -> schema_scoring.ResultatScoring:
+def _decomposition_vers_schema(
+    decomposition: list[PointsVariable], features_utilisees: dict[str, float]
+) -> list[schema_scoring.ContributionVariable]:
+    contributions = []
+    for point in decomposition:
+        valeur_brute = features_utilisees.get(point.code_variable, 0.0)
+        valeur_affichee = libelles_variables.formater_valeur(point.code_variable, valeur_brute)
+        contributions.append(
+            schema_scoring.ContributionVariable(
+                code_variable=point.code_variable,
+                libelle=libelles_variables.libelle(point.code_variable),
+                valeur=valeur_affichee,
+                points=point.points,
+                sens=libelles_variables.sens(point.points),
+                famille=libelles_variables.famille(point.code_variable),
+                explication=libelles_variables.explication(
+                    point.code_variable, valeur_affichee, point.points
+                ),
+            )
+        )
+    # Les facteurs les plus déterminants d'abord : c'est ce que "Facteurs déterminants" promet.
+    contributions.sort(key=lambda c: abs(c.points), reverse=True)
+    return contributions
+
+
+def _resultat_scoring_commun(
+    decision: DecisionAEnregistrer, horodatage: str
+) -> schema_scoring.ResultatScoring:
     montant_demande = decision.entree.get("montant_demande")
     montant_demande_int = montant_demande if isinstance(montant_demande, int) else 0
     return schema_scoring.ResultatScoring(
@@ -27,7 +62,9 @@ def decision_vers_resultat_scoring(decision: DecisionEnregistree) -> schema_scor
         montant_demande=montant_demande_int,
         mode_calcul=decision.mode_calcul.value,
         motif_mode=decision.motif_mode.value if decision.motif_mode else None,
-        decomposition=[],  # ModeleConstant ne produit aucune contribution par variable.
+        decomposition=_decomposition_vers_schema(
+            decision.decomposition, decision.features_utilisees
+        ),
         points_de_base=decision.points_de_base,
         plafond_progressif=decision.plafond_progressif.valeur,
         trajectoire_progression=[
@@ -39,9 +76,21 @@ def decision_vers_resultat_scoring(decision: DecisionEnregistree) -> schema_scor
         conditions_reexamen=decision.conditions_reexamen,
         version_modele=decision.version_modele,
         version_grille=decision.version_grille,
-        horodatage=decision.horodatage.isoformat(),
+        horodatage=horodatage,
         avertissements=decision.avertissements,
     )
+
+
+def decision_vers_resultat_scoring(decision: DecisionEnregistree) -> schema_scoring.ResultatScoring:
+    return _resultat_scoring_commun(decision, decision.horodatage.isoformat())
+
+
+def decision_a_enregistrer_vers_resultat_scoring(
+    decision: DecisionAEnregistrer,
+) -> schema_scoring.ResultatScoring:
+    """Pour une prévisualisation, pas encore persistée : pas de vrai horodatage
+    d'enregistrement, on affiche celui du calcul."""
+    return _resultat_scoring_commun(decision, datetime.now(UTC).isoformat())
 
 
 def decision_vers_registre(
@@ -116,9 +165,11 @@ def dossier_vers_schema(dossier: DossierSocietaire) -> schema_societaires.Dossie
             volatilite=dossier.epargne.volatilite,
             ratio_epargne_revenu=dossier.epargne.ratio_epargne_revenu,
             anciennete_relation_mois=dossier.epargne.anciennete_relation_mois,
-            serie_solde_12m=[
-                schema_societaires.PointSolde(mois=p.mois, solde=p.solde)
-                for p in dossier.epargne.serie_solde_12m
+            mouvements_recents=[
+                schema_societaires.MouvementEpargne(
+                    date_operation=m.date_operation.isoformat(), sens=m.sens, montant=m.montant
+                )
+                for m in dossier.epargne.mouvements_recents
             ],
         ),
         historique_credit=[
@@ -142,6 +193,7 @@ def dossier_vers_schema(dossier: DossierSocietaire) -> schema_societaires.Dossie
 def fiche_vers_schema(
     decision: DecisionEnregistree, entete: EnTeteFiche
 ) -> schema_fiche.FicheJustification:
+    contributions = _decomposition_vers_schema(decision.decomposition, decision.features_utilisees)
     return schema_fiche.FicheJustification(
         fiche_id=decision.decision_id,
         resultat=decision_vers_resultat_scoring(decision),
@@ -151,8 +203,8 @@ def fiche_vers_schema(
         agence=entete.agence,
         agent_nom=decision.agent_nom,
         date_edition=entete.date_edition.isoformat(),
-        facteurs_favorables=[],
-        facteurs_defavorables=[],
+        facteurs_favorables=[c for c in contributions if c.sens == "favorable"],
+        facteurs_defavorables=[c for c in contributions if c.sens == "defavorable"],
         conditions_reexamen=decision.conditions_reexamen,
         mention_legale=entete.mention_legale,
     )

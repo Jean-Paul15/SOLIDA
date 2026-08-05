@@ -1,4 +1,4 @@
-import { User, Users } from "lucide-react";
+import { Loader2, User, Users } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,15 +13,27 @@ const SCORE_MAX = 850;
 
 interface ResultatScoringVueProps {
   resultat: ResultatScoring;
+  /** Aperçu non encore enregistré : bascule les actions vers confirmer/annuler plutôt
+   * que d'afficher les actions d'une décision déjà persistée (fiche, "enregistrée le"). */
+  previsualisation?: boolean;
+  surConfirmer?: () => void;
+  surAnnuler?: () => void;
+  confirmationEnCours?: boolean;
 }
 
-export function ResultatScoringVue({ resultat }: ResultatScoringVueProps) {
+export function ResultatScoringVue({
+  resultat,
+  previsualisation = false,
+  surConfirmer,
+  surAnnuler,
+  confirmationEnCours = false,
+}: ResultatScoringVueProps) {
   const couleurs = COULEUR_TRANCHE[resultat.tranche];
   const positionScore = ((resultat.score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN)) * 100;
   const sommeContributions = resultat.decomposition.reduce((s, c) => s + c.points, 0);
 
   return (
-    <main className="mx-auto grid w-full max-w-[1440px] flex-1 grid-cols-12 gap-6 px-6 py-6">
+    <div className="mx-auto grid w-full max-w-[1440px] flex-1 grid-cols-12 gap-6 px-6 py-6">
       <div className="col-span-5 flex flex-col gap-4">
         <div
           className={`flex flex-col gap-3 rounded-lg border-l-3 ${couleurs.bordure} ${couleurs.fond} p-4`}
@@ -109,22 +121,49 @@ export function ResultatScoringVue({ resultat }: ResultatScoringVueProps) {
         </h2>
         <GraphiqueContributions decomposition={resultat.decomposition} />
         <span className="text-xs text-neutre-500">
-          Base {resultat.points_de_base} + contributions {sommeContributions >= 0 ? "+" : ""}
-          {sommeContributions} = {resultat.score}
+          Base {Math.round(resultat.points_de_base)} + contributions{" "}
+          {sommeContributions >= 0 ? "+" : ""}
+          {Math.round(sommeContributions)} = {Math.round(resultat.score)}
         </span>
 
-        <div className="mt-auto flex justify-end gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/">Nouvelle recherche</Link>
-          </Button>
-          <Button variant="secondary">Enregistrer la décision</Button>
-          <Button asChild>
-            <Link href={`/scoring/${resultat.decision_id}/fiche`}>
-              Générer la fiche de justification
-            </Link>
-          </Button>
+        <div className="mt-auto flex items-center justify-end gap-2">
+          {previsualisation ? (
+            <>
+              <Button variant="outline" onClick={surAnnuler} disabled={confirmationEnCours}>
+                Annuler
+              </Button>
+              <Button onClick={surConfirmer} disabled={confirmationEnCours}>
+                {confirmationEnCours ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Enregistrement…
+                  </>
+                ) : (
+                  "Enregistrer la décision"
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <span className="mr-auto text-xs text-neutre-500">
+                Décision enregistrée le{" "}
+                {new Date(resultat.horodatage).toLocaleString("fr-FR", {
+                  dateStyle: "long",
+                  timeStyle: "short",
+                })}
+              </span>
+              <Button variant="outline" asChild>
+                <Link href="/">Nouvelle recherche</Link>
+              </Button>
+              <Button asChild>
+                <Link href={`/scoring/${resultat.decision_id}/fiche`}>
+                  Générer la fiche de justification
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

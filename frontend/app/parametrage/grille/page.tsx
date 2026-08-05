@@ -1,11 +1,14 @@
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { EnTete } from "@/components/solida/EnTete";
 import { GrilleParametrage } from "@/components/solida/GrilleParametrage";
 import { fetchBackend } from "@/lib/backend";
 import type { ConfigurationGrilleApi, DecisionRegistreApi } from "@/lib/contracts";
-import { lireSession } from "@/lib/session";
+import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
 
 export default async function PageGrille() {
   const session = await lireSession();
+  exigerMotDePasseAJour(session);
 
   const [reponseGrille, reponseRegistre] = await Promise.all([
     fetchBackend("/api/v1/parametrage/grille"),
@@ -25,6 +28,13 @@ export default async function PageGrille() {
     <div className="flex min-h-screen flex-col">
       <EnTete agence={session?.agence} utilisateur={session?.nom} />
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-4 px-6 py-6">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-sm text-neutre-500 hover:text-neutre-950"
+        >
+          <ArrowLeft className="size-4" />
+          Retour à la recherche
+        </Link>
         <div>
           <h1 className="font-serif-title text-lg font-semibold text-neutre-950">
             Paramétrage de la grille de décision

@@ -15,6 +15,14 @@ export function RechercheSocietaire() {
   const [statutRequete, setStatutRequete] = useState<StatutRequete>("idle");
   const [resultats, setResultats] = useState<ResultatRechercheSocietaire[]>([]);
   const [total, setTotal] = useState(0);
+  const [recents, setRecents] = useState<ResultatRechercheSocietaire[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/societaires/recents")
+      .then((r) => (r.ok ? r.json() : { elements: [] }))
+      .then((donnees) => setRecents(donnees.elements))
+      .catch(() => setRecents([]));
+  }, []);
 
   useEffect(() => {
     if (terme.trim().length < 2) {
@@ -121,6 +129,32 @@ export function RechercheSocietaire() {
           </CommandList>
         )}
       </Command>
+
+      {etat === "repos" && recents.length > 0 && (
+        <div className="flex w-full flex-col gap-2">
+          <span className="text-xs font-medium text-neutre-500">Consultés récemment</span>
+          <div className="flex flex-col divide-y divide-neutre-200 rounded-lg border border-neutre-200">
+            {recents.map((r) => (
+              <button
+                key={r.societaire_id}
+                type="button"
+                onClick={() => router.push(`/societaires/${r.societaire_id}`)}
+                className="flex h-[52px] cursor-pointer flex-col items-start justify-center gap-0.5 px-3 text-left hover:bg-neutre-50"
+              >
+                <div className="flex w-full items-center justify-between">
+                  <span className="text-sm font-medium text-neutre-950">{r.nom_complet}</span>
+                  {r.a_credit_en_cours && (
+                    <span className="text-xs text-neutre-500">● Crédit en cours</span>
+                  )}
+                </div>
+                <span className="text-xs text-neutre-500">
+                  N° {r.numero_membre} · {r.agence} · {r.zone.replace("_", "-")}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

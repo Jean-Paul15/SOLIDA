@@ -38,12 +38,20 @@ export function FormulaireConnexion() {
 
     if (!reponse.ok) {
       setEnCours(false);
-      setErreur("Identifiant ou mot de passe incorrect.");
+      setErreur(
+        reponse.status === 429
+          ? "Compte temporairement bloqué après plusieurs échecs, réessayez plus tard."
+          : "Identifiant ou mot de passe incorrect."
+      );
       identifiantRef.current?.focus();
       return;
     }
 
-    router.push(searchParams.get("redirect") || "/");
+    const { doit_changer_mot_de_passe }: { doit_changer_mot_de_passe: boolean } =
+      await reponse.json();
+    router.push(
+      doit_changer_mot_de_passe ? "/changer-mot-de-passe" : searchParams.get("redirect") || "/"
+    );
   }
 
   return (

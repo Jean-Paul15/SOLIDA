@@ -5,7 +5,7 @@ const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL ?? "http://localho
 /**
  * Fetch côté serveur (Server Component) vers le backend réel : le navigateur passe par la
  * réécriture de `next.config.ts` et envoie ses cookies automatiquement, mais un fetch lancé
- * depuis le serveur Next.js n'a pas de navigateur pour le faire — le cookie de session doit
+ * depuis le serveur Next.js n'a pas de navigateur pour le faire ; le cookie de session doit
  * être transmis explicitement, sinon le backend voit une requête non authentifiée.
  */
 export async function fetchBackend(chemin: string, init?: RequestInit): Promise<Response> {

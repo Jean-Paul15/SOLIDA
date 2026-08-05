@@ -34,6 +34,21 @@ réel une fois qu'il existe.
 `plafond_primo_emprunteur` (150 000 FCFA), et les constantes de modulation par le risque (1,3 / 2,0
 / 0,4 / 1,2). Même statut que la grille : point de départ ajustable par la coopérative, pas figé.
 
+## nginx sans TLS
+
+`infra/nginx/nginx.conf` écoute en clair sur le port 80 — usage LAN/démonstration de hackathon
+assumé, pas un déploiement réel. Avant tout déploiement effectif : certificat TLS,
+`listen 443 ssl`, redirection 80→443, en-tête `Strict-Transport-Security`. Pas construit
+maintenant : temps non justifié pour un usage qui ne servira pas cette semaine.
+
+## Ajustement du générateur CORE-SIM
+
+`simulateur/simulateur/pipeline.py`, fonction `noms()` : à 12 000 sociétaires tirés sur 48
+patronymes × 22 prénoms par sexe, deux sociétaires distincts (`societaire_id` différents,
+donc pas un doublon technique) portaient presque certainement le même nom complet — gênant pour
+un agent qui cherche par nom. Le nom complet est désormais garanti unique sur toute la population
+générée (nouvelle tentative de tirage en cas de collision), sans suffixe numérique visible.
+
 ## Approximations de l'adaptateur CORE-SIM
 
 Le générateur produit des données brutes mais pas d'échéancier de remboursement détaillé ni
@@ -60,8 +75,14 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   un JWT court de 15 minutes séparé d'un renouvellement long. Choix délibéré pour la simplicité
   (moins de composants, plus facile à auditer) : la propriété qui compte — révocation côté serveur
   — est déjà pleinement assurée par ce choix unique.
-- **Fiche de justification : pas de génération PDF.** L'écran restitue le contenu en JSON/HTML ; la
-  génération PDF (rendu serveur, archivage) reste à construire.
+- **Fiche de justification : PDF généré côté serveur (WeasyPrint), archivage objet (SeaweedFS,
+  pas MinIO).** `minio/minio` n'a plus reçu de nouvelle image Docker officielle depuis
+  RELEASE.2025-09-07 (arrêt de la diffusion des binaires communautaires en octobre 2025) —
+  épingler cette image aurait figé un composant jamais plus corrigé. SeaweedFS (`chrislusf/
+  seaweedfs:4.40`, actif) expose la même API S3, lue par le même client Python `minio` (7.2.20) —
+  aucun code applicatif ne dépend du nom "MinIO", seulement de l'API S3 qu'il expose. Seules les
+  métadonnées (`fiche_archivee` : identifiant, chemin objet, auteur, horodatage) vivent dans
+  `solida` ; le PDF lui-même reste dans le stockage objet, jamais en base.
 - **`utilisateur.agence_id` porte le code `caisse_id` brut de CORE-SIM** ("CAI-00"), pas un
   libellé affichable ni une table `agence` séparée — nécessaire pour que le cloisonnement par
   agence du rôle `agent` compare des identifiants réels, mais la connexion affiche donc ce code
@@ -76,6 +97,13 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   agricole, équipement). `produit_id` est aujourd'hui seulement transmis pour l'audit
   (`decision_scoring.entree`), il n'influence pas encore le calcul du plafond. Il faudrait un
   plafond par produit dans `grille_decision.seuils` pour refléter le catalogue.
+- **Flux de scoring en deux temps** (`POST /previsualiser` puis `POST /confirmer`) : la
+  prévisualisation ne persiste rien, la confirmation relit les mêmes tables CORE-SIM et recalcule
+  à l'identique plutôt que de rejouer un résultat mis en cache — si les données CORE-SIM changent
+  entre les deux appels (fenêtre de quelques secondes en pratique), le résultat confirmé peut
+  différer marginalement de l'aperçu affiché. Accepté pour cette passe : pas de stockage
+  intermédiaire d'un résultat non confirmé, ce qui aurait ajouté un état à gérer (expiration,
+  nettoyage) pour un gain de cohérence négligeable à l'échelle d'une session de guichet.
 - **`/registre` et `/parametrage/grille`** ont été câblés directement sur ces nouveaux endpoints
   (pas de contrat frontend préexistant à respecter, voir `06-cablage-frontend.md`) : leur forme
   (nommage `snake_case`, `{elements, total}`) reste une convention posée pour l'occasion, pas la

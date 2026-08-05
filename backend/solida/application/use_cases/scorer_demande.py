@@ -3,6 +3,7 @@ import uuid
 from dataclasses import dataclass, replace
 
 from solida.domain.erreurs import AccesRefuse, DonneesInsuffisantes, SocietaireIntrouvable
+from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.ports.decisions import DepotDecisions
 from solida.domain.ports.feature_store import FeatureStore
@@ -107,8 +108,25 @@ class ScorerDemande:
     modele: ModeleScoring
     depot_grille: DepotGrille
     depot_decisions: DepotDecisions
+    journal_audit: JournalAudit
 
-    def executer(
+    def previsualiser(
+        self,
+        demande: DemandeScoring,
+        entree_brute: dict[str, object],
+        agent_id: str,
+        agent_nom: str,
+        agent_agence_id: str | None,
+    ) -> DecisionAEnregistrer:
+        """Calcule le score sans l'enregistrer — l'agent doit encore confirmer avant que
+        quoi que ce soit ne soit écrit dans le registre des décisions."""
+        decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
+        self.journal_audit.enregistrer_evenement(
+            "scoring_previsualise", agent_id, demande.societaire_id, {}
+        )
+        return decision
+
+    def confirmer(
         self,
         demande: DemandeScoring,
         entree_brute: dict[str, object],
@@ -116,6 +134,24 @@ class ScorerDemande:
         agent_nom: str,
         agent_agence_id: str | None,
     ) -> DecisionEnregistree:
+        """Recalcule à l'identique (les features CORE-SIM peuvent avoir changé entre la
+        prévisualisation et la confirmation — limite documentée, acceptable pour cette
+        passe) puis persiste, cette fois pour de bon."""
+        decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
+        enregistree = self.depot_decisions.enregistrer(decision)
+        self.journal_audit.enregistrer_evenement(
+            "scoring_confirme", agent_id, demande.societaire_id, {}
+        )
+        return enregistree
+
+    def _calculer(
+        self,
+        demande: DemandeScoring,
+        entree_brute: dict[str, object],
+        agent_id: str,
+        agent_nom: str,
+        agent_agence_id: str | None,
+    ) -> DecisionAEnregistrer:
         societaire = self.lecteur.charger_societaire(demande.societaire_id)
         if societaire is None:
             raise SocietaireIntrouvable(
@@ -184,7 +220,7 @@ class ScorerDemande:
         )
         conditions = lister_conditions_reexamen(situation, ParametresReexamen())
 
-        decision = DecisionAEnregistrer(
+        return DecisionAEnregistrer(
             decision_id=str(uuid.uuid4()),
             agent_id=agent_id,
             agent_nom=agent_nom,
@@ -207,4 +243,3 @@ class ScorerDemande:
             version_modele=self.modele.version(),
             version_grille=configuration.version_grille,
         )
-        return self.depot_decisions.enregistrer(decision)

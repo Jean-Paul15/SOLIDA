@@ -32,11 +32,28 @@ PRENOMS_F = ["Akouvi","Ama","Afi","Adjo","Adjovi","Akossiwa","Abra","Essi","Adzo
     "Ablavi","Afiwa","Akpene","Sitsope","Mawusi","Yawa","Dela","Akuvi","Elolo","Sedjro","Afia"]
 
 def noms(rng, sexes):
+    # Deux societaires distincts avec le meme nom complet ne sont pas un doublon technique
+    # (societaire_id reste unique) mais brouillent la recherche par nom pour l'agent : on
+    # garantit donc l'unicite du nom complet sur toute la population generee. L'espace de
+    # combinaisons (patronymes x prenoms, avec ou sans second prenom) depasse largement
+    # n_membres, une nouvelle tentative suffit presque toujours ; le second prenom force en
+    # dernier recours elargit encore la combinatoire plutot que d'ajouter un suffixe visible
+    # qui casserait le realisme des donnees.
+    utilises = set()
     out = []
     for s in sexes:
-        pat = rng.choice(PATRONYMES); base = PRENOMS_F if s == "F" else PRENOMS_M
-        p2 = (" " + rng.choice(PRENOMS_M + PRENOMS_F)) if rng.random() < 0.4 else ""
-        out.append(f"{pat} {rng.choice(base)}{p2}")
+        base = PRENOMS_F if s == "F" else PRENOMS_M
+        for _ in range(500):
+            pat = rng.choice(PATRONYMES)
+            prenom = rng.choice(base)
+            p2 = (" " + rng.choice(PRENOMS_M + PRENOMS_F)) if rng.random() < 0.4 else ""
+            nom = f"{pat} {prenom}{p2}"
+            if nom not in utilises:
+                break
+        else:
+            nom = f"{pat} {prenom} {rng.choice(PRENOMS_M + PRENOMS_F)} {rng.choice(PRENOMS_M + PRENOMS_F)}"
+        utilises.add(nom)
+        out.append(nom)
     return out
 
 # ------------------------------------------------------------------ membres (tous epargnants)

@@ -5,7 +5,7 @@ import { EnTete } from "@/components/solida/EnTete";
 import { ResultatScoringVue } from "@/components/solida/ResultatScoringVue";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ResultatScoring } from "@/lib/contracts";
-import { lireSession } from "@/lib/session";
+import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
 
 interface PageResultatScoringProps {
   params: Promise<{ id: string }>;
@@ -24,6 +24,7 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
   const dossier: DossierSocietaire = await reponseDossier.json();
 
   const session = await lireSession();
+  exigerMotDePasseAJour(session);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -37,7 +38,9 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
           Retour au dossier de {dossier.identite.nom_complet}
         </Link>
       </div>
-      <ResultatScoringVue resultat={resultat} />
+      <main className="flex flex-1 flex-col">
+        <ResultatScoringVue resultat={resultat} />
+      </main>
     </div>
   );
 }

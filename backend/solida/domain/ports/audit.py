@@ -14,3 +14,7 @@ class JournalAudit(Protocol):
         objet: str,
         details: dict[str, object],
     ) -> None: ...
+
+    def lister_objets_recents(
+        self, type_evenement: str, acteur_id: str, limite: int
+    ) -> list[str]: ...

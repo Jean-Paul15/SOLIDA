@@ -6,7 +6,7 @@ import { FicheApercu } from "@/components/solida/FicheApercu";
 import { FicheActions } from "@/components/solida/FicheActions";
 import { fetchBackend } from "@/lib/backend";
 import type { FicheJustification } from "@/lib/contracts";
-import { lireSession } from "@/lib/session";
+import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
 
 const VERSION_APPLICATION = "solida-frontend-0.1.0";
 
@@ -21,6 +21,7 @@ export default async function PageFiche({ params }: PageFicheProps) {
   const ficheData: FicheJustification = await reponse.json();
 
   const session = await lireSession();
+  exigerMotDePasseAJour(session);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -39,7 +40,7 @@ export default async function PageFiche({ params }: PageFicheProps) {
         <div className="flex-1">
           <FicheApercu fiche={ficheData} versionApplication={VERSION_APPLICATION} />
         </div>
-        <FicheActions />
+        <FicheActions decisionId={decisionId} />
       </main>
     </div>
   );
