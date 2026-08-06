@@ -5,7 +5,12 @@ import { EnTete } from "@/components/solida/EnTete";
 import { ResultatScoringVue } from "@/components/solida/ResultatScoringVue";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ResultatScoring } from "@/lib/contracts";
-import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
+import {
+  exigerMotDePasseAJour,
+  lireSession,
+  redirigerSiAccesRefuse,
+  redirigerSiNonAuthentifie,
+} from "@/lib/session";
 
 interface PageResultatScoringProps {
   params: Promise<{ id: string }>;
@@ -15,6 +20,7 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
   const { id: decisionId } = await params;
   const reponse = await fetchBackend(`/api/v1/scoring/${decisionId}`);
   redirigerSiNonAuthentifie(reponse);
+  redirigerSiAccesRefuse(reponse);
   if (!reponse.ok) notFound();
   const resultat: ResultatScoring = await reponse.json();
 
@@ -22,6 +28,7 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
     `/api/v1/societaires/${resultat.societaire_id}/dossier`
   );
   redirigerSiNonAuthentifie(reponseDossier);
+  redirigerSiAccesRefuse(reponseDossier);
   if (!reponseDossier.ok) notFound();
   const dossier: DossierSocietaire = await reponseDossier.json();
 

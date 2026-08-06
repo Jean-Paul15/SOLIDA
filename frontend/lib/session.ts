@@ -43,3 +43,15 @@ export function redirigerSiNonAuthentifie(reponse: Response): void {
     redirect("/connexion");
   }
 }
+
+/**
+ * Un 403 signifie que la ressource existe mais que l'agent n'a pas le droit de la voir
+ * (ex. sociétaire d'une autre agence, voir `AccesRefuse` côté backend) : ne jamais le
+ * confondre avec `notFound()`, qui affiche « page introuvable » et masquerait à l'agent
+ * qu'il vient de heurter une frontière d'accès plutôt qu'un identifiant invalide.
+ */
+export function redirigerSiAccesRefuse(reponse: Response): void {
+  if (reponse.status === 403) {
+    redirect("/acces-refuse");
+  }
+}

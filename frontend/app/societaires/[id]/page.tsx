@@ -20,7 +20,12 @@ import type { DossierSocietaire, ProduitCreditApi } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
 import { trouverProduit } from "@/lib/produits";
 import { peutScorer } from "@/lib/roles";
-import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
+import {
+  exigerMotDePasseAJour,
+  lireSession,
+  redirigerSiAccesRefuse,
+  redirigerSiNonAuthentifie,
+} from "@/lib/session";
 
 const LIBELLE_SEGMENT: Record<string, string> = {
   salarie: "Salarié",
@@ -52,6 +57,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
     fetchBackend("/api/v1/produits"),
   ]);
   redirigerSiNonAuthentifie(reponse);
+  redirigerSiAccesRefuse(reponse);
   if (!reponse.ok) notFound();
   const dossier: DossierSocietaire = await reponse.json();
   const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];

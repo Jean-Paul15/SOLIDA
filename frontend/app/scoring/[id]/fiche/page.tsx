@@ -6,7 +6,12 @@ import { FicheApercu } from "@/components/solida/FicheApercu";
 import { FicheActions } from "@/components/solida/FicheActions";
 import { fetchBackend } from "@/lib/backend";
 import type { FicheJustification, ProduitCreditApi } from "@/lib/contracts";
-import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
+import {
+  exigerMotDePasseAJour,
+  lireSession,
+  redirigerSiAccesRefuse,
+  redirigerSiNonAuthentifie,
+} from "@/lib/session";
 
 const VERSION_APPLICATION = "solida-frontend-0.1.0";
 
@@ -21,6 +26,7 @@ export default async function PageFiche({ params }: PageFicheProps) {
     fetchBackend("/api/v1/produits"),
   ]);
   redirigerSiNonAuthentifie(reponse);
+  redirigerSiAccesRefuse(reponse);
   if (!reponse.ok) notFound();
   const ficheData: FicheJustification = await reponse.json();
   const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
