@@ -70,9 +70,63 @@ taux_sortie_gie_annuel: 0.05
 # --- Credit ---
 montant_median_primo: 100000
 coefficient_progression: 1.5
-plafond_produit: 3000000
 duree_mois_choix: [3, 6, 9, 12, 18, 24]
 taux_interet_annuel: 0.16       # 16% degressif (FUCEC)
+
+# --- Catalogue de produits (un par segment, cf. simulateur/README.md) ---
+# Typologie confirmee sur les sites officiels FUCEC-Togo/RCPB/PAMECAS (CIF-AO) : credit sur
+# salaire domicilie, credit individuel, YouthStart (jeunes), Credit Epargne avec Education
+# (GIE femmes), credit agricole. Aucune de ces institutions ne publie de plafond/duree/taux
+# precis par produit (donnee interne, non publique) : valeurs ci-dessous calibrees comme point
+# de depart ajustable par la cooperative, meme statut que les autres parametres de ce fichier.
+# Plafond reglementaire de reference : 24% TAEG pour les SFD de l'UEMOA (Decision
+# n19/29-12-2025/CM/UMOA, applicable au 1er juin 2026) -- tous les taux ci-dessous sont en-dessous.
+produits:
+  salarie:
+    produit_id: prod-salarie
+    libelle: "Credit sur salaire domicilie"
+    type_garantie: epargne_nantie
+    montant_min: 50000
+    montant_max: 2000000
+    duree_min_mois: 3
+    duree_max_mois: 24
+    taux_annuel: 0.14
+  individuel:
+    produit_id: prod-individuel
+    libelle: "Credit individuel commerce/activite"
+    type_garantie: epargne_nantie
+    montant_min: 50000
+    montant_max: 2000000
+    duree_min_mois: 3
+    duree_max_mois: 18
+    taux_annuel: 0.16
+  jeune:
+    produit_id: prod-jeune
+    libelle: "YouthStart -- jeunes entrepreneurs"
+    type_garantie: epargne_nantie
+    montant_min: 50000
+    montant_max: 750000
+    duree_min_mois: 3
+    duree_max_mois: 12
+    taux_annuel: 0.16
+  femme_gie:
+    produit_id: prod-femme-gie
+    libelle: "Credit Epargne avec Education (GIE femmes)"
+    type_garantie: solidaire
+    montant_min: 50000
+    montant_max: 1500000
+    duree_min_mois: 3
+    duree_max_mois: 12
+    taux_annuel: 0.16
+  agricole:
+    produit_id: prod-agricole
+    libelle: "Credit agricole (campagne)"
+    type_garantie: epargne_nantie
+    montant_min: 50000
+    montant_max: 1500000
+    duree_min_mois: 6
+    duree_max_mois: 18
+    taux_annuel: 0.16
 
 # --- Epargne ---
 depot_mensuel_median: 10000

@@ -12,8 +12,8 @@ class ParametresGrille(BaseModel):
 class ParametresProgressif(BaseModel):
     coefficient_progression: float
     montant_plancher: int = Field(ge=0)
-    plafond_produit: int = Field(ge=0)
     plafond_primo_emprunteur: int = Field(ge=0)
+    plafonds_produits: dict[str, int]
     modulation_base: float
     modulation_pente: float
     modulation_min: float

@@ -63,7 +63,11 @@ export function FormulaireConnexion() {
           id="identifiant"
           name="identifiant"
           autoFocus
-          autoComplete="username"
+          // "off" plutot que "username" : reduit (sans l'annuler completement, certains
+          // navigateurs l'ignorent sur un formulaire de connexion) le remplissage automatique
+          // d'un identifiant enregistre pour cette origine. Le vrai nettoyage se fait dans le
+          // gestionnaire de mots de passe du navigateur, pas dans le code.
+          autoComplete="off"
           disabled={enCours}
           required
         />

@@ -62,6 +62,7 @@ def test_connexion_avec_identifiants_valides_pose_le_cookie(client: TestClient) 
     assert reponse.status_code == 200
     assert reponse.json() == {
         "nom": "Agent Bè",
+        "role": "agent",
         "agence": "CAI-00",
         "doit_changer_mot_de_passe": False,
     }
@@ -114,6 +115,7 @@ def test_moi_relit_lutilisateur_depuis_le_cookie_de_connexion(client: TestClient
     assert reponse.status_code == 200
     assert reponse.json() == {
         "nom": "Agent Agoè",
+        "role": "agent",
         "agence": "CAI-01",
         "doit_changer_mot_de_passe": False,
     }

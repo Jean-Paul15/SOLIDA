@@ -63,6 +63,7 @@ class SyntheseEpargne(BaseModel):
 
 class CreditResume(BaseModel):
     credit_id: str
+    produit_id: str
     date_deblocage: str
     montant_octroye: int
     duree_mois: int

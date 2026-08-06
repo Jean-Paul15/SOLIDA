@@ -93,6 +93,7 @@ class ConsulterDossier:
         historique = [
             CreditResume(
                 credit_id=c.credit_id,
+                produit_id=c.produit_id,
                 date_deblocage=c.date_deblocage,
                 montant_octroye=c.montant_octroye,
                 duree_mois=c.duree_mois,

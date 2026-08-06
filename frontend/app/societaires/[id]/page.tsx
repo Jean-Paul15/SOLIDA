@@ -16,9 +16,11 @@ import { GroupeCautionDialog } from "@/components/solida/GroupeCautionDialog";
 import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
 import { MouvementsEpargne } from "@/components/solida/MouvementsEpargne";
 import { fetchBackend } from "@/lib/backend";
-import type { DossierSocietaire } from "@/lib/contracts";
+import type { DossierSocietaire, ProduitCreditApi } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
-import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
+import { trouverProduit } from "@/lib/produits";
+import { peutScorer } from "@/lib/roles";
+import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
 
 const LIBELLE_SEGMENT: Record<string, string> = {
   salarie: "Salarié",
@@ -45,9 +47,14 @@ const LIBELLE_STATUT_CREDIT: Record<string, string> = {
 
 export default async function PageDossier({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const reponse = await fetchBackend(`/api/v1/societaires/${id}/dossier`);
+  const [reponse, reponseProduits] = await Promise.all([
+    fetchBackend(`/api/v1/societaires/${id}/dossier`),
+    fetchBackend("/api/v1/produits"),
+  ]);
+  redirigerSiNonAuthentifie(reponse);
   if (!reponse.ok) notFound();
   const dossier: DossierSocietaire = await reponse.json();
+  const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
 
   const session = await lireSession();
   exigerMotDePasseAJour(session);
@@ -87,11 +94,14 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
               {identite.agence} · {activite.secteur}
             </span>
           </div>
-          <NouvelleDemandeSheet
-            societaireId={id}
-            nomComplet={identite.nom_complet}
-            activite={activite}
-          />
+          {peutScorer(session?.role) && (
+            <NouvelleDemandeSheet
+              societaireId={id}
+              nomComplet={identite.nom_complet}
+              activite={activite}
+              produits={produits}
+            />
+          )}
         </div>
 
         {alertes.length > 0 && (
@@ -206,6 +216,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
               <TableHeader>
                 <TableRow>
                   <TableHead>Date de déblocage</TableHead>
+                  <TableHead>Produit</TableHead>
                   <TableHead>Montant octroyé</TableHead>
                   <TableHead>Durée</TableHead>
                   <TableHead>Cycle</TableHead>
@@ -218,6 +229,9 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
                 {historique_credit.map((c) => (
                   <TableRow key={c.credit_id}>
                     <TableCell>{new Date(c.date_deblocage).toLocaleDateString("fr-FR")}</TableCell>
+                    <TableCell>
+                      {trouverProduit(produits, c.produit_id)?.libelle ?? c.produit_id}
+                    </TableCell>
                     <TableCell className="text-right font-mono">
                       {formaterMontant(c.montant_octroye)}
                     </TableCell>

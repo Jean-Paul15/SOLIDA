@@ -3,17 +3,25 @@ import Link from "next/link";
 import { EnTete } from "@/components/solida/EnTete";
 import { GrilleParametrage } from "@/components/solida/GrilleParametrage";
 import { fetchBackend } from "@/lib/backend";
-import type { ConfigurationGrilleApi, DecisionRegistreApi } from "@/lib/contracts";
-import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
+import type {
+  ConfigurationGrilleApi,
+  DecisionRegistreApi,
+  ProduitCreditApi,
+} from "@/lib/contracts";
+import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
 
 export default async function PageGrille() {
   const session = await lireSession();
   exigerMotDePasseAJour(session);
 
-  const [reponseGrille, reponseRegistre] = await Promise.all([
+  const [reponseGrille, reponseRegistre, reponseProduits] = await Promise.all([
     fetchBackend("/api/v1/parametrage/grille"),
     fetchBackend("/api/v1/registre?limite=100"),
+    fetchBackend("/api/v1/produits"),
   ]);
+  redirigerSiNonAuthentifie(reponseGrille);
+  redirigerSiNonAuthentifie(reponseRegistre);
+  redirigerSiNonAuthentifie(reponseProduits);
 
   const configurationInitiale: ConfigurationGrilleApi | null = reponseGrille.ok
     ? await reponseGrille.json()
@@ -23,6 +31,7 @@ export default async function PageGrille() {
         (d) => d.resultat.score
       )
     : [];
+  const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -48,6 +57,8 @@ export default async function PageGrille() {
           <GrilleParametrage
             configurationInitiale={configurationInitiale}
             scoresHistoriques={scoresHistoriques}
+            role={session?.role}
+            produits={produits}
           />
         ) : (
           <p className="text-sm text-neutre-500">

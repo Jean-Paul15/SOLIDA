@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { ContributionVariable, FicheJustification } from "@/lib/contracts";
+import type { ContributionVariable, FicheJustification, ProduitCreditApi } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
 import { COULEUR_TRANCHE, LIBELLE_OBJET_CREDIT, LIBELLE_TRANCHE } from "@/lib/libelles";
 import { trouverProduit } from "@/lib/produits";
@@ -7,6 +7,7 @@ import { trouverProduit } from "@/lib/produits";
 interface FicheApercuProps {
   fiche: FicheJustification;
   versionApplication: string;
+  produits: ProduitCreditApi[];
 }
 
 function BlocFacteurs({ titre, facteurs }: { titre: string; facteurs: ContributionVariable[] }) {
@@ -30,10 +31,10 @@ function BlocFacteurs({ titre, facteurs }: { titre: string; facteurs: Contributi
   );
 }
 
-export function FicheApercu({ fiche, versionApplication }: FicheApercuProps) {
+export function FicheApercu({ fiche, versionApplication, produits }: FicheApercuProps) {
   const { resultat, demande } = fiche;
   const couleurs = COULEUR_TRANCHE[resultat.tranche];
-  const produit = trouverProduit(demande.produit_id);
+  const produit = trouverProduit(produits, demande.produit_id);
 
   return (
     <div
@@ -66,7 +67,7 @@ export function FicheApercu({ fiche, versionApplication }: FicheApercuProps) {
         </div>
         <div className="flex flex-col gap-1">
           <span className="font-medium text-neutre-500 uppercase">Demande</span>
-          <span>{produit.nom}</span>
+          <span>{produit?.libelle ?? demande.produit_id}</span>
           <span>{formaterMontant(demande.montant_demande)} sollicités</span>
           <span>{demande.duree_demandee_mois} mois</span>
           <span>{LIBELLE_OBJET_CREDIT[demande.objet_credit]}</span>

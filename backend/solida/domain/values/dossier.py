@@ -51,6 +51,7 @@ class SyntheseEpargne:
 @dataclass(frozen=True)
 class CreditResume:
     credit_id: str
+    produit_id: str
     date_deblocage: date
     montant_octroye: int
     duree_mois: int

@@ -23,7 +23,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { ActiviteEconomique, EntreeScoring, ObjetCredit } from "@/lib/contracts";
+import type {
+  ActiviteEconomique,
+  EntreeScoring,
+  ObjetCredit,
+  ProduitCreditApi,
+} from "@/lib/contracts";
 import {
   calculerEcheanceMensuelle,
   calculerTauxEndettement,
@@ -32,11 +37,15 @@ import {
 import { formaterMontant } from "@/lib/format";
 import { LIBELLE_OBJET_CREDIT } from "@/lib/libelles";
 import { usePrevisualisation } from "@/lib/previsualisation-context";
-import { PRODUITS, trouverProduit } from "@/lib/produits";
+import { trouverProduit } from "@/lib/produits";
 import { ErreurService } from "@/lib/services/erreur-service";
 import { previsualiserScore } from "@/lib/services/scoring";
 
-const DUREES = [3, 6, 9, 12, 18, 24];
+// Catalogue de durees "standard" (aligne sur simulateur/config.yaml, duree_mois_choix) : filtre
+// ensuite aux bornes reelles du produit selectionne plutot qu'affiche une liste universelle qui
+// laisserait choisir une duree hors du produit (meme incoherence que l'ancrage de la courbe
+// d'epargne, voir MouvementsEpargne.tsx).
+const DUREES_STANDARD = [3, 6, 9, 12, 18, 24];
 
 const OBJETS = Object.entries(LIBELLE_OBJET_CREDIT).map(([valeur, libelle]) => ({
   valeur: valeur as ObjetCredit,
@@ -47,19 +56,21 @@ interface NouvelleDemandeSheetProps {
   societaireId: string;
   nomComplet: string;
   activite: ActiviteEconomique;
+  produits: ProduitCreditApi[];
 }
 
 export function NouvelleDemandeSheet({
   societaireId,
   nomComplet,
   activite,
+  produits,
 }: NouvelleDemandeSheetProps) {
   const router = useRouter();
   const { definirPrevisualisation } = usePrevisualisation();
   const [sheetOuvert, setSheetOuvert] = useState(false);
-  const [produitId, setProduitId] = useState(PRODUITS[0].id);
+  const [produitId, setProduitId] = useState(produits[0]?.produit_id ?? "");
   const [montant, setMontant] = useState(500000);
-  const [duree, setDuree] = useState(12);
+  const [duree, setDuree] = useState(() => Math.min(12, produits[0]?.duree_max_mois ?? 12));
   const [dureePersonnalisee, setDureePersonnalisee] = useState(false);
   const [objet, setObjet] = useState<ObjetCredit>("fonds_roulement");
   const [actualisationOuverte, setActualisationOuverte] = useState(false);
@@ -68,7 +79,22 @@ export function NouvelleDemandeSheet({
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const produit = trouverProduit(produitId);
+  const produit = trouverProduit(produits, produitId);
+  const dureesValides = produit
+    ? DUREES_STANDARD.filter((d) => d >= produit.duree_min_mois && d <= produit.duree_max_mois)
+    : DUREES_STANDARD;
+
+  function choisirProduit(id: string): void {
+    setProduitId(id);
+    const nouveauProduit = trouverProduit(produits, id);
+    if (
+      nouveauProduit &&
+      (duree < nouveauProduit.duree_min_mois || duree > nouveauProduit.duree_max_mois)
+    ) {
+      setDureePersonnalisee(false);
+      setDuree(nouveauProduit.duree_max_mois);
+    }
+  }
 
   const echeance = useMemo(
     () => calculerEcheanceMensuelle(montant, duree, TAUX_MENSUEL_DEMONSTRATION),
@@ -120,14 +146,14 @@ export function NouvelleDemandeSheet({
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4">
           <div className="flex flex-col gap-1.5">
             <Label>Produit de crédit</Label>
-            <Select value={produitId} onValueChange={setProduitId}>
+            <Select value={produitId} onValueChange={choisirProduit}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PRODUITS.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.nom}
+                {produits.map((p) => (
+                  <SelectItem key={p.produit_id} value={p.produit_id}>
+                    {p.libelle}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -143,13 +169,15 @@ export function NouvelleDemandeSheet({
                 value={montant}
                 onChange={(e) => setMontant(Number(e.target.value))}
                 min={0}
-                max={produit.plafond}
+                max={produit?.montant_max}
               />
               <span className="text-sm text-neutre-500">FCFA</span>
             </div>
-            <span className="text-xs text-neutre-500">
-              Plafond du produit : {formaterMontant(produit.plafond)}
-            </span>
+            {produit && (
+              <span className="text-xs text-neutre-500">
+                Plafond du produit : {formaterMontant(produit.montant_max)}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -169,7 +197,7 @@ export function NouvelleDemandeSheet({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DUREES.map((d) => (
+                {dureesValides.map((d) => (
                   <SelectItem key={d} value={String(d)}>
                     {d} mois
                   </SelectItem>
@@ -177,12 +205,17 @@ export function NouvelleDemandeSheet({
                 <SelectItem value="autre">Autre (préciser)</SelectItem>
               </SelectContent>
             </Select>
+            {produit && (
+              <span className="text-xs text-neutre-500">
+                Durée du produit : {produit.duree_min_mois}–{produit.duree_max_mois} mois
+              </span>
+            )}
             {dureePersonnalisee && (
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  min={1}
-                  max={60}
+                  min={produit?.duree_min_mois ?? 1}
+                  max={produit?.duree_max_mois ?? 60}
                   value={duree}
                   onChange={(e) => setDuree(Number(e.target.value))}
                   autoFocus
@@ -273,7 +306,14 @@ export function NouvelleDemandeSheet({
         )}
 
         <SheetFooter className="flex-row justify-end gap-2">
-          <Button variant="outline" disabled={enCours}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setErreur(null);
+              setSheetOuvert(false);
+            }}
+            disabled={enCours}
+          >
             Annuler
           </Button>
           <Button onClick={calculerLeScore} disabled={enCours || montant <= 0}>

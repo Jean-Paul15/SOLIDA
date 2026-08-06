@@ -2,7 +2,14 @@ import math
 import uuid
 from dataclasses import dataclass, replace
 
-from solida.domain.erreurs import AccesRefuse, DonneesInsuffisantes, SocietaireIntrouvable
+from solida.domain.erreurs import (
+    AccesRefuse,
+    DonneesInsuffisantes,
+    DureeDemandeeInvalide,
+    MontantDemandeInvalide,
+    ProduitIntrouvable,
+    SocietaireIntrouvable,
+)
 from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.ports.decisions import DepotDecisions
@@ -188,6 +195,34 @@ class ScorerDemande:
         contributions_log_odds = self.modele.contributions(features_dict)
 
         configuration = self.depot_grille.lire_active()
+        plafond_produit_montant = configuration.progressif.plafonds_produits.get(
+            demande.produit_id
+        )
+        if plafond_produit_montant is None:
+            raise ProduitIntrouvable(
+                f"Aucun produit de crédit ne correspond à l'identifiant {demande.produit_id!r}."
+            )
+        if demande.montant_demande > plafond_produit_montant.valeur:
+            raise MontantDemandeInvalide(
+                f"Le montant demandé ({demande.montant_demande:,} FCFA) dépasse le plafond "
+                f"de ce produit ({plafond_produit_montant.valeur:,} FCFA)."
+            )
+
+        catalogue_produit = next(
+            (p for p in self.lecteur.charger_produits() if p.produit_id == demande.produit_id),
+            None,
+        )
+        if catalogue_produit is not None and not (
+            catalogue_produit.duree_min_mois
+            <= demande.duree_demandee_mois
+            <= catalogue_produit.duree_max_mois
+        ):
+            raise DureeDemandeeInvalide(
+                f"La durée demandée ({demande.duree_demandee_mois} mois) sort des bornes de ce "
+                f"produit ({catalogue_produit.duree_min_mois}-{catalogue_produit.duree_max_mois} "
+                "mois)."
+            )
+
         score = calculer_score(probabilite, configuration.scorecard)
         beta_0 = math.log((1 - probabilite.valeur) / probabilite.valeur) - sum(
             v for _, v in contributions_log_odds
@@ -206,9 +241,15 @@ class ScorerDemande:
         )
         montant_demande_v = Montant(valeur=demande.montant_demande)
         plafond = calculer_plafond(
-            montant_max_rembourse, montant_demande_v, probabilite, configuration.progressif
+            montant_max_rembourse,
+            montant_demande_v,
+            probabilite,
+            configuration.progressif,
+            plafond_produit_montant,
         )
-        trajectoire = calculer_trajectoire(plafond, configuration.progressif)
+        trajectoire = calculer_trajectoire(
+            plafond, configuration.progressif, plafond_produit_montant
+        )
 
         situation = SituationReexamen(
             regularite_epargne=features_actualisees.nb_mois_avec_depot_12m / 12,

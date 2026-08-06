@@ -22,8 +22,9 @@ connue (un modèle mal calibré rend cette mise à l'échelle trompeuse).
 
 `marge` (0,15) et `lgd` — perte en cas de défaut — (0,75), plus les multiplicateurs de zone (0,6 /
 1 / 1,6). Ce ne sont pas des choix techniques : ils traduisent un arbitrage risque/approbation qui
-appartient à la coopérative, pas à qui écrit le code. Les valeurs actuelles reprennent le prototype
-`simulateur/decision.py` pour construire et tester le mécanisme — pas la vérité finale. Réglage
+appartient à la coopérative, pas à qui écrit le code. Les valeurs actuelles reprennent un prototype
+de calcul (retiré du dépôt, voir `03-MODELE/09-lecons-prototype-simulateur.md`) qui a servi à
+construire et tester le mécanisme — pas la vérité finale. Réglage
 prévu par le superviseur (écran de paramétrage de la grille), affiné par le calibrage du modèle
 réel une fois qu'il existe.
 
@@ -92,11 +93,27 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   `superviseur.reseau`, `auditeur.interne`, `administrateur.systeme`, mot de passe unique
   `solida-demo`). À supprimer avant tout déploiement réel — ce sont des comptes de hackathon, pas
   un provisioning de production.
-- **Un seul `plafond_produit` global**, alors que le catalogue de produits du frontend
-  (`frontend/lib/produits.ts`) affiche trois plafonds différents par produit (crédit commerce,
-  agricole, équipement). `produit_id` est aujourd'hui seulement transmis pour l'audit
-  (`decision_scoring.entree`), il n'influence pas encore le calcul du plafond. Il faudrait un
-  plafond par produit dans `grille_decision.seuils` pour refléter le catalogue.
+- **Catalogue de produits, désormais réel** (2026-08-05, ferme le finding F4 de l'audit offensif) :
+  `simulateur/pipeline.py` génère la table CORE-SIM `produits_credit` (5 lignes, une par segment
+  existant — typologie confirmée par les pages produits publiques de FUCEC-Togo/RCPB/PAMECAS,
+  réseaux de la confédération CIF-AO). `produit_id` est validé au scoring
+  (`ScorerDemande._calculer`) : un identifiant inconnu lève `ProduitIntrouvable` (404). Aucune
+  source officielle ne publiant de plafond/durée/taux précis par produit (donnée interne non
+  publique à chaque réseau), les valeurs de `config/config.yaml` sont un point de départ calibré et
+  ajustable — même statut que les autres paramètres de la grille, pas une vérité mesurée.
+  Le plafond réellement **appliqué** par produit vit dans `grille_decision.seuils.plafonds_produits`
+  (dict `produit_id → montant`), ajustable par la supervision depuis l'écran de paramétrage sans
+  repasser par le générateur ; CORE-SIM reste la source des valeurs de référence initiales et de
+  l'identité du catalogue (libellé, type de garantie, bornes de durée, taux). L'ancien
+  `plafond_produit` scalaire unique a été retiré (migration `c1f8e5a3d947`).
+  `credits` (table CORE-SIM déjà générée) porte aussi un `produit_id`, dérivé du `segment` déjà tiré
+  par ligne — rétrofit choisi pour permettre l'affichage du produit dans l'historique de crédit du
+  dossier sociétaire.
+  Au passage, corrigé un bug préexistant du générateur découvert pendant ce travail : `max_remb`
+  (capacité historique de remboursement, censée piloter la progression du plafond entre cycles dans
+  `gen_credits`) était initialisé à `0.0` et jamais réassigné — le plafond de progression ne
+  dépassait donc jamais `montant_median_primo` (100 000 FCFA), quel que soit le produit. Corrigé en
+  l'alimentant depuis le montant des cycles déjà résolus (non `en_cours`) à `date_fin`.
 - **Flux de scoring en deux temps** (`POST /previsualiser` puis `POST /confirmer`) : la
   prévisualisation ne persiste rien, la confirmation relit les mêmes tables CORE-SIM et recalcule
   à l'identique plutôt que de rejouer un résultat mis en cache — si les données CORE-SIM changent
@@ -108,3 +125,23 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   (pas de contrat frontend préexistant à respecter, voir `06-cablage-frontend.md`) : leur forme
   (nommage `snake_case`, `{elements, total}`) reste une convention posée pour l'occasion, pas la
   reprise d'une spécification externe.
+
+## Blocage connu : `next build` (image `front` de production)
+
+Depuis le 2026-08-05, `npm run build` (donc `docker compose build front`, cible `runner`) échoue de
+façon reproductible lors du pré-rendu de pages internes à Next.js (`/`, `/_global-error`, jamais une
+page applicative) avec `TypeError: Cannot read properties of null (reading 'useContext')` ou
+`Cannot read properties of undefined (reading 'length')`, dans des frames "ignore-listed" (internes
+à React/Next, pas notre code). Confirmé comme bug non résolu de Next.js 16 via le dépôt officiel
+`vercel/next.js` (issues #84994, #86178, discussion #94667) — reproduit même sans `global-error.tsx`
+personnalisé, et même avec (`frontend/app/global-error.tsx`, ajouté malgré tout par bonne pratique).
+Testé et écarté : le contournement communautaire documenté (ci-dessus), `next build --webpack`
+(donc pas spécifique à Turbopack), `reactStrictMode: false`. Aucune version plus récente ne corrige
+ça à ce jour (dernière canary `16.3.1-canary.3` du jour même sans mention du correctif ; `16.3.0`,
+notre version épinglée, est la dernière stable).
+
+**Conséquence** : le conteneur `front` de production reste sur la dernière image construite avec
+succès jusqu'à correction amont ou décision de contournement (ex. downgrade vers Next.js 15.x,
+changement structurant hors périmètre d'une correction ponctuelle). `front-dev` (`next dev`, jamais
+exposé en production) n'est pas affecté — c'est le canal de vérification en attendant. Décision
+explicite de l'utilisateur (2026-08-05) : attendre plutôt que de downgrader dans l'urgence.

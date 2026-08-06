@@ -8,6 +8,7 @@ from solida.domain.entities.credit import Credit
 from solida.domain.entities.garantie import Garantie
 from solida.domain.entities.groupe import GroupeCaution, MembreGroupe
 from solida.domain.entities.mouvement_epargne import MouvementEpargne
+from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
 from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
 
@@ -49,6 +50,7 @@ def _ligne_vers_credit(ligne: Any, aujourdhui: date) -> Credit:
     return Credit(
         credit_id=ligne.credit_id,
         societaire_id=ligne.societaire_id,
+        produit_id=ligne.produit_id,
         date_deblocage=date_deblocage,
         date_echeance_prevue=ligne.date_issue,
         duree_mois=duree_mois,
@@ -135,7 +137,7 @@ class LecteurCoreSimPostgres:
 
     def charger_historique_credit(self, societaire_id: str) -> list[Credit]:
         requete = text("""
-            SELECT credit_id, societaire_id, date_deblocage, date_issue, duree_mois,
+            SELECT credit_id, societaire_id, produit_id, date_deblocage, date_issue, duree_mois,
                    numero_cycle, montant_octroye, statut, jours_retard_max
             FROM credits WHERE societaire_id = :id ORDER BY date_deblocage DESC
         """)
@@ -316,3 +318,25 @@ class LecteurCoreSimPostgres:
             statut=statut_groupe,
             membres=membres,
         )
+
+    def charger_produits(self) -> list[ProduitCredit]:
+        requete = text("""
+            SELECT produit_id, libelle, type_garantie, montant_min, montant_max,
+                   duree_min_mois, duree_max_mois, taux_annuel
+            FROM produits_credit ORDER BY produit_id
+        """)
+        with self._moteur.connect() as connexion:
+            lignes = connexion.execute(requete)
+            return [
+                ProduitCredit(
+                    produit_id=ligne.produit_id,
+                    libelle=ligne.libelle,
+                    type_garantie=ligne.type_garantie,
+                    montant_min=round(ligne.montant_min),
+                    montant_max=round(ligne.montant_max),
+                    duree_min_mois=ligne.duree_min_mois,
+                    duree_max_mois=ligne.duree_max_mois,
+                    taux_annuel=float(ligne.taux_annuel),
+                )
+                for ligne in lignes
+            ]

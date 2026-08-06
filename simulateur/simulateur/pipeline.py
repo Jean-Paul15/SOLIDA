@@ -100,8 +100,19 @@ def gen_membres(cfg, rng):
 def gen_epargne(cfg, rng, mb):
     n = len(mb); fin = pd.Timestamp(cfg["date_fin"])
     disc = mb["lat_discipline"].values
-    p_depot = sigmoid(1.3 * disc + rng.normal(0, 0.3, n))
-    nb_mois = rng.binomial(12, np.clip(p_depot, 0.03, 0.98))
+    p_depot = np.clip(sigmoid(1.3 * disc + rng.normal(0, 0.3, n)), 0.03, 0.98)
+    # tableau mois par mois (colonne 0 = il y a 11 mois, colonne 11 = mois courant) : la somme de
+    # 12 Bernoulli(p) independants suit la meme loi Binomiale(12,p) que l'ancien tirage direct,
+    # mais expose desormais QUELS mois ont un depot, pour aligner les mouvements generes dessus.
+    mois_avec_depot = rng.random((n, 12)) < p_depot[:, None]
+    # un mois ne peut etre "avec depot" que si le societaire etait deja adherent ce mois-la :
+    # masquer les colonnes hors fenetre d'adherence AVANT de sommer (plutot que plafonner
+    # nb_mois a l'anciennete apres coup) garde nb_mois_avec_depot_12m rigoureusement identique
+    # au compte tire de mouv dans la boucle ci-dessous, qui applique deja cette meme regle.
+    anciennete = mb["anciennete_societaire_mois"].values
+    mois_valides = np.arange(12)[None, :] >= (12 - np.clip(anciennete, 0, 12))[:, None]
+    mois_avec_depot &= mois_valides
+    nb_mois = mois_avec_depot.sum(axis=1)
     solde = (cfg["depot_mensuel_median"] * (0.6 + 1.6 * sigmoid(disc)) *
              (0.5 + 0.9 * rng.random(n)) * (1 + mb["anciennete_societaire_mois"].values/120)).astype(int)
     croissance = np.round(rng.normal(0.15, 0.25, n) + 0.25 * sigmoid(disc), 3)  # tendance du solde
@@ -111,15 +122,47 @@ def gen_epargne(cfg, rng, mb):
         "solde_epargne_moyen_6m": solde, "nb_mois_avec_depot_12m": nb_mois,
         "croissance_epargne_12m": croissance, "volatilite_epargne": volat,
     })
-    # echantillon de mouvements recents (realisme demo)
+
+    # mouvements alignes mois par mois sur mois_avec_depot : un mois marque "avec depot" produit
+    # toujours un mouvement de sens "depot" (hausse de solde) ce mois-la, jamais l'inverse. Plus
+    # d'echantillon aleatoire decorrele (l'ancienne cle "k" donnait 0 a 10 mouvements sans lien
+    # avec les mois effectivement marques "avec depot", d'ou des puces de regularite et un
+    # graphique de mouvements incoherents entre eux cote frontend).
+    mois_courant = pd.Timestamp(fin.year, fin.month, 1)
+    debuts_mois = [mois_courant - pd.DateOffset(months=11 - j) for j in range(12)]
+    adhesions = mb["date_adhesion"].values
+    montant_base = cfg["depot_mensuel_median"] * (0.6 + 1.6 * sigmoid(disc))
     lignes = []
-    for r in comptes.itertuples():
-        k = int(np.clip(r.nb_mois_avec_depot_12m * 0.7, 0, 10))
-        for _ in range(k):
-            d = fin - pd.to_timedelta(int(rng.uniform(1, 360)), unit="D")
-            sens = "depot" if rng.random() < 0.78 else "retrait"
-            m = int(abs(rng.normal(cfg["depot_mensuel_median"], cfg["depot_mensuel_median"]*0.5)))
-            lignes.append((f"MVT-{len(lignes):07d}", r.compte_id, d, sens, m))
+    for i, r in enumerate(comptes.itertuples()):
+        adhesion_i = pd.Timestamp(adhesions[i])
+        total_depot, jours_depot, jours_libres = 0, [], []
+        for j, debut in enumerate(debuts_mois):
+            if debut < adhesion_i:
+                continue  # pas encore societaire ce mois-la : aucun mouvement possible
+            # borne au mois calendaire, sans jamais depasser fin (mois courant partiel) : le
+            # module l'exige ("Aucune date > date_fin", voir docstring en tete de fichier).
+            borne_sup = min(debut + pd.DateOffset(months=1), fin + pd.Timedelta(days=1))
+            jour = debut + pd.to_timedelta(int(rng.integers(0, (borne_sup - debut).days)), unit="D")
+            if mois_avec_depot[i, j]:
+                montant = max(int(abs(rng.normal(montant_base[i], montant_base[i] * 0.35))), 1000)
+                lignes.append((f"MVT-{len(lignes):07d}", r.compte_id, jour, "depot", montant))
+                total_depot += montant
+                jours_depot.append(jour)
+            else:
+                jours_libres.append(jour)
+
+        # aligne la pente des mouvements sur croissance_epargne_12m (la vraie variable de
+        # tendance, feature du modele) : sans ce retrait correctif, un mois "avec depot" est
+        # toujours positif et la courbe reconstruite cote frontend (ancree sur le solde 6 mois)
+        # grimpe presque systematiquement, meme quand la tendance reelle tiree est a l'erosion.
+        retrait_requis = max(total_depot - croissance[i] * solde[i], 0)
+        porteurs = jours_libres or jours_depot
+        if retrait_requis > 0 and porteurs:
+            k = min(len(porteurs), 2)
+            part = int(retrait_requis / k)
+            if part >= 1000:
+                for idx in rng.choice(len(porteurs), size=k, replace=False):
+                    lignes.append((f"MVT-{len(lignes):07d}", r.compte_id, porteurs[idx], "retrait", part))
     mouv = pd.DataFrame(lignes, columns=["mouvement_id","compte_id","date_operation","sens","montant"])
     return comptes, mouv
 
@@ -169,6 +212,21 @@ def choc_at(choc, date):
     i = max(0, min(choc.index.searchsorted(pd.Timestamp(date), side="right") - 1, len(choc)-1))
     return float(choc.iloc[i])
 
+# ------------------------------------------------------------------ catalogue produits (referentiel)
+def gen_produits(cfg):
+    # Deterministe (aucun tirage rng) : ne consomme aucun etat aleatoire, donc ne perturbe pas la
+    # sequence de tirages du reste du pipeline malgre la graine fixe. Un produit par segment
+    # (typologie confirmee FUCEC-Togo/RCPB/PAMECAS, voir config.yaml).
+    lignes = []
+    for segment, p in cfg["produits"].items():
+        lignes.append({
+            "produit_id": p["produit_id"], "libelle": p["libelle"], "segment": segment,
+            "type_garantie": p["type_garantie"], "montant_min": p["montant_min"],
+            "montant_max": p["montant_max"], "duree_min_mois": p["duree_min_mois"],
+            "duree_max_mois": p["duree_max_mois"], "taux_annuel": p["taux_annuel"],
+        })
+    return pd.DataFrame(lignes)
+
 # ------------------------------------------------------------------ credits (~25% empruntent) -- BRUT
 def gen_credits(cfg, rng, mb, choc, qualite, sc_std):
     fin = pd.Timestamp(cfg["date_fin"]); debut = fin - pd.DateOffset(years=cfg["annees_credit_observe"])
@@ -187,14 +245,23 @@ def gen_credits(cfg, rng, mb, choc, qualite, sc_std):
         if debut_credit >= fin: continue
         primo_only = r.segment == "jeune" and rng.random() < 0.6
         n_credits = 1 if primo_only else int(rng.integers(1, 6))
+        # Produit du segment : borne le montant et restreint les durees choisies (catalogue,
+        # voir gen_produits/config.yaml). Repli sur la liste complete si aucune duree du choix
+        # global ne tombe dans les bornes du produit (ne devrait pas arriver avec le calibrage
+        # actuel, garde defensive).
+        produit = C["produits"][r.segment]
+        duree_choix_produit = [
+            d for d in C["duree_mois_choix"]
+            if produit["duree_min_mois"] <= d <= produit["duree_max_mois"]
+        ] or C["duree_mois_choix"]
         t0 = debut_credit; montant_ref = C["montant_median_primo"]; max_remb = 0.0; incidents = 0
         for cyc in range(1, n_credits + 1):
             if t0 >= fin: break
             ddate = t0 + pd.to_timedelta(int(rng.uniform(20, 350)), "D")
             if ddate >= fin: break
-            duree = int(rng.choice(C["duree_mois_choix"]))
+            duree = int(rng.choice(duree_choix_produit))
             plafond = max(C["montant_median_primo"], int(max_remb * C["coefficient_progression"]))
-            montant = int(min(plafond, montant_ref * rng.uniform(0.7, 1.6), C["plafond_produit"]))
+            montant = int(min(plafond, montant_ref * rng.uniform(0.7, 1.6), produit["montant_max"]))
             revenu = max(int(r.revenu_declare), 1)
             echeance = montant / duree * (1 + C["taux_interet_annuel"] * duree / 12 / duree * duree/12)
             echeance = montant / duree * 1.10
@@ -221,12 +288,19 @@ def gen_credits(cfg, rng, mb, choc, qualite, sc_std):
             reveal = ddate + pd.DateOffset(months=duree); en_cours = reveal > fin
             lignes.append({
                 "credit_id": f"CRD-{len(lignes):06d}", "societaire_id": r.societaire_id,
-                "segment": r.segment, "zone": r.zone, "gie_id": r.gie_id if r.segment=="femme_gie" else None,
+                "segment": r.segment, "produit_id": produit["produit_id"],
+                "zone": r.zone, "gie_id": r.gie_id if r.segment=="femme_gie" else None,
                 "date_deblocage": ddate, "date_issue": reveal, "duree_mois": duree,
                 "numero_cycle": cyc, "montant_octroye": montant, "endettement": endettement,
                 "est_primo": int(cyc == 1), "en_cours": en_cours, "lat_lp0": lp0,
             })
             montant_ref = montant; t0 = ddate
+            # "Capacite historique" (cf. backend/solida/domain/rules/progressif.py, calculer_plafond) :
+            # ne progresse qu'a partir des cycles deja resolus a date_fin, pas d'un credit encore en cours. Sans
+            # cette mise a jour, max_remb restait a 0.0 pour toujours et le plafond de progression
+            # ne depassait jamais montant_median_primo (100 000 FCFA), quel que soit le produit.
+            if not en_cours:
+                max_remb = max(max_remb, montant)
             if not en_cours and rng.random() < sigmoid(lp0):  # provision incidents pour cycle suivant
                 incidents += 1
     df = pd.DataFrame(lignes).sort_values("date_deblocage").reset_index(drop=True)
@@ -294,7 +368,7 @@ def injecter_manquants(cfg, rng, mb):
     mb.loc[rng.random(len(mb)) < cfg["manquant_education"], "niveau_education"] = None
     return mb
 
-def controles(cfg, mb, comptes, credits, gie, appart, garanties, mouv):
+def controles(cfg, mb, comptes, credits, gie, appart, garanties, mouv, produits):
     fin = pd.Timestamp(cfg["date_fin"]); r = {}
     res = credits[credits["defaut"] >= 0]
     r["taux_souffrance_resolus"] = round(res["defaut"].mean(), 4)
@@ -302,6 +376,7 @@ def controles(cfg, mb, comptes, credits, gie, appart, garanties, mouv):
     r["part_membres_emprunteurs"] = round(credits["societaire_id"].nunique() / len(mb), 4)
     r["part_credits_gie"] = round((credits["segment"] == "femme_gie").mean(), 4)
     r["part_credits_salarie"] = round((credits["segment"] == "salarie").mean(), 4)
+    r["produits_orphelins"] = int((~credits["produit_id"].isin(produits["produit_id"])).sum())
     dep = 0
     for s, col in [(mb,"date_adhesion"),(credits,"date_deblocage"),(gie,"date_creation"),
                    (appart,"date_entree"),(mouv,"date_operation"),(garanties,"date_engagement")]:
@@ -325,7 +400,8 @@ if __name__ == "__main__":
     credits, emp = gen_credits(cfg, rng, mb, choc, qualite, sc_std)
     garanties = gen_garanties(cfg, rng, mb, credits, comptes, appart)
     mb = injecter_manquants(cfg, rng, mb)
-    rap = controles(cfg, mb, comptes, credits, gie, appart, garanties, mouv)
+    produits = gen_produits(cfg)
+    rap = controles(cfg, mb, comptes, credits, gie, appart, garanties, mouv, produits)
 
     out = RACINE / "sorties"; out.mkdir(exist_ok=True)
     def sans_lat(d): return d[[c for c in d.columns if not c.startswith("lat_")]]
@@ -336,6 +412,7 @@ if __name__ == "__main__":
     comptes.to_parquet(out / "comptes_epargne.parquet")
     mouv.to_parquet(out / "mouvements_epargne.parquet")
     garanties.to_parquet(out / "garanties.parquet")
+    produits.to_parquet(out / "produits_credit.parquet")
     choc.to_frame("choc_sectoriel").to_parquet(out / "choc_secteur.parquet")
     credits.to_parquet(out / "_credits_latents.parquet")   # avec lat_ pour la validation
     mb.to_parquet(out / "_societaires_latents.parquet")

@@ -4,6 +4,7 @@
 # ===========================================================
 
 _archive-instructions/
+AUDIT-SECURITE-OFFENSIF.md
 
 # --- Secrets et configuration locale ---
 .env

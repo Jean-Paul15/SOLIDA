@@ -6,6 +6,7 @@ from datetime import date
 class Credit:
     credit_id: str
     societaire_id: str
+    produit_id: str
     date_deblocage: date
     date_echeance_prevue: date
     duree_mois: int

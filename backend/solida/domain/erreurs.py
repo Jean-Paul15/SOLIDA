@@ -32,3 +32,15 @@ class InvariantScoreViole(ErreurDomaine):
 
 class MotDePasseInvalide(ErreurDomaine):
     """Le mot de passe proposé ne respecte pas la politique en vigueur."""
+
+
+class MontantDemandeInvalide(ErreurDomaine):
+    """Le montant demandé dépasse le plafond produit de la grille active."""
+
+
+class DureeDemandeeInvalide(ErreurDomaine):
+    """La durée demandée sort des bornes du produit de crédit choisi."""
+
+
+class ProduitIntrouvable(ErreurDomaine):
+    """Aucun produit de crédit ne correspond à l'identifiant fourni."""

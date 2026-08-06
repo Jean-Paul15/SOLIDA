@@ -92,7 +92,8 @@ La calibration est apprise sur le jeu de validation, jamais sur le jeu d'entraî
 
 ## Grille de décision
 
-**Mécanisme** (aligné sur `simulateur/decision.py`, qui sert de prototype pour la forme du calcul) :
+**Mécanisme** (implémenté dans `backend/solida/domain/rules/grille.py` ; voir aussi
+`03-MODELE/09-lecons-prototype-simulateur.md` pour l'origine de la forme du calcul) :
 les seuils se calculent à partir de la matrice de coûts, en probabilité, pas comme des points de
 score fixés arbitrairement à l'avance :
 
@@ -117,9 +118,10 @@ cette décision **se prend au moment du hackathon**, pas avant.
 
 ## Plafond progressif
 
-Le montant recommandé est ensuite borné par la règle de crédit progressif. Le mécanisme suit la
-forme de `simulateur/decision.py` — il module le plafond par le niveau de risque, pas seulement par
-l'historique — mais ses paramètres restent, de la même façon, un réglage de la coopérative :
+Le montant recommandé est ensuite borné par la règle de crédit progressif, implémentée dans
+`backend/solida/domain/rules/progressif.py` — elle module le plafond par le niveau de risque, pas
+seulement par l'historique — mais ses paramètres restent, de la même façon, un réglage de la
+coopérative :
 
 ```
 base       = max(montant_max_rembourse × coefficient_progression, montant_plancher)
@@ -211,7 +213,7 @@ Quand la décision n'est pas un accord simple, la fiche ne s'arrête pas au verd
 d'épargne nantie à renforcer, endettement à réduire) que le sociétaire peut activer, ainsi que la
 **trajectoire de plafond** accessible s'il rembourse sans incident sur les cycles suivants. Le refus
 cesse d'être une porte fermée : il devient un parcours d'éligibilité. Voir
-`simulateur/decision.py` dans le dépôt de simulation pour l'implémentation de référence.
+`backend/solida/domain/rules/progressif.py` (`lister_conditions_reexamen`) pour l'implémentation.
 
 ### Garde-fous
 

@@ -1,22 +1,22 @@
 .PHONY: front-install front-dev front-lint front-typecheck front-test front-build front-down
 
 front-install:
-	docker compose run --rm front npm install
+	docker compose --profile dev run --rm front-dev npm install
 
 front-dev:
-	docker compose up front
+	docker compose --profile dev up front-dev
 
 front-down:
-	docker compose down
+	docker compose --profile dev down
 
 front-lint:
-	docker compose run --rm front npm run lint
+	docker compose --profile dev run --rm front-dev npm run lint
 
 front-typecheck:
-	docker compose run --rm front npm run typecheck
+	docker compose --profile dev run --rm front-dev npm run typecheck
 
 front-test:
-	docker compose run --rm front npm run test
+	docker compose --profile dev run --rm front-dev npm run test
 
 front-build:
-	docker compose run --rm front npm run build
+	docker compose --profile dev run --rm front-dev npm run build

@@ -57,7 +57,7 @@ def societaire_autre_agence() -> str:
 def _demande(societaire_id: str) -> dict[str, object]:
     return {
         "societaire_id": societaire_id,
-        "produit_id": "prod-commerce",
+        "produit_id": "prod-individuel",
         "montant_demande": 100000,
         "duree_demandee_mois": 6,
         "objet_credit": "stock",
@@ -113,6 +113,34 @@ def test_confirmer_puis_relire_la_decision(
 def test_confirmer_un_societaire_introuvable_renvoie_404(client_agent: TestClient) -> None:
     reponse = client_agent.post("/api/v1/scoring/confirmer", json=_demande("SOC-INEXISTANT"))
     assert reponse.status_code == 404
+
+
+def test_montant_au_dela_du_plafond_produit_est_rejete(
+    client_agent: TestClient, societaire_agence_agent: str
+) -> None:
+    moteur = create_engine(os.environ["SOLIDA_DATABASE_URL"])
+    with moteur.connect() as connexion:
+        avant = connexion.execute(text("SELECT count(*) FROM decision_scoring")).scalar_one()
+
+    demande = _demande(societaire_agence_agent)
+    demande["montant_demande"] = 999_000_000
+    reponse = client_agent.post("/api/v1/scoring/previsualiser", json=demande)
+    assert reponse.status_code == 422
+    assert reponse.json()["code"] == "montant_invalide"
+
+    with moteur.connect() as connexion:
+        apres = connexion.execute(text("SELECT count(*) FROM decision_scoring")).scalar_one()
+    assert apres == avant
+
+
+def test_produit_inconnu_renvoie_404(
+    client_agent: TestClient, societaire_agence_agent: str
+) -> None:
+    demande = _demande(societaire_agence_agent)
+    demande["produit_id"] = "prod-inexistant"
+    reponse = client_agent.post("/api/v1/scoring/previsualiser", json=demande)
+    assert reponse.status_code == 404
+    assert reponse.json()["code"] == "introuvable"
 
 
 def test_auditeur_ne_peut_pas_scorer(

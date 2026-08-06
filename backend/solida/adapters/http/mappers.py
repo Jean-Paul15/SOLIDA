@@ -9,9 +9,11 @@ from datetime import UTC, datetime
 from solida.adapters import libelles_variables
 from solida.adapters.http.schemas import fiche as schema_fiche
 from solida.adapters.http.schemas import grille as schema_grille
+from solida.adapters.http.schemas import produits as schema_produits
 from solida.adapters.http.schemas import registre as schema_registre
 from solida.adapters.http.schemas import scoring as schema_scoring
 from solida.adapters.http.schemas import societaires as schema_societaires
+from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.values.decision import (
     DecisionAEnregistrer,
     DecisionEnregistree,
@@ -175,6 +177,7 @@ def dossier_vers_schema(dossier: DossierSocietaire) -> schema_societaires.Dossie
         historique_credit=[
             schema_societaires.CreditResume(
                 credit_id=c.credit_id,
+                produit_id=c.produit_id,
                 date_deblocage=c.date_deblocage.isoformat(),
                 montant_octroye=c.montant_octroye,
                 duree_mois=c.duree_mois,
@@ -223,8 +226,11 @@ def grille_vers_schema(configuration: ConfigurationGrille) -> schema_grille.Conf
         progressif=schema_grille.ParametresProgressif(
             coefficient_progression=configuration.progressif.coefficient_progression,
             montant_plancher=configuration.progressif.montant_plancher.valeur,
-            plafond_produit=configuration.progressif.plafond_produit.valeur,
             plafond_primo_emprunteur=configuration.progressif.plafond_primo_emprunteur.valeur,
+            plafonds_produits={
+                produit_id: montant.valeur
+                for produit_id, montant in configuration.progressif.plafonds_produits.items()
+            },
             modulation_base=configuration.progressif.modulation_base,
             modulation_pente=configuration.progressif.modulation_pente,
             modulation_min=configuration.progressif.modulation_min,
@@ -238,4 +244,17 @@ def grille_vers_schema(configuration: ConfigurationGrille) -> schema_grille.Conf
         auteur=configuration.auteur,
         date_activation=configuration.date_activation.isoformat(),
         active=configuration.active,
+    )
+
+
+def produit_vers_schema(produit: ProduitCredit) -> schema_produits.ProduitCredit:
+    return schema_produits.ProduitCredit(
+        produit_id=produit.produit_id,
+        libelle=produit.libelle,
+        type_garantie=produit.type_garantie,
+        montant_min=produit.montant_min,
+        montant_max=produit.montant_max,
+        duree_min_mois=produit.duree_min_mois,
+        duree_max_mois=produit.duree_max_mois,
+        taux_annuel=produit.taux_annuel,
     )

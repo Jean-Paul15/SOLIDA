@@ -24,16 +24,25 @@ La performance du modele **emerge** des donnees ; on ne cible jamais une AUC.
 
 **Generateur (`pipeline.py`)** = uniquement les tables BRUTES du SIG : membres,
 comptes et mouvements d'epargne, credits (echeancier, jours de retard, statut),
-GIE et appartenances, garanties (epargne nantie OU caution solidaire GIE). Rien
-de pre-calcule. Il encode la structure reelle, dont la contagion GIE (documentee).
+GIE et appartenances, garanties (epargne nantie OU caution solidaire GIE),
+produits de credit (referentiel). Rien de pre-calcule. Il encode la structure
+reelle, dont la contagion GIE (documentee).
 
-**Feature engineering (`features.py`)** = derive les variables du modele, en trois
-blocs, toutes leak-free (a la date de deblocage) :
-- **SOCLE (universel)** : regularite et anciennete d'epargne, ratio epargne
-  nantie/credit, historique de remboursement (jours de retard, incidents),
-  endettement, cycle, anciennete, segment.
-- **SOLIDAIRE (conditionnel, GIE)** : remboursement du groupe, taille, deja secouru.
-- **SECTORIEL** : degradation recente du secteur.
+**Referentiel `produits_credit`** : un produit par segment (correspondance 1:1,
+confirmee par la typologie publique de FUCEC-Togo/RCPB/PAMECAS -- credit sur
+salaire domicilie, individuel, YouthStart jeunes, Credit Epargne avec Education
+pour les GIE femmes, agricole). Aucune de ces institutions ne publie de plafond/
+duree/taux precis par produit (donnee interne non publique) : les valeurs de
+`config/config.yaml` sont un point de depart calibre et ajustable, pas une
+verite mesuree -- meme statut que les autres parametres de ce fichier. Chaque
+credit genere porte le `produit_id` de son segment ; `montant_octroye` et
+`duree_mois` sont bornes par les valeurs du produit plutot que par un plafond
+global unique.
+
+**Feature engineering** : la specification (trois blocs SOCLE / SOLIDAIRE / SECTORIEL,
+regle "leak-free a la date de deblocage") vit desormais dans
+`03-MODELE/02-feature-engineering.md`, pas dans ce depot. Le prototype qui vivait ici
+(`features.py`) a ete retire -- voir `03-MODELE/09-lecons-prototype-simulateur.md`.
 
 ## Reproductible, dates bornees
 
@@ -45,32 +54,24 @@ date ne sont pas etiquetes (exclus de la modelisation).
 
 ```bash
 python3 simulateur/pipeline.py        # genere sorties/*.parquet + rapport coherence
-python3 simulateur/features.py        # construit la matrice de variables (verif couverture)
-python3 simulateur/valider.py         # performance emergente + matrice d'argent + interpretation
-python3 simulateur/decision.py        # grille parametrable, plafond progressif, fiche actionnable
 python3 simulateur/demo_recherche.py "MENSAH"   # dossier 360 d'un membre (demo agent)
 DATABASE_URL=postgresql://... python3 simulateur/charger_postgres.py
 ```
 
 Passer a l'echelle : `n_membres: 25000` dans `config/config.yaml`.
 
-## Resultat mesure (graine 42)
+## Feature engineering, entrainement, decision : plus ici
 
-Structure : 25,0% de membres emprunteurs, defaut en souffrance ~8,9%, GIE ~18%
-des credits, salaries ~22%, garanties = epargne nantie dominante + caution GIE
-en minorite. Performance emergente : socle AUC ~0,69 (regularite d'epargne,
-segment salarie, ratio de garantie et conditions sectorielles en tete des
-variables). Matrice d'argent : ~17% des pertes evitees au seuil economique ;
-les 20% de dossiers les plus risques concentrent ~40% des souffrances. La couche
-solidaire apporte un gain reel mais modeste sur le seul segment GIE, sous-estime
-par le demarrage a froid synthetique (plus fort sur portefeuille reel mature).
-
-## Moteur de décision (`decision.py`)
-
-Au-dessus du score : une grille de décision paramétrable (dérivée de la matrice de coûts, pas
-arbitraire), un plafond de crédit progressif avec trajectoire sur 3 cycles, et des **conditions de
-réexamen actionnables** quand la décision n'est pas un accord simple. Rien n'est une boîte noire :
-chaque règle est lisible dans `decision.py` et modifiable par caisse.
+Ce depot ne contient plus que le generateur de donnees brutes. Le prototype jetable qui
+demontrait la faisabilite (feature engineering, entrainement d'un classifieur de
+validation, moteur de decision) a ete retire : son role etait de prouver que les donnees
+synthetiques produisent un signal plausible avant que le vrai modele et le vrai backend
+n'existent, et il comportait des ecarts (fuite temporelle, coefficient non cable) qui le
+rendaient trompeur s'il restait dans le depot sans etre maintenu. Le contenu correct est
+deja specifie, en mieux, dans `03-MODELE/` (feature engineering, scorecard et grille,
+evaluation et metriques) et implemente reellement dans `backend/solida/domain/rules/`
+(`progressif.py`, `grille.py`, `scorecard.py`). Le detail de ce qui a ete retire et pourquoi
+est dans `03-MODELE/09-lecons-prototype-simulateur.md`.
 
 ## Honnetete pour le jury
 

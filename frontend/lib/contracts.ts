@@ -150,6 +150,7 @@ export interface SyntheseEpargne {
 
 export interface CreditResume {
   credit_id: string;
+  produit_id: string;
   date_deblocage: string;
   montant_octroye: number;
   duree_mois: number;
@@ -217,12 +218,23 @@ export interface ParametresGrilleApi {
 export interface ParametresProgressifApi {
   coefficient_progression: number;
   montant_plancher: number;
-  plafond_produit: number;
+  plafonds_produits: Record<string, number>;
   plafond_primo_emprunteur: number;
   modulation_base: number;
   modulation_pente: number;
   modulation_min: number;
   modulation_max: number;
+}
+
+export interface ProduitCreditApi {
+  produit_id: string;
+  libelle: string;
+  type_garantie: string;
+  montant_min: number;
+  montant_max: number;
+  duree_min_mois: number;
+  duree_max_mois: number;
+  taux_annuel: number;
 }
 
 export interface ParametresScorecardApi {

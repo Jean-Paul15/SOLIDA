@@ -45,8 +45,11 @@ def modifier(
         progressif=ParametresProgressif(
             coefficient_progression=nouvelle.progressif.coefficient_progression,
             montant_plancher=Montant(valeur=nouvelle.progressif.montant_plancher),
-            plafond_produit=Montant(valeur=nouvelle.progressif.plafond_produit),
             plafond_primo_emprunteur=Montant(valeur=nouvelle.progressif.plafond_primo_emprunteur),
+            plafonds_produits={
+                produit_id: Montant(valeur=montant)
+                for produit_id, montant in nouvelle.progressif.plafonds_produits.items()
+            },
             modulation_base=nouvelle.progressif.modulation_base,
             modulation_pente=nouvelle.progressif.modulation_pente,
             modulation_min=nouvelle.progressif.modulation_min,

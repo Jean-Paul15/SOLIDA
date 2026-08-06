@@ -5,8 +5,8 @@ import { EnTete } from "@/components/solida/EnTete";
 import { FicheApercu } from "@/components/solida/FicheApercu";
 import { FicheActions } from "@/components/solida/FicheActions";
 import { fetchBackend } from "@/lib/backend";
-import type { FicheJustification } from "@/lib/contracts";
-import { exigerMotDePasseAJour, lireSession } from "@/lib/session";
+import type { FicheJustification, ProduitCreditApi } from "@/lib/contracts";
+import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
 
 const VERSION_APPLICATION = "solida-frontend-0.1.0";
 
@@ -16,9 +16,14 @@ interface PageFicheProps {
 
 export default async function PageFiche({ params }: PageFicheProps) {
   const { id: decisionId } = await params;
-  const reponse = await fetchBackend(`/api/v1/scoring/${decisionId}/fiche`);
+  const [reponse, reponseProduits] = await Promise.all([
+    fetchBackend(`/api/v1/scoring/${decisionId}/fiche`),
+    fetchBackend("/api/v1/produits"),
+  ]);
+  redirigerSiNonAuthentifie(reponse);
   if (!reponse.ok) notFound();
   const ficheData: FicheJustification = await reponse.json();
+  const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
 
   const session = await lireSession();
   exigerMotDePasseAJour(session);
@@ -38,7 +43,11 @@ export default async function PageFiche({ params }: PageFicheProps) {
 
       <main className="mx-auto flex w-full max-w-[1000px] flex-1 gap-6 px-6 py-6">
         <div className="flex-1">
-          <FicheApercu fiche={ficheData} versionApplication={VERSION_APPLICATION} />
+          <FicheApercu
+            fiche={ficheData}
+            versionApplication={VERSION_APPLICATION}
+            produits={produits}
+          />
         </div>
         <FicheActions decisionId={decisionId} />
       </main>

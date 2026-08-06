@@ -22,6 +22,7 @@ from solida.application.use_cases.generer_fiche import GenererFiche
 from solida.application.use_cases.gerer_grille import LireGrilleActive, ModifierGrille
 from solida.application.use_cases.lire_decision import LireDecision
 from solida.application.use_cases.lister_decisions import ListerDecisions
+from solida.application.use_cases.lister_produits import ListerProduits
 from solida.application.use_cases.lister_societaires_recents import ListerSocietairesRecents
 from solida.application.use_cases.rechercher_societaire import RechercherSocietaire
 from solida.application.use_cases.scorer_demande import ScorerDemande
@@ -141,3 +142,7 @@ def lire_grille_active() -> LireGrilleActive:
 
 def modifier_grille() -> ModifierGrille:
     return ModifierGrille(depot=_depot_grille())
+
+
+def lister_produits() -> ListerProduits:
+    return ListerProduits(lecteur=_lecteur(), depot_grille=_depot_grille())

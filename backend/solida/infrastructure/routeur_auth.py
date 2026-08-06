@@ -32,6 +32,7 @@ class DemandeConnexion(BaseModel):
 
 class ReponseConnexion(BaseModel):
     nom: str
+    role: str
     agence: str | None
     doit_changer_mot_de_passe: bool
 
@@ -95,6 +96,7 @@ async def connexion(
     audit.enregistrer_evenement("connexion_reussie", str(utilisateur.id), demande.identifiant, {})
     return ReponseConnexion(
         nom=utilisateur.nom_complet,
+        role=utilisateur.role,
         agence=utilisateur.agence_id,
         doit_changer_mot_de_passe=utilisateur.doit_changer_mot_de_passe,
     )
@@ -128,6 +130,7 @@ async def deconnexion(
 async def moi(utilisateur: Utilisateur = Depends(current_active_user)) -> ReponseConnexion:
     return ReponseConnexion(
         nom=utilisateur.nom_complet,
+        role=utilisateur.role,
         agence=utilisateur.agence_id,
         doit_changer_mot_de_passe=utilisateur.doit_changer_mot_de_passe,
     )

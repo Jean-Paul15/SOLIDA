@@ -6,6 +6,7 @@ from solida.domain.entities.credit import Credit
 from solida.domain.entities.garantie import Garantie
 from solida.domain.entities.groupe import GroupeCaution
 from solida.domain.entities.mouvement_epargne import MouvementEpargne
+from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
 from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
 
@@ -40,3 +41,9 @@ class LecteurCoreSim(Protocol):
     def charger_groupe(self, societaire_id: str) -> GroupeCaution | None: ...
 
     def charger_garanties(self, societaire_id: str) -> list[Garantie]: ...
+
+    def charger_produits(self) -> list[ProduitCredit]:
+        """Référentiel des produits de crédit — table CORE-SIM, pas les plafonds
+        appliqués (ceux-ci vivent dans `grille_decision`, ajustables par la
+        supervision sans repasser par le générateur)."""
+        ...

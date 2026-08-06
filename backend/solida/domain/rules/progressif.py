@@ -12,8 +12,11 @@ class ParametresProgressif:
 
     coefficient_progression: float
     montant_plancher: Montant
-    plafond_produit: Montant
     plafond_primo_emprunteur: Montant
+    plafonds_produits: dict[str, Montant]
+    """Clé = `produit_id`. Plafond réellement appliqué par produit, ajustable par la
+    supervision — initialisé depuis les valeurs de référence CORE-SIM mais indépendant
+    du générateur une fois modifié (voir `docs/backend/03-decisions-provisoires-a-revoir.md`)."""
     modulation_base: float = 1.3
     modulation_pente: float = 2.0
     modulation_min: float = 0.4
@@ -25,12 +28,17 @@ def calculer_plafond(
     montant_demande: Montant,
     probabilite: ProbabiliteDefaut,
     parametres: ParametresProgressif,
+    plafond_produit: Montant,
 ) -> Montant:
     """Borne le montant recommandé par le principe du crédit progressif.
 
     `montant_max_rembourse` à None signifie un primo-emprunteur (aucun crédit
     antérieur) : le plafond applique alors `plafond_primo_emprunteur`, pas la
     formule générale qui n'a pas de base historique à partir de laquelle progresser.
+
+    `plafond_produit` est résolu par l'appelant (le produit demandé n'est pas
+    connu de ce module pur) — voir `ParametresProgressif.plafonds_produits` côté
+    configuration de grille.
     """
     plafond: float
     if montant_max_rembourse is None:
@@ -49,7 +57,7 @@ def calculer_plafond(
         )
         plafond = min(
             base * modulation,
-            parametres.plafond_produit.valeur,
+            plafond_produit.valeur,
             montant_demande.valeur,
         )
 
@@ -132,7 +140,10 @@ def lister_conditions_reexamen(
 
 
 def calculer_trajectoire(
-    plafond_actuel: Montant, parametres: ParametresProgressif, nb_cycles: int = 3
+    plafond_actuel: Montant,
+    parametres: ParametresProgressif,
+    plafond_produit: Montant,
+    nb_cycles: int = 3,
 ) -> list[PalierProgression]:
     """Trajectoire indicative si le sociétaire rembourse sans incident.
 
@@ -144,9 +155,7 @@ def calculer_trajectoire(
     trajectoire = []
     plafond: float = plafond_actuel.valeur
     for cycle in range(1, nb_cycles + 1):
-        plafond = min(
-            plafond * parametres.coefficient_progression, parametres.plafond_produit.valeur
-        )
+        plafond = min(plafond * parametres.coefficient_progression, plafond_produit.valeur)
         trajectoire.append(
             PalierProgression(cycle=cycle, plafond_accessible=Montant(valeur=int(round(plafond))))
         )

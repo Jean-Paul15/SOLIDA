@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import type { ConfigurationGrilleApi } from "@/lib/contracts";
+import type { ConfigurationGrilleApi, ProduitCreditApi } from "@/lib/contracts";
+import { formaterMontant } from "@/lib/format";
 import { LIBELLE_TRANCHE } from "@/lib/libelles";
+import { peutModifierGrille } from "@/lib/roles";
 import { ErreurService, leverSiEnErreur } from "@/lib/services/erreur-service";
 import {
   probabiliteDepuisScore,
@@ -19,12 +21,20 @@ import {
 interface GrilleParametrageProps {
   scoresHistoriques: number[];
   configurationInitiale: ConfigurationGrilleApi;
+  role: string | undefined;
+  produits: ProduitCreditApi[];
 }
 
 export function GrilleParametrage({
   scoresHistoriques,
   configurationInitiale,
+  role,
+  produits,
 }: GrilleParametrageProps) {
+  const autoriseAModifier = peutModifierGrille(role);
+  const [plafondsProduits, setPlafondsProduits] = useState<Record<string, number>>(
+    configurationInitiale.progressif.plafonds_produits
+  );
   const oddsReference = configurationInitiale.scorecard.odds_reference;
   const [marge, setMarge] = useState(configurationInitiale.grille.marge);
   const [lgd, setLgd] = useState(configurationInitiale.grille.lgd);
@@ -79,6 +89,7 @@ export function GrilleParametrage({
     total > 0 ? (compte("accord") + compte("accord_sous_condition")) / total : 0;
 
   async function enregistrer() {
+    if (!autoriseAModifier) return;
     setEnregistrementEnCours(true);
     const [major, minor] = version.replace(/^v/, "").split(".").map(Number);
     const nouvelleVersion = `v${major}.${(minor ?? 0) + 1}`;
@@ -95,7 +106,7 @@ export function GrilleParametrage({
             multiplicateur_vigilance: configurationInitiale.grille.multiplicateur_vigilance,
             multiplicateur_examen: multiplicateurExamen,
           },
-          progressif: configurationInitiale.progressif,
+          progressif: { ...configurationInitiale.progressif, plafonds_produits: plafondsProduits },
           scorecard: { pdo, score_reference: scoreReference, odds_reference: oddsReference },
         }),
       });
@@ -189,9 +200,19 @@ export function GrilleParametrage({
           </div>
         </div>
 
-        <Button onClick={enregistrer} disabled={enregistrementEnCours} className="self-start">
+        <Button
+          onClick={enregistrer}
+          disabled={enregistrementEnCours || !autoriseAModifier}
+          className="self-start"
+        >
           {enregistrementEnCours ? "Enregistrement…" : "Enregistrer la grille"}
         </Button>
+        {!autoriseAModifier && (
+          <p className="text-xs text-neutre-500">
+            Lecture seule : la modification de la grille est réservée à la supervision. Les curseurs
+            simulent l&rsquo;effet d&rsquo;un réglage sans l&rsquo;enregistrer.
+          </p>
+        )}
       </div>
 
       <div className="col-span-7 flex flex-col gap-4">
@@ -236,6 +257,42 @@ export function GrilleParametrage({
           <span className="text-xs text-neutre-500">
             Taux d&rsquo;approbation : {(tauxApprobation * 100).toFixed(0)}%
           </span>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-lg border border-neutre-200 p-4">
+          <span className="text-xs font-medium text-neutre-500">Plafonds par produit</span>
+          {produits.map((p) => (
+            <div key={p.produit_id} className="flex items-center gap-3 text-sm">
+              <div className="flex flex-1 flex-col">
+                <span className="text-neutre-950">{p.libelle}</span>
+                <span className="text-xs text-neutre-500">
+                  {p.duree_min_mois}–{p.duree_max_mois} mois · {(p.taux_annuel * 100).toFixed(0)}% ·{" "}
+                  {p.type_garantie}
+                </span>
+              </div>
+              {autoriseAModifier ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    className="w-32"
+                    value={plafondsProduits[p.produit_id] ?? p.montant_max}
+                    onChange={(e) =>
+                      setPlafondsProduits((precedent) => ({
+                        ...precedent,
+                        [p.produit_id]: Number(e.target.value),
+                      }))
+                    }
+                    min={p.montant_min}
+                  />
+                  <span className="text-xs text-neutre-500">FCFA</span>
+                </div>
+              ) : (
+                <span className="font-mono text-neutre-950">
+                  {formaterMontant(plafondsProduits[p.produit_id] ?? p.montant_max)}
+                </span>
+              )}
+            </div>
+          ))}
         </div>
 
         <span className="text-xs text-neutre-500">Version active : {version}</span>

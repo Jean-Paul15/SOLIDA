@@ -2,6 +2,39 @@ services:
   front:
     build:
       context: ./frontend
+      target: runner
+    env_file:
+      - ./frontend/.env
+    environment:
+      BACKEND_INTERNAL_URL: http://api:8000
+      # Sans ceci, le serveur standalone Next.js se lie a la valeur de HOSTNAME que Docker
+      # positionne automatiquement (l'ID du conteneur, resolu sur l'IP reseau) plutot que
+      # 0.0.0.0 — nginx le joint tout de meme via cette IP, mais le healthcheck local
+      # ("localhost" = 127.0.0.1 depuis l'interieur du conteneur) echoue.
+      HOSTNAME: "0.0.0.0"
+    networks:
+      - solida
+    depends_on:
+      api:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/v1/sante').then(r=>{if(!r.ok)throw 0}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  # Uniquement pour le developpement local (make front-dev, front-install, ...) : jamais
+  # demarre par un simple "docker compose up" et jamais route par nginx. Next.js en mode
+  # "next dev" ne doit pas etre expose derriere le reverse proxy, meme en demo (audit F2).
+  front-dev:
+    build:
+      context: ./frontend
       target: dev
     env_file:
       - ./frontend/.env
@@ -16,20 +49,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    # Turbopack (mode dev) peut paniquer sporadiquement sur des cycles HMR répétés (bug
-    # connu de Next.js 16.3.0, pas du code applicatif) — redémarrage automatique pour
-    # rester disponible sans intervention manuelle.
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/v1/sante').then(r=>{if(!r.ok)throw 0}).catch(()=>process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      start_period: 20s
-      retries: 5
+    profiles:
+      - dev
 
   postgres-coresim:
     image: postgres:16.14

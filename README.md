@@ -21,16 +21,35 @@ reste de la chaîne, voir `docs/backend/03-decisions-provisoires-a-revoir.md`.
 
 ## Démarrage
 
-Prérequis : Docker, Docker Compose.
+Prérequis : Docker Desktop installé et démarré. Rien d'autre.
+
+```bash
+./scripts/demarrer.sh      # Linux / macOS / Git Bash / WSL
+```
+```powershell
+.\scripts\demarrer.ps1     # Windows (PowerShell)
+```
+
+Le script vérifie Docker, génère `.env` et `frontend/.env` (mots de passe et secrets aléatoires,
+propres à la machine) s'ils n'existent pas encore, construit les images, démarre la pile, attend
+que l'API et l'interface répondent réellement (pas juste que les conteneurs soient lancés), puis
+affiche l'URL à ouvrir. À la première exécution, il joue aussi les migrations, génère les données
+CORE-SIM et crée les comptes de démonstration — les exécutions suivantes ne touchent plus aux
+données, seulement au démarrage. Un `.env` déjà présent n'est jamais régénéré ni écrasé ; pour
+repartir de zéro, le supprimer avant de relancer le script.
+
+Seul nginx (port 80) est exposé sur l'hôte : l'application est accessible sur `http://localhost`.
+
+### Démarrage manuel (détail de ce que fait le script, ou pour aller pas à pas)
 
 ```bash
 cp .env.example .env
 # completer .env (mots de passe, SECRET_AUTH, identifiants SeaweedFS...)
+cp frontend/.env.example frontend/.env
 
 docker compose up -d --build
+docker compose run --rm api alembic upgrade head
 ```
-
-Seul nginx (port 80) est exposé sur l'hôte : l'application est accessible sur `http://localhost`.
 
 Peupler CORE-SIM avec des données synthétiques (à refaire à chaque fois qu'on veut régénérer un
 jeu de données propre) :

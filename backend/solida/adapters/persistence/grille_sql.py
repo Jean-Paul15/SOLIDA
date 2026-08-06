@@ -24,8 +24,11 @@ def _ligne_vers_configuration(ligne: Any) -> ConfigurationGrille:
         progressif=ParametresProgressif(
             coefficient_progression=seuils["coefficient_progression"],
             montant_plancher=Montant(valeur=seuils["montant_plancher"]),
-            plafond_produit=Montant(valeur=seuils["plafond_produit"]),
             plafond_primo_emprunteur=Montant(valeur=seuils["plafond_primo_emprunteur"]),
+            plafonds_produits={
+                produit_id: Montant(valeur=montant)
+                for produit_id, montant in seuils["plafonds_produits"].items()
+            },
             modulation_base=seuils["modulation_base"],
             modulation_pente=seuils["modulation_pente"],
             modulation_min=seuils["modulation_min"],
@@ -56,8 +59,11 @@ def _configuration_vers_seuils(configuration: ConfigurationGrille) -> dict[str, 
         "multiplicateur_examen": grille.multiplicateur_examen,
         "coefficient_progression": progressif.coefficient_progression,
         "montant_plancher": progressif.montant_plancher.valeur,
-        "plafond_produit": progressif.plafond_produit.valeur,
         "plafond_primo_emprunteur": progressif.plafond_primo_emprunteur.valeur,
+        "plafonds_produits": {
+            produit_id: montant.valeur
+            for produit_id, montant in progressif.plafonds_produits.items()
+        },
         "modulation_base": progressif.modulation_base,
         "modulation_pente": progressif.modulation_pente,
         "modulation_min": progressif.modulation_min,

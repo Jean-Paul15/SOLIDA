@@ -53,7 +53,7 @@ def test_modification_grille_refusee_a_lauditeur() -> None:
             "progressif": {
                 "coefficient_progression": 1.5,
                 "montant_plancher": 50000,
-                "plafond_produit": 3000000,
+                "plafonds_produits": {"prod-individuel": 2000000},
                 "plafond_primo_emprunteur": 150000,
                 "modulation_base": 1.3,
                 "modulation_pente": 2.0,

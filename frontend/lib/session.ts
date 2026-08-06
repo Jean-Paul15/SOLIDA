@@ -5,6 +5,7 @@ export const SESSION_COOKIE = "solida_session";
 
 export interface Session {
   nom: string;
+  role: string;
   agence: string | null;
   doit_changer_mot_de_passe: boolean;
 }
@@ -28,5 +29,17 @@ export async function lireSession(): Promise<Session | null> {
 export function exigerMotDePasseAJour(session: Session | null): void {
   if (session?.doit_changer_mot_de_passe) {
     redirect("/changer-mot-de-passe");
+  }
+}
+
+/**
+ * Une réponse 401 signifie une session absente, expirée ou révoquée entre le passage de
+ * `proxy.ts` et cet appel (ex. reconnexion ailleurs, qui révoque l'ancienne session) : jamais
+ * une absence légitime de résultat. La confondre avec une liste vide ou un 404 masquerait
+ * l'échec d'authentification à l'agent (audit F5) au lieu de le renvoyer se reconnecter.
+ */
+export function redirigerSiNonAuthentifie(reponse: Response): void {
+  if (reponse.status === 401) {
+    redirect("/connexion");
   }
 }
