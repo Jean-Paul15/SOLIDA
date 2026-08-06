@@ -27,6 +27,15 @@ class ListerDecisions:
                     else ("Sociétaire introuvable", "")
                 )
             nom, agence = noms_par_societaire[decision.societaire_id]
+            # `depot.lister` filtre par l'agence de l'AGENT qui a note la decision (seule donnee
+            # disponible cote SQL : CORE-SIM, qui porte l'agence du societaire, est une base
+            # separee, jamais jointe). Les deux coincident normalement (un agent ne peut scorer
+            # qu'un societaire de sa propre agence, voir scorer_demande.py), mais une decision
+            # historique incoherente avec cette regle exposerait sinon un autre societaire a un
+            # agent d'une autre agence : on revalide ici sur l'agence reellement affichee, avec
+            # la donnee societaire de toute facon deja chargee pour le nom.
+            if agence_id is not None and agence != agence_id:
+                continue
             affichees.append(
                 DecisionRegistreAffichee(decision=decision, societaire_nom=nom, agence=agence)
             )

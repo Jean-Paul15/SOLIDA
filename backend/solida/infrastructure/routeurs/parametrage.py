@@ -16,7 +16,10 @@ from solida.infrastructure.dependances import lire_grille_active, modifier_grill
 
 routeur = APIRouter(prefix="/api/v1/parametrage", tags=["parametrage"])
 
-ROLES_LECTURE_GRILLE = ("superviseur", "auditeur", "administrateur")
+ROLES_LECTURE_GRILLE = ("superviseur", "auditeur", "administrateur", "agent")
+"""Lecture seule, y compris pour l'agent : il doit pouvoir situer un score par rapport aux
+seuils de la grille qui a produit sa décision (explicabilité), sans pouvoir la modifier —
+`POST /grille` (ci-dessous) reste réservé à la supervision."""
 
 
 @routeur.get("/grille", response_model=ConfigurationGrille)
