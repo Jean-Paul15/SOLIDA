@@ -43,21 +43,21 @@ export function GraphiqueContributions({
   const amplitude = Math.max(...decomposition.map((c) => Math.abs(c.points)), 1);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div style={{ height: visibles.length * 30 + 20 }}>
+    <div className="flex flex-col gap-3">
+      <div style={{ height: visibles.length * 38 + 20 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={donnees}
             layout="vertical"
-            margin={{ left: 4, right: 24 }}
-            barCategoryGap={10}
+            margin={{ left: 4, right: 28 }}
+            barCategoryGap={14}
           >
             <XAxis type="number" domain={[-amplitude, amplitude]} hide />
             <YAxis
               type="category"
               dataKey="nom"
               width={220}
-              tick={{ fontSize: 12, fill: "var(--color-neutre-700)" }}
+              tick={{ fontSize: 13, fill: "var(--color-neutre-700)" }}
               axisLine={false}
               tickLine={false}
             />
@@ -73,7 +73,7 @@ export function GraphiqueContributions({
                 return n > 0 ? `+${n}` : n;
               }}
             />
-            <Bar dataKey="points" barSize={20} animationDuration={200} isAnimationActive>
+            <Bar dataKey="points" barSize={26} animationDuration={200} isAnimationActive>
               {donnees.map((d) => (
                 <Cell
                   key={d.nom}
@@ -103,6 +103,17 @@ export function GraphiqueContributions({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="flex items-center gap-4 text-xs text-neutre-500">
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-decision-accord" />
+          Favorable au score
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-decision-refus" />
+          Défavorable au score
+        </span>
       </div>
 
       {!tousVisibles && masques > 0 && (
