@@ -7,7 +7,8 @@ Il s'applique intégralement à Claude Code et à Codex. Il n'est pas indicatif.
 
 ## 1. Règle zéro : ne jamais inventer une décision
 
-Si l'information nécessaire n'est pas dans `SOLIDA-FOUNDATION/`, elle n'a pas été tranchée.
+Si l'information nécessaire n'est pas dans `03-MODELE/`, `07-MLOPS/` ou `docs/` (backend,
+frontend, infra), elle n'a pas été tranchée.
 
 **Interdit :** deviner un nom de champ, inventer un seuil, choisir une librairie non listée,
 créer un endpoint non spécifié, ajouter une dépendance, modifier un contrat d'interface.
@@ -20,7 +21,8 @@ Formulation attendue :
 ```
 DÉCISION MANQUANTE
 Contexte : je dois implémenter X (fichier Y).
-Ce qui manque : le seuil de Z n'est défini nulle part dans SOLIDA-FOUNDATION.
+Ce qui manque : le seuil de Z n'est défini nulle part dans la documentation de référence
+(03-MODELE/, docs/).
 Options :
   A) ... conséquence ...
   B) ... conséquence ...
@@ -63,11 +65,12 @@ S'il pense qu'un fichier hors de son périmètre doit changer, il le signale san
 
 **Ne jamais toucher sans instruction explicite :**
 
-- Les contrats d'interface (`01-ARCHITECTURE/05-contrats-interfaces.md` et leur implémentation)
+- Les ports et contrats du domaine (`backend/solida/domain/ports/`, `backend/solida/domain/values/`)
+  et leur implémentation
 - Le schéma de la base CORE-SIM
 - Les fichiers de configuration d'environnement
 - Les migrations déjà appliquées
-- Ce dossier `SOLIDA-FOUNDATION/` lui-même
+- Les dossiers de référence eux-mêmes (`03-MODELE/`, `07-MLOPS/`)
 
 ---
 
@@ -75,7 +78,7 @@ S'il pense qu'un fichier hors de son périmètre doit changer, il le signale san
 
 Pour toute tâche, dans cet ordre, sans sauter d'étape :
 
-1. Lire le ou les fichiers de `SOLIDA-FOUNDATION/` couvrant le périmètre.
+1. Lire le ou les fichiers de `03-MODELE/`, `07-MLOPS/` ou `docs/` couvrant le périmètre.
 2. Reformuler la tâche en une phrase et énoncer le critère de réussite.
 3. Lister les fichiers qui seront créés ou modifiés, **avant** de les écrire.
 4. Vérifier que rien dans la liste ne viole un contrat existant.
@@ -92,7 +95,7 @@ Pour toute tâche, dans cet ordre, sans sauter d'étape :
 |---|---|
 | Écrire dans la base CORE-SIM depuis SOLIDA | Violation de la frontière structurante du projet |
 | Mettre un secret en dur dans le code | Sécurité, et détecté par les hooks |
-| Ajouter une dépendance non listée dans `06-INFRA/01` | Dérive de stack |
+| Ajouter une dépendance non listée dans `backend/pyproject.toml` ou `frontend/package.json` | Dérive de stack |
 | Utiliser `localStorage`/`sessionStorage` pour des données métier | Non conforme à la politique de persistance |
 | Générer des données de démonstration dans le code applicatif | Les données viennent du simulateur, pas du code |
 | Introduire une variable sensible dans le modèle (sexe, ethnie, religion) | Engagement de non-discrimination du projet |
