@@ -78,11 +78,13 @@ def test_previsualiser_ne_persiste_rien(
     resultat = reponse.json()
     assert resultat["montant_demande"] == 100000
     assert resultat["tranche"] in {"accord", "accord_sous_condition", "comite_de_credit", "refus"}
-    # ModeleConstant ne produit aucune contribution par variable (probabilité fixe, les
-    # features ne l'influencent pas) : la décomposition réelle n'existera qu'avec le vrai
-    # modèle. Le mapper est déjà câblé pour l'afficher dès qu'elle existera (voir
+    # ModeleConstant renvoie une probabilité fixe (les features ne l'influencent pas) mais
+    # produit une décomposition heuristique (pas apprise) pour que la fiche de justification
+    # ne soit pas vide en attendant le vrai modèle (voir modele_constant.py et
     # docs/backend/03-decisions-provisoires-a-revoir.md).
-    assert resultat["decomposition"] == []
+    assert len(resultat["decomposition"]) > 0
+    premiere = resultat["decomposition"][0]
+    assert premiere.keys() >= {"code_variable", "libelle", "valeur", "points", "sens", "famille"}
 
     with moteur.connect() as connexion:
         apres = connexion.execute(text("SELECT count(*) FROM decision_scoring")).scalar_one()

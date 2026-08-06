@@ -19,6 +19,15 @@ Le modèle de scoring réel (entraînement, calibration) est hors périmètre de
 backend fonctionne avec un modèle de substitution (`ModeleConstant`), remplaçable sans changer le
 reste de la chaîne, voir `docs/backend/03-decisions-provisoires-a-revoir.md`.
 
+**Important pour la suite du projet :** `ModeleConstant.contributions()`
+(`backend/solida/adapters/ml/modele_constant.py`) fabrique à la main une décomposition en facteurs
+déterminants plausible (régularité d'épargne, endettement, ancienneté, ...) uniquement pour que la
+fiche de justification et le graphique « Facteurs déterminants » ne soient pas vides tant qu'aucun
+modèle n'est entraîné. Ce n'est pas un modèle appris, seulement des coefficients illustratifs
+choisis à la main. **C'est le tout premier fichier à modifier/supprimer dès qu'un vrai modèle (EBM
+entraîné) arrive** : brancher ses vraies contributions log-odds à la place, rien d'autre en aval
+n'a besoin de changer.
+
 ## Démarrage
 
 Prérequis : Docker Desktop installé et démarré. Rien d'autre.

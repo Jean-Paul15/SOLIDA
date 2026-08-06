@@ -6,11 +6,26 @@ vérité figée : c'est un point de départ pour que la chaîne fonctionne dès 
 
 ## Le modèle lui-même
 
-`ModeleConstant` renvoie une probabilité de défaut fixe (0,09 — le taux de créances en souffrance
+`ModeleConstant` renvoie une probabilité de défaut fixe (0,09 ; le taux de créances en souffrance
 cible du générateur, pas une valeur inventée). **À remplacer entièrement** une fois le modèle réel
 entraîné et calibré : c'est le seul changement attendu, aucun code au-dessus (scorecard, grille,
 cascade, plafond progressif, persistance, HTTP) ne devrait avoir à changer, puisque tout dépend du
 modèle uniquement via le port `ModeleScoring`.
+
+## `ModeleConstant.contributions()` : décomposition factice, PAS apprise
+
+Comme la probabilité est constante, le score et la décision ne dépendent jamais de cette méthode
+(`scorer_demande.py` calibre `beta_0` pour absorber exactement l'écart). Elle sert uniquement à ce
+que la fiche de justification et le graphique « Facteurs déterminants » affichent quelque chose de
+plausible plutôt qu'une liste vide, en attendant le vrai modèle. Six variables (régularité
+d'épargne, endettement, incidents, ancienneté, deux ratios d'épargne), des coefficients illustratifs
+choisis à la main (même intuition de signe que `simulateur/config/config.yaml`, jamais ses valeurs).
+
+**C'est la toute première chose à supprimer/remplacer dès qu'un vrai modèle (EBM entraîné) existe** :
+`decomposer_en_points` (déjà câblé, `domain/rules/scorecard.py`) doit alors recevoir les vraies
+contributions log-odds apprises, à la place de cette liste à la main. Rien d'autre en aval (mapper
+HTTP, `GraphiqueContributions.tsx`, fiche PDF) n'a besoin de changer : ils affichent déjà
+correctement n'importe quelle décomposition non vide.
 
 ## Paramètres de la scorecard (mise à l'échelle probabilité → score)
 

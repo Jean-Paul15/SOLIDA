@@ -95,4 +95,4 @@ def explication(code_variable: str, valeur_affichee: str, points: float) -> str:
         "defavorable": "pèse négativement sur le score",
         "neutre": "n'a pas d'effet notable sur le score",
     }[sens(points)]
-    return f"{libelle(code_variable)} : {valeur_affichee} — {jugement}."
+    return f"{libelle(code_variable)} : {valeur_affichee} ; {jugement}."

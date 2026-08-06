@@ -20,9 +20,9 @@ class ModeleScoring(Protocol):
     def contributions(self, features: dict[str, float]) -> list[tuple[str, float]]:
         """Retourne `(code_variable, contribution_log_odds)` pour chaque variable.
 
-        Liste vide pour un modèle qui n'a pas de décomposition par variable
-        (cas de `ModeleConstant`) : `decomposer_en_points` produit alors des
-        points de base égaux au score, sans contribution — un cas dégénéré
-        légitime du mécanisme générique, pas un cas particulier codé en dur.
+        Liste vide acceptée pour un modèle qui n'a pas de décomposition par variable :
+        `decomposer_en_points` produit alors des points de base égaux au score, sans
+        contribution ; un cas dégénéré légitime du mécanisme générique, pas un cas
+        particulier codé en dur.
         """
         ...
