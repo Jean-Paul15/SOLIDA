@@ -66,6 +66,7 @@ miniodata/
 exports/
 *.pdf
 !assets/*.pdf
+!docs/formules/formules.pdf
 reports/
 
 # --- Éditeurs et OS ---

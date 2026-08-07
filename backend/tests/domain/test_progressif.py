@@ -74,17 +74,32 @@ def test_le_montant_demande_borne_le_resultat() -> None:
     assert plafond == Montant(100_000)
 
 
-def test_la_trajectoire_applique_le_coefficient_de_progression_sur_trois_cycles() -> None:
-    trajectoire = calculer_trajectoire(Montant(165_600), PARAMETRES, PLAFOND_PRODUIT)
+def test_la_trajectoire_applique_par_defaut_le_coefficient_et_la_modulation_sur_un_seul_cycle() -> (
+    None
+):
+    trajectoire = calculer_trajectoire(
+        Montant(165_600), ProbabiliteDefaut(0.19), PARAMETRES, PLAFOND_PRODUIT
+    )
 
-    assert [p.cycle for p in trajectoire] == [1, 2, 3]
-    assert [p.plafond_accessible.valeur for p in trajectoire] == [248_400, 372_600, 558_900]
+    assert [p.cycle for p in trajectoire] == [1]
+    assert trajectoire[0].plafond_accessible.valeur == 228_528
 
 
 def test_la_trajectoire_est_bornee_par_le_plafond_produit() -> None:
-    trajectoire = calculer_trajectoire(Montant(2_500_000), PARAMETRES, PLAFOND_PRODUIT)
+    trajectoire = calculer_trajectoire(
+        Montant(2_500_000), ProbabiliteDefaut(0.1), PARAMETRES, PLAFOND_PRODUIT
+    )
 
-    assert [p.plafond_accessible.valeur for p in trajectoire] == [3_000_000, 3_000_000, 3_000_000]
+    assert trajectoire[0].plafond_accessible.valeur == 3_000_000
+
+
+def test_la_trajectoire_peut_projeter_plusieurs_cycles_si_explicitement_demande() -> None:
+    trajectoire = calculer_trajectoire(
+        Montant(165_600), ProbabiliteDefaut(0.19), PARAMETRES, PLAFOND_PRODUIT, nb_cycles=3
+    )
+
+    assert [p.cycle for p in trajectoire] == [1, 2, 3]
+    assert [p.plafond_accessible.valeur for p in trajectoire] == [228_528, 315_369, 435_209]
 
 
 SITUATION_PARAMETRES = ParametresReexamen()

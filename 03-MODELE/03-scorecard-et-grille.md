@@ -141,6 +141,10 @@ Paramètres par défaut du générateur : `coefficient_progression = 1,5`, `mont
 Cette règle est **déterministe et pure**. Elle est testée sans modèle ni base, et c'est
 précisément ce qui permet de la développer avant même que les données existent.
 
+`calculer_trajectoire` n'affiche que le prochain cycle (`nb_cycles=1`). Le détail de cette
+formule, sa justification et le rôle exact du modèle réel dans son calcul sont documentés dans
+`docs/formules/` (référence unique pour toutes les formules du produit).
+
 ## Versionnage
 
 Toute modification des paramètres de scorecard ou de grille crée une nouvelle `version_grille`.

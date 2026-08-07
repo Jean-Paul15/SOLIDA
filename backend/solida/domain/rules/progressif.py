@@ -7,20 +7,27 @@ from solida.domain.values.probabilite import ProbabiliteDefaut
 
 @dataclass(frozen=True)
 class ParametresProgressif:
-    """Réglage du crédit progressif. Point de départ issu de `simulateur/decision.py`,
-    pas une vérité figée."""
+    """Réglage du crédit progressif — voir docs/formules/."""
 
     coefficient_progression: float
     montant_plancher: Montant
     plafond_primo_emprunteur: Montant
     plafonds_produits: dict[str, Montant]
-    """Clé = `produit_id`. Plafond réellement appliqué par produit, ajustable par la
-    supervision — initialisé depuis les valeurs de référence CORE-SIM mais indépendant
-    du générateur une fois modifié (voir `docs/backend/03-decisions-provisoires-a-revoir.md`)."""
+    """Clé = `produit_id`, ajustable par la supervision."""
     modulation_base: float = 1.3
     modulation_pente: float = 2.0
     modulation_min: float = 0.4
     modulation_max: float = 1.2
+
+
+def _modulation_risque(probabilite: ProbabiliteDefaut, parametres: ParametresProgressif) -> float:
+    return min(
+        max(
+            parametres.modulation_base - parametres.modulation_pente * probabilite.valeur,
+            parametres.modulation_min,
+        ),
+        parametres.modulation_max,
+    )
 
 
 def calculer_plafond(
@@ -48,15 +55,8 @@ def calculer_plafond(
             montant_max_rembourse.valeur * parametres.coefficient_progression,
             parametres.montant_plancher.valeur,
         )
-        modulation = min(
-            max(
-                parametres.modulation_base - parametres.modulation_pente * probabilite.valeur,
-                parametres.modulation_min,
-            ),
-            parametres.modulation_max,
-        )
         plafond = min(
-            base * modulation,
+            base * _modulation_risque(probabilite, parametres),
             plafond_produit.valeur,
             montant_demande.valeur,
         )
@@ -141,21 +141,20 @@ def lister_conditions_reexamen(
 
 def calculer_trajectoire(
     plafond_actuel: Montant,
+    probabilite: ProbabiliteDefaut,
     parametres: ParametresProgressif,
     plafond_produit: Montant,
-    nb_cycles: int = 3,
+    nb_cycles: int = 1,
 ) -> list[PalierProgression]:
-    """Trajectoire indicative si le sociétaire rembourse sans incident.
-
-    Simplification assumée (identique à `simulateur/decision.py`) : la progression
-    future ne remodule pas par le risque à chaque cycle, elle applique le seul
-    coefficient de progression borné par le plafond produit. C'est une incitation
-    affichée, pas une décision prise à l'avance.
-    """
+    """Palier indicatif au prochain cycle, à profil de risque inchangé — jamais une
+    décision prise à l'avance. Voir docs/formules/."""
+    modulation = _modulation_risque(probabilite, parametres)
     trajectoire = []
     plafond: float = plafond_actuel.valeur
     for cycle in range(1, nb_cycles + 1):
-        plafond = min(plafond * parametres.coefficient_progression, plafond_produit.valeur)
+        plafond = min(
+            plafond * parametres.coefficient_progression * modulation, plafond_produit.valeur
+        )
         trajectoire.append(
             PalierProgression(cycle=cycle, plafond_accessible=Montant(valeur=int(round(plafond))))
         )

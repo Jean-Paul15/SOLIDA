@@ -1,0 +1,741 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+
+\definecolor{solidateal}{RGB}{15,76,79}
+\definecolor{gris}{RGB}{90,90,90}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=solidateal,
+  urlcolor=solidateal,
+  pdftitle={SOLIDA -- Registre des formules de calcul},
+  pdfauthor={SOLIDA}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gris}{SOLIDA -- Registre des formules de calcul}}
+\fancyhead[R]{\small\textcolor{gris}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Chemins de fichiers : coupables apres "/" et "::" pour eviter les debordements.
+\newcommand{\brk}{\allowbreak}
+\newcommand{\ecran}[1]{\noindent\textbf{Écran(s) concerné(s) :} #1\par}
+\newcommand{\fichier}[1]{\noindent\textbf{Implémentation :} \tiny\ttfamily#1\normalfont\normalsize\par}
+\newenvironment{formule}{\begin{quote}}{\end{quote}}
+
+% Colonnes de tableau qui retournent a la ligne au lieu de deborder.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\textcolor{solidateal}{\Huge SOLIDA} \\[0.3em] \Large Registre des formules de calcul}
+\author{}
+\date{Dernière mise à jour : \today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Objet de ce document}
+
+Ce document répertorie \textbf{toutes} les formules de calcul utilisées par SOLIDA pour produire
+un score, une décision, un plafond de crédit ou une échéance -- sans exception. Pour chacune, il
+précise : l'écran où le résultat apparaît, chaque variable et chaque constante en jeu avec sa
+valeur actuelle, la formule telle qu'elle est implémentée aujourd'hui, pourquoi elle a été
+choisie ainsi (y compris quand la réponse honnête est « aucune source, choix arbitraire »), et ce
+que le modèle de scoring réel changera -- ou ne changera pas -- une fois entraîné.
+
+C'est la référence unique pour comprendre ou modifier un calcul sans relire le code source. Le
+code lui-même ne porte que des renvois courts vers ce document : le détail et la justification
+vivent ici, pas dans des commentaires longs qui alourdissent la lecture du code.
+
+\textbf{Principe transversal, valable pour toutes les formules ci-dessous sauf mention contraire :}
+le modèle de scoring réel, une fois entraîné, améliore uniquement la probabilité de défaut $p$
+qu'il produit. Il ne calibre jamais tout seul les paramètres de politique de risque (marges,
+seuils, coefficients de modulation) qui transforment ensuite cette probabilité en score, en
+décision ou en plafond -- ce sont des arbitrages de la coopérative, qui se calibrent par
+rétro-test sur des cohortes réelles de remboursement, pas par l'entraînement du modèle. Chaque
+section précise l'exception quand elle existe.
+
+\textbf{Origine des valeurs actuelles.} Une partie des constantes ci-dessous (grille de décision,
+crédit progressif, conditions de réexamen) proviennent d'un prototype de calcul,
+\texttt{simulateur/\brk decision.py}, écrit pour démontrer le mécanisme avant que le vrai backend
+n'existe, puis retiré du dépôt une fois son rôle de démonstration rempli (trace complète dans
+\texttt{03-MODELE/\brk 09-lecons-prototype-simulateur.md}). Ce prototype n'a jamais prétendu être
+calibré sur des données réelles : c'est un point de départ illustratif, pas une vérité mesurée.
+Chaque section indique explicitement quand une valeur a cette origine, et quand elle n'a
+\textbf{aucune} source documentée du tout.
+
+\tableofcontents
+
+\newpage
+
+% ============================================================
+\section{Transformation probabilité → score (échelle PDO)}
+\label{sec:scorecard}
+
+\ecran{Résultat de scoring (jauge et nombre de points), fiche de justification.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk scorecard.py::\brk{}calculer\_score}
+
+\subsection*{Variables}
+
+\begin{tabular}{@{}lL{10cm}@{}}
+\toprule
+Symbole & Signification \\
+\midrule
+$p$ & Probabilité de défaut produite par le modèle de scoring \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{3.2cm}rL{7.4cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{PDO}$ (points pour doubler les cotes) & $20$ &
+  Reprend l'exemple canonique de la littérature scorecard (popularisé par les manuels de
+  \emph{credit scoring} et repris comme valeur par défaut dans la plupart des outils de
+  scorecard), pas une calibration propre à SOLIDA. \\
+$\mathit{score\_ref}$ & $600$ & Idem : point d'ancrage canonique de la même littérature. \\
+$\mathit{odds\_ref}$ & $50$ & Idem : rapport de cotes canonique associé à $\mathit{score\_ref}=600$
+  dans le même exemple de référence. \\
+$\mathit{score\_min}$ & $300$ & Convention du score FICO américain (300--850), reprise pour sa
+  familiarité, sans lien avec la distribution réelle du futur modèle. \\
+$\mathit{score\_max}$ & $850$ & Idem. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+\begin{formule}
+\begin{align}
+\mathit{Facteur} &= \frac{\mathit{PDO}}{\ln 2} \\
+\mathit{Décalage} &= \mathit{score\_ref} - \mathit{Facteur} \times \ln(\mathit{odds\_ref}) \\
+\mathit{score} &= \operatorname{clip}\left(\mathit{Décalage} + \mathit{Facteur} \times \ln\!\left(\frac{1-p}{p}\right),\ \mathit{score\_min},\ \mathit{score\_max}\right)
+\end{align}
+\end{formule}
+
+Convention bancaire : score élevé $=$ risque faible, d'où le rapport $(1-p)/p$ et non son inverse.
+
+\subsection*{Pourquoi cette formule}
+C'est la transformation PDO standard de la scorecard bancaire (logistique $\to$ score linéaire),
+qui garantit qu'une variation constante du score correspond toujours au même facteur
+multiplicatif sur le rapport de cotes, quel que soit le niveau de risque de départ. C'est ce qui
+rend le score lisible et comparable d'un dossier à l'autre.
+
+\subsection*{Statut et rôle du modèle réel}
+\textbf{Exception au principe transversal} : contrairement à la grille et au crédit progressif,
+$\mathit{PDO}$, $\mathit{score\_ref}$ et $\mathit{odds\_ref}$ \emph{doivent} être recalibrés dès
+que le modèle réel existe -- l'échelle n'a de sens que rapportée à la distribution réelle de $p$
+que ce modèle produit. Un score mal calibré resterait affiché de façon trompeuse même si la
+décision sous-jacente (section~\ref{sec:grille}) reste correcte, puisqu'elle raisonne directement
+sur $p$, jamais sur le score affiché. $\mathit{score\_min}$ et $\mathit{score\_max}$ n'ont pas
+besoin de changer : ce sont de simples bornes d'affichage.
+
+\newpage
+
+% ============================================================
+\section{Invariant de cohérence de la décomposition}
+\label{sec:invariant}
+
+\ecran{Aucun -- vérification interne avant l'enregistrement de toute décision.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk scorecard.py::\brk{}verifier\_invariant\_decomposition}
+
+\subsection*{Constante}
+
+\begin{tabular}{@{}L{3.2cm}rL{7.4cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+\texttt{TOLERANCE\_\brk{}INVARIANT} & $1{,}0$ point & Marge technique pour l'arrondi
+  flottant accumulé en sommant plusieurs contributions, pas un seuil métier : assez large pour
+  ne jamais déclencher sur un arrondi légitime, assez serrée pour rejeter toute vraie
+  incohérence de calcul. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+\begin{formule}
+\[
+\left|\ \mathit{points\_de\_base} + \sum_j \mathit{points}_j - \mathit{score}\ \right| < \mathit{TOLERANCE\_INVARIANT}
+\]
+\end{formule}
+Si l'inégalité est violée, le scoring est \textbf{rejeté} (exception \texttt{InvariantScoreViole})
+plutôt que rendu de façon incohérente.
+
+\subsection*{Pourquoi ce mécanisme}
+Une fiche de justification dont les points ne somment pas exactement au score détruirait la
+crédibilité du produit devant un sociétaire ou un auditeur. Mieux vaut refuser un scoring que
+l'afficher faux.
+
+\subsection*{Statut et rôle du modèle réel}
+Aucun changement attendu : cette vérification reste valable quelle que soit la source des
+contributions, apprises ou factices.
+
+\newpage
+
+% ============================================================
+\section{Décomposition en points (« Facteurs déterminants »)}
+\label{sec:decomposition}
+
+\ecran{Résultat de scoring (graphique « Facteurs déterminants »), fiche de justification.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk scorecard.py::\brk{}decomposer\_en\_points}
+
+\subsection*{Variables}
+
+\begin{tabular}{@{}lL{10cm}@{}}
+\toprule
+Symbole & Signification \\
+\midrule
+$\beta_0$ & Constante (log-cotes de base, hors effet des variables) \\
+$f_j$ & Contribution en log-cotes de la variable $j$ \\
+$\mathit{Facteur}, \mathit{Décalage}$ & Identiques à la section~\ref{sec:scorecard} \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+\begin{formule}
+\begin{align}
+\mathit{points\_de\_base} &= \mathit{Décalage} + \mathit{Facteur} \times \beta_0 \\
+\mathit{points}_j &= \mathit{Facteur} \times f_j
+\end{align}
+\end{formule}
+
+\subsection*{Pourquoi cette formule}
+La transformation probabilité $\to$ score étant affine, chaque terme du log-cotes se met à
+l'échelle indépendamment par le même facteur : la décomposition en points hérite donc exactement
+des mêmes propriétés que le score global, ce qui rend l'invariant de la section~\ref{sec:invariant}
+possible.
+
+\subsection*{Statut et rôle du modèle réel}
+Le modèle réel doit fournir des $f_j$ qui soient de véritables contributions en log-cotes
+(nativement additives pour un modèle de type EBM/GAM, ou approximées par des valeurs de Shapley
+pour un autre type de modèle). Voir section~\ref{sec:contributions-factices} pour l'état actuel de
+$\beta_0$ et des $f_j$, aujourd'hui entièrement fictifs.
+
+\newpage
+
+% ============================================================
+\section{Contributions factices du modèle de substitution}
+\label{sec:contributions-factices}
+
+\ecran{Résultat de scoring (graphique « Facteurs déterminants »), fiche de justification.}
+\fichier{backend/\brk solida/\brk adapters/\brk ml/\brk modele\_constant.py::\brk{}ModeleConstant.contributions ;
+backend/\brk solida/\brk application/\brk use\_cases/\brk scorer\_demande.py (calcul de beta\_0)}
+
+\subsection*{Contexte}
+\texttt{ModeleConstant} (le modèle de substitution utilisé tant qu'aucun modèle réel n'est
+entraîné) renvoie une probabilité \textbf{fixe} $p = 0{,}09$ -- le taux de créances en souffrance
+cible du générateur de données, pas une valeur inventée. Comme $p$ ne varie jamais avec le
+dossier, $\beta_0$ est recalculé à chaque scoring pour absorber exactement l'écart :
+\begin{formule}
+\[
+\beta_0 = \ln\!\left(\frac{1-p}{p}\right) - \sum_j f_j
+\]
+\end{formule}
+Conséquence mathématique importante : \textbf{le score et la décision ne dépendent jamais} de ce
+que \texttt{contributions()} renvoie, quelle que soit sa valeur. C'est ce qui rend sûr d'y mettre
+une décomposition non apprise sans risquer de fausser une décision réelle.
+
+\subsection*{Constantes -- coefficients choisis à la main, pas appris}
+
+\begin{tabular}{@{}L{5.2cm}rr@{}}
+\toprule
+Variable & Coefficient & Point de référence \\
+\midrule
+Régularité des dépôts (12 mois) & $0{,}12$ & 6 mois \\
+Taux d'endettement & $-1{,}4$ & $0{,}35$ \\
+Nombre d'incidents antérieurs & $-0{,}5$ & $0$ \\
+Ancienneté sociétaire (mois) & $0{,}01$ & 36 mois \\
+Épargne rapportée au revenu & $0{,}6$ & $0{,}3$ \\
+Épargne rapportée au montant demandé & $0{,}5$ & $0{,}5$ \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Pourquoi ces valeurs précises}
+\textbf{Aucune source, aucune calibration.} Seul le \emph{signe} de chaque coefficient reprend
+l'intuition métier attendue (même intuition que \texttt{simulateur/\brk config/\brk config.yaml},
+jamais ses valeurs). Les points de référence sont choisis pour être des valeurs médianes
+plausibles d'un dossier moyen, à l'œil, sans mesure. C'est une démonstration délibérément
+assumée comme non apprise, pas une estimation.
+
+\subsection*{Formule (par variable)}
+\begin{formule}
+\[
+f_j = \mathit{coefficient}_j \times (\mathit{valeur}_j - \mathit{référence}_j)
+\]
+\end{formule}
+
+\subsection*{Pourquoi cette fonction existe}
+Sans elle, l'écran « Facteurs déterminants » afficherait une liste vide (« Aucune contribution
+significative identifiée »), ce qui est correct mais peu utile pour juger l'interface avant qu'un
+modèle réel existe.
+
+\subsection*{Statut et rôle du modèle réel}
+\textbf{C'est la toute première chose à supprimer} dès qu'un modèle réel (EBM entraîné) existe.
+\texttt{decomposer\_en\_points} (section~\ref{sec:decomposition}) doit alors recevoir les vraies
+contributions log-cotes apprises, à la place de cette liste écrite à la main. Rien d'autre en
+aval (mapper HTTP, graphique, fiche PDF) n'a besoin de changer : ils affichent déjà correctement
+n'importe quelle décomposition non vide.
+
+\newpage
+
+% ============================================================
+\section{Grille de décision (tranche)}
+\label{sec:grille}
+
+\ecran{Résultat de scoring (badge de décision, zones colorées de la jauge), écran de paramétrage
+de la grille.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk grille.py::\brk{}decider ;
+frontend/\brk lib/\brk scorecard.ts::\brk{} trancheDepuisProbabilite (miroir, même formule)}
+
+\subsection*{Variables}
+
+\begin{tabular}{@{}lL{9.5cm}@{}}
+\toprule
+Symbole & Signification \\
+\midrule
+$p$ & Probabilité de défaut produite par le modèle \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{3.2cm}rL{6.9cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{marge}$ & $0{,}15$ & Hérite du prototype retiré \texttt{decision.py} -- un choix
+  illustratif pour démontrer le mécanisme, sans dérivation actuarielle sur des données
+  réelles. \\
+$\mathit{lgd}$ (perte en cas de défaut) & $0{,}75$ & Même origine que $\mathit{marge}$. \\
+$m_a$ (multiplicateur accord) & $0{,}6$ & Même origine. \\
+$m_v$ (multiplicateur vigilance) & $1{,}0$ & Même origine (le seuil économique lui-même, sans
+  marge de tolérance). \\
+$m_e$ (multiplicateur examen) & $1{,}6$ & Même origine. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+\begin{formule}
+\begin{align}
+\mathit{seuil} &= \frac{\mathit{marge}}{\mathit{marge} + \mathit{lgd}} \\[0.3em]
+\mathit{tranche} &=
+\begin{cases}
+\text{ACCORD} & \text{si } p < \mathit{seuil} \times m_a \\
+\text{ACCORD\_SOUS\_CONDITION} & \text{si } p < \mathit{seuil} \times m_v \\
+\text{COMITÉ\_DE\_CRÉDIT} & \text{si } p < \mathit{seuil} \times m_e \\
+\text{REFUS} & \text{sinon}
+\end{cases}
+\end{align}
+\end{formule}
+
+\subsection*{Pourquoi cette formule}
+$\mathit{seuil}$ est le seuil économique classique qui égalise le coût espéré des deux erreurs
+possibles : refuser un bon dossier (perte de marge) et accorder un mauvais dossier (perte en cas
+de défaut). Les multiplicateurs créent des zones de tolérance autour de ce seuil plutôt qu'une
+coupure binaire, pour laisser une marge de jugement humain (accord sous condition, comité de
+crédit) avant le refus pur. La jauge du résultat de scoring recalcule ces mêmes seuils en score
+(via la formule de la section~\ref{sec:scorecard}) pour que les zones colorées affichées
+correspondent exactement aux frontières de décision -- aucune constante supplémentaire n'y est
+introduite.
+
+\subsection*{Statut et rôle du modèle réel}
+Le modèle réel améliore uniquement $p$, l'entrée de \texttt{decider}. Il ne calibre jamais
+$\mathit{marge}$, $\mathit{lgd}$ ni les multiplicateurs : ce sont des paramètres de politique de
+risque de la coopérative, ajustables depuis l'écran de paramétrage de la grille, à rétro-tester
+sur des cohortes réelles une fois qu'elles existeront.
+
+\newpage
+
+% ============================================================
+\section{Plafond de crédit progressif}
+\label{sec:progressif}
+
+\ecran{Résultat de scoring (« Montant recommandé »).}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk progressif.py::\brk{}calculer\_plafond, \_modulation\_risque}
+
+\subsection*{Variables}
+
+\begin{tabular}{@{}lL{9.5cm}@{}}
+\toprule
+Symbole & Signification \\
+\midrule
+$p$ & Probabilité de défaut produite par le modèle \\
+$M$ & Montant maximum déjà remboursé par le sociétaire (historique), ou \emph{néant} pour un
+  primo-emprunteur \\
+$D$ & Montant demandé pour ce nouveau crédit \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{3.2cm}rL{6.5cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$c$ (coefficient de progression) & $1{,}5$ & Hérite du prototype retiré \texttt{decision.py}, sans
+  dérivation actuarielle sur des données réelles. \\
+$\mathit{plancher}$ & 50\,000 FCFA & Même origine. \\
+$\mathit{plafond\_produit}$ & ex. 3\,000\,000 FCFA & Résolu par produit de crédit (voir
+  section~\ref{sec:echeance}), même origine, ajustable par la supervision. \\
+$\mathit{plafond\_primo}$ & 150\,000 FCFA & Même origine. \\
+$a$ (base de modulation) & $1{,}3$ & Même origine. \\
+$b$ (pente de modulation) & $2{,}0$ & Même origine. \\
+$m_{\min}$ & $0{,}4$ & Même origine. \\
+$m_{\max}$ & $1{,}2$ & Même origine. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+
+\textbf{Primo-emprunteur} ($M$ absent) :
+\begin{formule}
+\[
+\mathit{montant\_recommandé} = \max\Big(\min(\mathit{plafond\_primo},\ D),\ \mathit{plancher}\Big)
+\]
+\end{formule}
+
+\textbf{Sociétaire avec historique} :
+\begin{formule}
+\begin{align}
+\mathit{modulation} &= \operatorname{clip}(a - b \times p,\ m_{\min},\ m_{\max}) \\
+\mathit{base} &= \max(M \times c,\ \mathit{plancher}) \\
+\mathit{montant\_recommandé} &= \max\Big(\min(\mathit{base} \times \mathit{modulation},\ \mathit{plafond\_produit},\ D),\ \mathit{plancher}\Big)
+\end{align}
+\end{formule}
+
+\subsection*{Pourquoi cette formule}
+Le crédit progressif (récompenser un historique de remboursement sain par un plafond plus élevé)
+est un mécanisme d'incitation classique en microfinance, documenté depuis le modèle Grameen
+(prêt progressif / \emph{step lending}). La modulation par $p$ ajoute une dimension que ce
+mécanisme historique n'a pas seul : elle évite d'accorder une forte augmentation à un sociétaire
+dont le profil de risque s'est dégradé entre deux cycles, même si son historique de remboursement
+reste bon sur le papier -- cohérent avec la pratique de gestion de ligne de crédit bancaire, où le
+score comportemental borne toujours la décision dans une règle explicite, jamais l'inverse.
+
+\subsection*{Statut et rôle du modèle réel}
+Le modèle réel améliore uniquement $p$, l'entrée de $\mathit{modulation}$. Il ne calibre jamais
+$c$, $\mathit{plancher}$, $\mathit{plafond\_primo}$ ni $(a, b, m_{\min}, m_{\max})$ : ce sont des
+paramètres de politique de risque du comité de crédit, à rétro-tester sur des cohortes réelles de
+remboursement une fois qu'elles existeront en production -- un travail distinct de l'entraînement
+du modèle de score.
+
+\newpage
+
+% ============================================================
+\section{Palier accessible au prochain cycle}
+\label{sec:trajectoire}
+
+\ecran{Résultat de scoring (« Palier suivant accessible »).}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk progressif.py::\brk{}calculer\_trajectoire}
+
+\subsection*{Constante}
+
+\begin{tabular}{@{}L{3.2cm}rL{6.9cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{nb\_cycles}$ & $1$ & Voir justification détaillée ci-dessous : aucune institution
+  sérieuse ne projette plusieurs cycles à l'avance. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+\begin{formule}
+\[
+\mathit{palier} = \min\big(\mathit{montant\_recommandé} \times c \times \mathit{modulation},\ \mathit{plafond\_produit}\big)
+\]
+\end{formule}
+où $c$ et $\mathit{modulation}$ sont identiques à la section~\ref{sec:progressif},
+$\mathit{modulation}$ étant gelée sur la probabilité $p$ connue \emph{aujourd'hui}.
+
+\subsection*{Pourquoi une projection sur un seul cycle}
+Aucune institution de microcrédit sérieuse ne pré-calcule ni ne garantit un plafond à plusieurs
+cycles d'écart. Les \emph{Guidelines for Establishing and Operating Grameen-Style Microcredit
+Programs} (Grameen Foundation) l'interdisent même explicitement : chaque proposition de prêt est
+évaluée et approuvée \emph{au moment du renouvellement}, sur la capacité de remboursement et
+l'historique du cycle qui vient de s'achever -- jamais promise à l'avance -- et le code de
+conduite du gestionnaire de centre y est explicite : \emph{« Does not give any false hope nor
+lies to members »}, \emph{« Strictly keeps any word given to a loanee. »} La gestion de ligne de
+crédit bancaire suit le même principe (score comportemental réévalué à chaque cycle réel, jamais
+projeté). Chaque cycle supplémentaire empilerait une hypothèse de bon remboursement sur une
+hypothèse de risque inchangé, de moins en moins défendable.
+
+\subsection*{Statut et rôle du modèle réel}
+Identique à la section~\ref{sec:progressif} : seul $p$ change avec le modèle réel. La fonction
+reste paramétrable (\texttt{nb\_cycles}) si une projection plus longue est un jour explicitement
+demandée par la coopérative à des fins d'incitation -- ce serait alors un choix produit assumé,
+pas une pratique standard.
+
+\newpage
+
+% ============================================================
+\section{Conditions de réexamen}
+\label{sec:reexamen}
+
+\ecran{Résultat de scoring (« Conditions de réexamen »), affiché pour toute tranche autre que
+ACCORD.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk progressif.py::\brk{}lister\_conditions\_reexamen}
+
+\subsection*{Constantes -- cibles}
+
+\begin{tabular}{@{}L{5.5cm}rL{4.6cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{régularité\_cible}$ & $75\,\%$ & Hérite du prototype retiré \texttt{decision.py}
+  (voir \texttt{03-MODELE/\brk 09-lecons-\brk prototype-\brk simulateur.md}), sans calibration sur
+  des cohortes réelles. \\
+$\mathit{mois\_observation}$ & $3$ & Même origine. \\
+$\mathit{ratio\_garantie\_cible}$ & $50\,\%$ & Même origine. \\
+$\mathit{endettement\_seuil}$ & $50\,\%$ & Même origine. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule (exemple : rattrapage de régularité)}
+\begin{formule}
+\[
+\mathit{mois\_à\_rattraper} = \operatorname{round}\big((\mathit{régularité\_cible} - \mathit{régularité\_actuelle}) \times 12\big)
+\]
+\end{formule}
+Les autres conditions (garantie, endettement, tendance d'épargne, caution déjà appelée) sont des
+comparaisons directes au seuil, sans formule dédiée, traduites en phrase actionnable.
+
+\subsection*{Pourquoi ce mécanisme}
+Un refus ne doit jamais être une porte fermée : chaque condition est un levier concret et
+vérifiable que le sociétaire peut activer avant le prochain cycle, plutôt qu'un « non » sans
+recours.
+
+\subsection*{Statut et rôle du modèle réel}
+Indépendant du modèle de scoring : ces cibles sont des seuils métier, pas des sorties de modèle,
+et le modèle n'influence pas quelles conditions sont listées -- seule la tranche décidée
+(section~\ref{sec:grille}) détermine si ce bloc s'affiche.
+
+\newpage
+
+% ============================================================
+\section{Cascade : choix du mode de calcul (socle vs enrichi)}
+\label{sec:cascade}
+
+\ecran{Résultat de scoring (mention « Score calculé avec l'historique du groupe de caution » ou
+« profil individuel »).}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk cascade.py::\brk{}determiner\_mode}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{5.5cm}rL{4.6cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{taille\_groupe\_minimale}$ & $3$ & Aucune source documentée au-delà de l'intuition
+  qu'un groupe de 1 ou 2 membres ne peut pas produire une statistique de groupe fiable. \\
+$\mathit{nb\_credits\_anterieurs\_minimum}$ & $3$ & Arbitrage documenté explicitement dans
+  \texttt{03-MODELE/\brk 04-cascade-\brk et-cold-start.md} : en dessous, le taux de remboursement
+  du groupe repose sur trop peu d'observations et introduirait plus de bruit que de signal. \\
+$\mathit{fraicheur\_maximale\_jours}$ & $7$ & Aucune source ni calibration documentée pour ce
+  seuil précis -- à valider avec la coopérative. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Logique}
+\begin{formule}
+\begin{verbatim}
+SI les 4 conditions sont reunies
+    ALORS mode = enrichi, modele = EBM_enrichi
+SINON
+    mode = socle_seul, modele = EBM_socle
+    motif = raison precise de la bascule
+\end{verbatim}
+\end{formule}
+Les quatre conditions (appartenance à un groupe, taille, historique de crédits soldés, fraîcheur
+des features) sont vérifiées dans l'ordre de leur dépendance logique : on ne peut pas juger la
+taille d'un groupe auquel on n'appartient pas, ni son historique avant d'avoir vérifié sa taille.
+
+\subsection*{Pourquoi ce mécanisme}
+45\,\% des dossiers du calibrage retenu sont des primo-emprunteurs : un système qui exigerait un
+historique de groupe pour scorer serait inutilisable précisément là où le besoin est le plus fort.
+
+\subsection*{Statut et rôle du modèle réel}
+Cette règle choisit \emph{quel} modèle appeler (socle ou enrichi), elle ne calcule pas elle-même
+de score. Les trois seuils restent des paramètres de politique ajustables par la coopérative,
+indépendants de l'implémentation du modèle derrière chacun des deux ports.
+
+\newpage
+
+% ============================================================
+\section{Tendance de l'épargne}
+\label{sec:epargne}
+
+\ecran{Dossier sociétaire (badge « en hausse » / « stable » / « en érosion » sur le graphique de
+trajectoire d'épargne) ; alimente aussi la variable de scoring \texttt{tendance\_epargne\_12m}.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk epargne.py::\brk{}tendance\_depuis\_croissance}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{3.2cm}rL{6.9cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{SEUIL\_HAUSSE}$ & $10\,\%$ & \textbf{Aucune source.} Choisi à la main pour donner un
+  libellé lisible à l'agent au guichet. \\
+$\mathit{SEUIL\_EROSION}$ & $-5\,\%$ & \textbf{Aucune source.} Même choix, non symétrique par
+  intuition (une érosion de l'épargne est jugée significative plus tôt qu'une hausse). \\
+\bottomrule
+\end{tabular}
+
+C'est le seul cas de ce document où même l'ordre de grandeur est incertain -- contrairement au
+taux BCEAO de la section~\ref{sec:echeance}, il n'existe pas de référence externe pour ce
+découpage.
+
+\subsection*{Formule}
+\begin{formule}
+\[
+\mathit{tendance} =
+\begin{cases}
+\text{hausse} & \text{si } \mathit{croissance\_12m} > \mathit{SEUIL\_HAUSSE} \\
+\text{érosion} & \text{si } \mathit{croissance\_12m} < \mathit{SEUIL\_EROSION} \\
+\text{stable} & \text{sinon}
+\end{cases}
+\]
+\end{formule}
+
+\subsection*{Statut et rôle du modèle réel}
+Cette fonction alimente à la fois l'affichage et une variable d'entrée du modèle. Un modèle réel
+entraîné directement sur \texttt{croissance\_12m} en continu n'a pas besoin de ce découpage en 3
+classes, qui perd de l'information par construction. À trancher avec le modèle réel : soit
+recalibrer ces deux seuils sur des cohortes réelles, soit ne garder ce libellé que pour
+l'affichage agent et passer la variable continue au modèle.
+
+\newpage
+
+% ============================================================
+\section{Échéance mensuelle et taux d'endettement}
+\label{sec:echeance}
+
+\ecran{Formulaire « Nouvelle demande » (« Échéance mensuelle estimée ») ; alimente la variable de
+scoring \texttt{ratio\_endettement}.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk echeance.py::\brk{}calculer\_echeance\_mensuelle, calculer\_taux\_endettement}
+
+\subsection*{Variables}
+
+\begin{tabular}{@{}lL{9.5cm}@{}}
+\toprule
+Symbole & Signification \\
+\midrule
+$D$ & Montant demandé \\
+$n$ & Durée en mois \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Constante}
+
+\begin{tabular}{@{}L{3.2cm}rL{6.5cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$i$ (taux mensuel) & $0{,}18/12$ (18\,\%/an) & Valeur de démonstration, nettement sous le plafond
+  légal de 24\,\%/an (TAEG plafond BCEAO pour les SFD, UEMOA, depuis le 1\textsuperscript{er} juin
+  2026), choisie en l'absence d'une table de taux réelle par produit de crédit. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule (amortissement à annuité constante)}
+\begin{formule}
+\[
+\mathit{échéance} = D \times \frac{i (1+i)^n}{(1+i)^n - 1}
+\]
+\end{formule}
+\begin{formule}
+\[
+\mathit{taux\_endettement} = \frac{\mathit{charges\_mensuelles} + \mathit{échéance}}{\mathit{revenu\_mensuel}}
+\]
+\end{formule}
+
+\subsection*{Pourquoi cette formule}
+L'amortissement à annuité constante (intérêt dégressif sur le capital restant dû) est la méthode
+que la réglementation BCEAO impose pour exprimer le TEG/TAEG des crédits dans l'UEMOA, et celle
+qu'appliquent en pratique les coopératives d'épargne et de crédit togolaises -- pas un taux
+forfaitaire sur le montant initial.
+
+\subsection*{Statut et rôle du modèle réel}
+Indépendant du modèle de scoring : le taux $i$ dépend d'une vraie table de taux par produit à
+obtenir de la coopérative, pas d'un entraînement de modèle. Le taux d'endettement calculé ici
+devient en revanche une variable d'entrée du modèle (section~\ref{sec:contributions-factices}),
+dont le modèle réel apprendra le poids véritable.
+
+\newpage
+
+% ============================================================
+\section{Politique de mot de passe}
+\label{sec:motdepasse}
+
+Incluse par exhaustivité : ce n'est pas un calcul de crédit, mais c'est une règle à seuils
+numériques avec sa propre justification, comme tout ce qui précède.
+
+\ecran{Connexion, changement de mot de passe.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk mot\_de\_passe.py::\brk{}valider\_mot\_de\_passe}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{3.2cm}rL{6.9cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+\texttt{LONGUEUR\_\brk{}MINIMALE} & 8 caractères & NIST SP 800-63B rev.\,4 : 8 caractères est le
+  plancher \emph{SHALL} (obligatoire), quel que soit le nombre de facteurs d'authentification --
+  15 n'est qu'une recommandation \emph{SHOULD} renforcée en l'absence de second facteur. Choix
+  produit : rester praticable pour des agents de coopérative sans authentification
+  multi-facteurs. \\
+\texttt{LONGUEUR\_\brk{}MAXIMALE} & 64 caractères & Même norme : plafond \emph{SHALL} pour éviter les
+  attaques par déni de service via des mots de passe démesurément longs. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Règle (pas de formule)}
+Aucune règle de composition (majuscule/chiffre/symbole) : la même norme l'interdit explicitement
+-- ces règles poussent statistiquement vers des mots de passe prévisibles (substitutions
+convenues, ex. « @ » pour « a »). Rejet uniquement sur la longueur et sur une liste de mots de
+passe trop courants.
+
+\subsection*{Statut et rôle du modèle réel}
+Sans rapport avec le modèle de scoring.
+
+\newpage
+
+\section*{Récapitulatif}
+
+\begin{longtable}{@{}L{4cm}L{3.4cm}L{3cm}L{3.2cm}@{}}
+\toprule
+Calcul & Fichier & Le modèle réel change... & ...mais pas \\
+\midrule
+\endhead
+Score (PDO) & \texttt{scorecard.py} & $p$ \emph{et} les 3 paramètres d'échelle (recalibrage
+  requis) & Les bornes d'affichage 300/850 \\
+Invariant de cohérence & \texttt{scorecard.py} & Rien & La tolérance de 1 point \\
+Décomposition en points & \texttt{scorecard.py} & Les contributions $f_j$ (deviennent réelles) &
+  La formule elle-même \\
+Contributions factices & \texttt{modele\_\allowbreak constant.py} & Remplacée entièrement & -- \\
+Grille (tranche) & \texttt{grille.py} & $p$ & marge, lgd, multiplicateurs \\
+Plafond progressif & \texttt{progressif.py} & $p$ & coefficient, plancher, modulation \\
+Palier au prochain cycle & \texttt{progressif.py} & $p$ & idem + \texttt{nb\_cycles=1} \\
+Conditions de réexamen & \texttt{progressif.py} & Rien & Toutes les cibles \\
+Cascade (mode) & \texttt{cascade.py} & Rien (choisit quel modèle appeler) & Tous les seuils \\
+Tendance d'épargne & \texttt{epargne.py} & À trancher (voir section~\ref{sec:epargne}) & -- \\
+Échéance / endettement & \texttt{echeance.py} & Rien & Taux, indépendant du modèle \\
+Mot de passe & \texttt{mot\_de\_\allowbreak passe.py} & Rien & Sans rapport avec le modèle \\
+\bottomrule
+\end{longtable}
+
+\end{document}

@@ -49,6 +49,7 @@ réel une fois qu'il existe.
 (3 000 000 FCFA — le plafond que le système ne dépasse jamais, quel que soit le calcul),
 `plafond_primo_emprunteur` (150 000 FCFA), et les constantes de modulation par le risque (1,3 / 2,0
 / 0,4 / 1,2). Même statut que la grille : point de départ ajustable par la coopérative, pas figé.
+Détail de la formule et du rôle du modèle réel dans `docs/formules/`.
 
 ## nginx sans TLS
 

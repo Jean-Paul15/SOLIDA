@@ -1,4 +1,4 @@
-SEUIL_HAUSSE = 0.10
+SEUIL_HAUSSE = 0.10  # voir docs/formules/
 SEUIL_EROSION = -0.05
 
 

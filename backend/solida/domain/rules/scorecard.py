@@ -11,7 +11,8 @@ TOLERANCE_INVARIANT = 1.0
 
 @dataclass(frozen=True)
 class ParametresScorecard:
-    """Mise à l'échelle probabilité de défaut -> score, par transformation PDO."""
+    """Mise à l'échelle probabilité de défaut -> score, par transformation PDO — voir
+    docs/formules/."""
 
     pdo: float
     score_reference: float

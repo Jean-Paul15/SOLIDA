@@ -248,7 +248,7 @@ class ScorerDemande:
             plafond_produit_montant,
         )
         trajectoire = calculer_trajectoire(
-            plafond, configuration.progressif, plafond_produit_montant
+            plafond, probabilite, configuration.progressif, plafond_produit_montant
         )
 
         situation = SituationReexamen(
