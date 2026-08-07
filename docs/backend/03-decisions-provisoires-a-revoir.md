@@ -92,6 +92,16 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   un JWT court de 15 minutes séparé d'un renouvellement long. Choix délibéré pour la simplicité
   (moins de composants, plus facile à auditer) : la propriété qui compte — révocation côté serveur
   — est déjà pleinement assurée par ce choix unique.
+- **Rétention du journal d'audit (`journal_audit`) : 1 an, purge automatique au-delà**
+  (2026-08-07). Avant cette décision, rien n'était purgé : le journal grossissait indéfiniment,
+  ce qui contredit le droit à l'effacement « quand la conservation n'est plus justifiée » de la
+  loi togolaise n°2019-014 sur la protection des données personnelles — cette loi ne fixe pas de
+  durée précise pour un journal de sécurité, d'où le choix de s'aligner sur le standard du
+  secteur en l'absence de mandat plus précis : PCI-DSS, FISMA, HIPAA, SOX et GLBA convergent tous
+  vers 1 an pour ce type de journal (avec au moins 90 jours immédiatement consultables). Implémenté
+  dans `backend/solida/batch/jobs/purger_journal_audit.py`. **Non planifié automatiquement** :
+  aucun ordonnanceur (cron, `pg_cron`) n'existe encore dans la pile SOLIDA — le script s'exécute
+  manuellement ou via une tâche cron externe à ajouter à l'hôte avant un déploiement réel.
 - **Fiche de justification : PDF généré côté serveur (WeasyPrint), archivage objet (SeaweedFS,
   pas MinIO).** `minio/minio` n'a plus reçu de nouvelle image Docker officielle depuis
   RELEASE.2025-09-07 (arrêt de la diffusion des binaires communautaires en octobre 2025) —

@@ -1,0 +1,81 @@
+import os
+import uuid
+from datetime import UTC, datetime, timedelta
+
+import pytest
+import sqlalchemy as sa
+
+from solida.batch.jobs.purger_journal_audit import RETENTION, purger
+from solida.infrastructure.database import moteur_solida
+
+pytestmark = pytest.mark.skipif(
+    "SOLIDA_DATABASE_URL_ASYNC" not in os.environ,
+    reason="Base reelle absente : integration non disponible ici",
+)
+
+_TYPE_TEST = "test_purge_journal_audit"
+
+
+def _inserer(horodatage: datetime) -> uuid.UUID:
+    evenement_id = uuid.uuid4()
+    moteur = moteur_solida()
+    with moteur.connect() as connexion:
+        connexion.execute(
+            sa.text("""
+                INSERT INTO journal_audit
+                    (evenement_id, type, acteur_id, objet, details, horodatage)
+                VALUES (:id, :type, 'test', 'test', '{}', :horodatage)
+            """),
+            {"id": evenement_id, "type": _TYPE_TEST, "horodatage": horodatage},
+        )
+        connexion.commit()
+    return evenement_id
+
+
+def _nettoyer() -> None:
+    with moteur_solida().connect() as connexion:
+        connexion.execute(
+            sa.text("DELETE FROM journal_audit WHERE type = :type"), {"type": _TYPE_TEST}
+        )
+        connexion.commit()
+
+
+def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -> None:
+    maintenant = datetime.now(UTC)
+    _inserer(maintenant - RETENTION - timedelta(days=1))  # au-dela : doit disparaitre
+    _inserer(maintenant - timedelta(days=1))  # en-deca : doit rester
+    try:
+        with moteur_solida().connect() as connexion:
+            avant = connexion.execute(
+                sa.text("SELECT count(*) FROM journal_audit WHERE type = :type"),
+                {"type": _TYPE_TEST},
+            ).scalar_one()
+        assert avant == 2
+
+        nb_supprimes = purger()
+
+        with moteur_solida().connect() as connexion:
+            restantes = connexion.execute(
+                sa.text("SELECT count(*) FROM journal_audit WHERE type = :type"),
+                {"type": _TYPE_TEST},
+            ).scalar_one()
+        assert restantes == 1
+        assert nb_supprimes >= 1
+    finally:
+        _nettoyer()
+
+
+def test_essai_a_blanc_ne_supprime_rien() -> None:
+    _inserer(datetime.now(UTC) - RETENTION - timedelta(days=1))
+    try:
+        nb_concernees = purger(essai_a_blanc=True)
+        assert nb_concernees >= 1
+
+        with moteur_solida().connect() as connexion:
+            restantes = connexion.execute(
+                sa.text("SELECT count(*) FROM journal_audit WHERE type = :type"),
+                {"type": _TYPE_TEST},
+            ).scalar_one()
+        assert restantes == 1
+    finally:
+        _nettoyer()
