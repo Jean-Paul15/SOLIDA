@@ -69,7 +69,7 @@ export function GraphiqueContributions({
                 fontSize: 12,
               }}
               formatter={(v) => {
-                const n = Number(v);
+                const n = Math.round(Number(v));
                 return n > 0 ? `+${n}` : n;
               }}
             />
@@ -91,7 +91,7 @@ export function GraphiqueContributions({
                 dataKey="points"
                 position="right"
                 formatter={(v) => {
-                  const n = Number(v);
+                  const n = Math.round(Number(v));
                   return n > 0 ? `+${n}` : String(n);
                 }}
                 style={{

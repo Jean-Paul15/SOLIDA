@@ -301,15 +301,19 @@ export function ResultatScoringVue({
         </span>
 
         <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
-          <span className="text-xs font-medium text-neutre-500">Trajectoire de progression</span>
+          <span className="text-xs font-medium text-neutre-500">Palier suivant accessible</span>
           {resultat.trajectoire_progression.map((p) => (
             <div key={p.cycle} className="flex justify-between text-sm">
-              <span className="text-neutre-700">Cycle +{p.cycle}</span>
+              <span className="text-neutre-700">Prochain cycle</span>
               <span className="font-mono text-neutre-950">
                 {formaterMontant(p.plafond_accessible)}
               </span>
             </div>
           ))}
+          <span className="text-xs text-neutre-500 italic">
+            Estimation à profil de risque inchangé, non contractuelle : réévaluée au moment du
+            renouvellement.
+          </span>
         </div>
 
         {resultat.tranche !== "accord" && resultat.conditions_reexamen.length > 0 && (
