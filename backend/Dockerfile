@@ -31,4 +31,6 @@ ENTRYPOINT []
 RUN chown -R solida:solida /app
 USER solida
 
-CMD ["uvicorn", "solida.infrastructure.application_fastapi:app", "--host", "0.0.0.0", "--port", "8000"]
+# --no-access-log : remplace par MiddlewareJournalisationAcces (JSON structure, adresse IP
+# fiable via X-Real-IP) plutot que le journal texte brut d'uvicorn.
+CMD ["uvicorn", "solida.infrastructure.application_fastapi:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

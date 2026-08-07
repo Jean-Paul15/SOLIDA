@@ -12,6 +12,7 @@ from solida.domain.erreurs import AccesRefuse
 from solida.domain.rules.mot_de_passe import valider_mot_de_passe
 from solida.infrastructure.auth import (
     GestionnaireUtilisateurs,
+    adresse_ip_client,
     charger_mots_de_passe_courants,
     current_active_user,
     obtenir_gestionnaire_utilisateurs,
@@ -62,12 +63,18 @@ FENETRE_VERROUILLAGE = timedelta(minutes=15)
 @routeur.post("/connexion", response_model=ReponseConnexion)
 async def connexion(
     demande: DemandeConnexion,
+    requete: Request,
     reponse: Response,
     session: AsyncSession = Depends(obtenir_session),
     gestionnaire: GestionnaireUtilisateurs = Depends(obtenir_gestionnaire_utilisateurs),
     strategie: DatabaseStrategy[Utilisateur, uuid.UUID, AccessToken] = Depends(obtenir_strategie),
     audit: JournalAuditSql = Depends(journal_audit),
 ) -> ReponseConnexion:
+    ip = adresse_ip_client(requete)
+    # Navigateur declare (User-Agent), pas une empreinte technique (canvas/WebGL/polices) :
+    # juste l'en-tete standard, deja envoye par tout client HTTP a chaque requete. Suffisant
+    # pour signaler "connexion depuis un appareil inhabituel" sans collecte intrusive.
+    navigateur = requete.headers.get("user-agent")
     depuis = datetime.now(UTC) - FENETRE_VERROUILLAGE
     echecs_recents = audit.compter_evenements_recents(
         "connexion_echouee", demande.identifiant, depuis
@@ -83,7 +90,11 @@ async def connexion(
     )
     if utilisateur is None or not utilisateur.is_active:
         audit.enregistrer_evenement(
-            "connexion_echouee", demande.identifiant, demande.identifiant, {}
+            "connexion_echouee",
+            demande.identifiant,
+            demande.identifiant,
+            {"navigateur": navigateur},
+            ip,
         )
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, "Identifiant ou mot de passe incorrect."
@@ -93,7 +104,13 @@ async def connexion(
     await revoquer_jetons_utilisateur(session, utilisateur.id)
     jeton = await strategie.write_token(utilisateur)
     _poser_cookie(reponse, jeton)
-    audit.enregistrer_evenement("connexion_reussie", str(utilisateur.id), demande.identifiant, {})
+    audit.enregistrer_evenement(
+        "connexion_reussie",
+        str(utilisateur.id),
+        demande.identifiant,
+        {"navigateur": navigateur},
+        ip,
+    )
     return ReponseConnexion(
         nom=utilisateur.nom_complet,
         role=utilisateur.role,
@@ -122,7 +139,13 @@ async def deconnexion(
         httponly=transport_cookie.cookie_httponly,
         samesite=transport_cookie.cookie_samesite,
     )
-    audit.enregistrer_evenement("deconnexion", str(utilisateur.id), utilisateur.identifiant, {})
+    audit.enregistrer_evenement(
+        "deconnexion",
+        str(utilisateur.id),
+        utilisateur.identifiant,
+        {"navigateur": requete.headers.get("user-agent")},
+        adresse_ip_client(requete),
+    )
     return {"statut": "ok"}
 
 
@@ -139,6 +162,7 @@ async def moi(utilisateur: Utilisateur = Depends(current_active_user)) -> Repons
 @routeur.post("/changer-mot-de-passe")
 async def changer_mot_de_passe(
     demande: DemandeChangementMotDePasse,
+    requete: Request,
     session: AsyncSession = Depends(obtenir_session),
     utilisateur: Utilisateur = Depends(current_active_user),
     gestionnaire: GestionnaireUtilisateurs = Depends(obtenir_gestionnaire_utilisateurs),
@@ -161,6 +185,10 @@ async def changer_mot_de_passe(
     # session courante — l'agent devra se reconnecter avec le nouveau mot de passe.
     await revoquer_jetons_utilisateur(session, utilisateur.id)
     audit.enregistrer_evenement(
-        "mot_de_passe_change", str(utilisateur.id), utilisateur.identifiant, {}
+        "mot_de_passe_change",
+        str(utilisateur.id),
+        utilisateur.identifiant,
+        {"navigateur": requete.headers.get("user-agent")},
+        adresse_ip_client(requete),
     )
     return {"statut": "ok"}

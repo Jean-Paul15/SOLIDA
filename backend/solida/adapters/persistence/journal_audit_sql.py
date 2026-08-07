@@ -16,13 +16,14 @@ class JournalAuditSql:
         acteur_id: str,
         objet: str,
         details: dict[str, object],
+        adresse_ip: str | None = None,
     ) -> None:
         # evenement_id genere ici : la colonne n'a pas de server_default, seulement un
         # defaut cote ORM (jamais applique par cette instruction SQL brute). bindparams
         # (type_=JSON) : psycopg3 n'adapte pas un dict Python tout seul.
         instruction = text("""
-            INSERT INTO journal_audit (evenement_id, type, acteur_id, objet, details)
-            VALUES (:evenement_id, :type, :acteur_id, :objet, :details)
+            INSERT INTO journal_audit (evenement_id, type, acteur_id, objet, details, adresse_ip)
+            VALUES (:evenement_id, :type, :acteur_id, :objet, :details, :adresse_ip)
         """).bindparams(bindparam("details", type_=JSON))
         with self._moteur.connect() as connexion:
             connexion.execute(
@@ -33,6 +34,7 @@ class JournalAuditSql:
                     "acteur_id": acteur_id,
                     "objet": objet,
                     "details": details,
+                    "adresse_ip": adresse_ip,
                 },
             )
             connexion.commit()

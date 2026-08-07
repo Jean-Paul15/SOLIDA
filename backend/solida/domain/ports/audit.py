@@ -13,6 +13,7 @@ class JournalAudit(Protocol):
         acteur_id: str,
         objet: str,
         details: dict[str, object],
+        adresse_ip: str | None = None,
     ) -> None: ...
 
     def lister_objets_recents(

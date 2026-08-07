@@ -54,6 +54,11 @@ services:
 
   postgres-coresim:
     image: postgres:16.14
+    # `-c timezone=UTC` plutot que la variable d'environnement TZ : initdb ne fixe le GUC
+    # timezone qu'a la creation du volume de donnees, un TZ pose apres coup sur un volume
+    # deja initialise n'aurait aucun effet. Le flag de ligne de commande s'applique a chaque
+    # demarrage, quel que soit l'age du volume.
+    command: postgres -c timezone=UTC
     environment:
       POSTGRES_DB: coresim
       POSTGRES_USER: ${CORESIM_ADMIN_USER}
@@ -76,6 +81,9 @@ services:
 
   postgres-solida:
     image: postgres:16.14
+    # Voir le commentaire equivalent sur postgres-coresim : flag de ligne de commande, pas
+    # la variable TZ, pour un effet garanti meme sur un volume de donnees deja initialise.
+    command: postgres -c timezone=UTC
     environment:
       POSTGRES_DB: solida
       POSTGRES_USER: ${SOLIDA_APP_USER}

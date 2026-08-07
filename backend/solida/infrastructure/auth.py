@@ -149,6 +149,14 @@ DUREE_INACTIVITE_MAX = timedelta(minutes=15)
 """Expiration par inactivité, vérifiée côté serveur à chaque requête — un minuteur
 côté client seul se contourne (l'attaquant qui a volé la session simule l'activité)."""
 
+
+def adresse_ip_client(requete: Request) -> str | None:
+    """`X-Real-IP` : posé par nginx sur toute requête proxifiée vers l'API (seul point
+    d'entrée public, voir `infra/nginx/nginx.conf`), donc jamais falsifiable par le client
+    lui-même. `request.client.host` ne sert qu'en développement local, quand l'API est
+    appelée directement sans passer par nginx."""
+    return requete.headers.get("x-real-ip") or (requete.client.host if requete.client else None)
+
 _utilisateur_actif_brut = fastapi_users.current_user(active=True)
 
 
