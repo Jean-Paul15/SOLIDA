@@ -18,8 +18,18 @@ export function EnTete({ agence, utilisateur }: EnTeteProps) {
 
   async function seDeconnecter() {
     setDeconnexionEnCours(true);
-    await fetch("/api/v1/auth/deconnexion", { method: "POST" });
-    router.push("/connexion");
+    // Meme filet que le formulaire de connexion : sans try/catch, une requete qui echoue
+    // avant d'atteindre le serveur laissait le bouton bloque en chargement indefiniment,
+    // sans jamais rediriger vers l'ecran de connexion.
+    try {
+      await fetch("/api/v1/auth/deconnexion", { method: "POST" });
+    } catch {
+      // Rien a afficher : on redirige quand meme vers /connexion, ou une session encore
+      // active cote serveur redemandera simplement les identifiants au prochain appel.
+    } finally {
+      router.push("/connexion");
+      setDeconnexionEnCours(false);
+    }
   }
 
   return (

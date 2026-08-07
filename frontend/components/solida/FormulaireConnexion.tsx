@@ -27,31 +27,43 @@ export function FormulaireConnexion() {
     setEnCours(true);
 
     const formData = new FormData(event.currentTarget);
-    const reponse = await fetch("/api/v1/auth/connexion", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        identifiant: formData.get("identifiant"),
-        mot_de_passe: formData.get("mot_de_passe"),
-      }),
-    });
+    // Delai d'abandon + try/catch : sans ca, une requete qui echoue avant meme d'atteindre
+    // le serveur (reseau coupe momentanement) ou qui ne repond jamais laissait le bouton
+    // bloque sur "Connexion..." indefiniment, sans autre issue que de recharger la page.
+    const controleur = new AbortController();
+    const delaiAbandon = setTimeout(() => controleur.abort(), 15_000);
+    try {
+      const reponse = await fetch("/api/v1/auth/connexion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifiant: formData.get("identifiant"),
+          mot_de_passe: formData.get("mot_de_passe"),
+        }),
+        signal: controleur.signal,
+      });
 
-    if (!reponse.ok) {
-      setEnCours(false);
-      setErreur(
-        reponse.status === 429
-          ? "Compte temporairement bloqué après plusieurs échecs, réessayez plus tard."
-          : "Identifiant ou mot de passe incorrect."
+      if (!reponse.ok) {
+        setErreur(
+          reponse.status === 429
+            ? "Compte temporairement bloqué après plusieurs échecs, réessayez plus tard."
+            : "Identifiant ou mot de passe incorrect."
+        );
+        identifiantRef.current?.focus();
+        return;
+      }
+
+      const { doit_changer_mot_de_passe }: { doit_changer_mot_de_passe: boolean } =
+        await reponse.json();
+      router.push(
+        doit_changer_mot_de_passe ? "/changer-mot-de-passe" : searchParams.get("redirect") || "/"
       );
-      identifiantRef.current?.focus();
-      return;
+    } catch {
+      setErreur("Connexion au serveur impossible. Vérifiez votre réseau et réessayez.");
+    } finally {
+      clearTimeout(delaiAbandon);
+      setEnCours(false);
     }
-
-    const { doit_changer_mot_de_passe }: { doit_changer_mot_de_passe: boolean } =
-      await reponse.json();
-    router.push(
-      doit_changer_mot_de_passe ? "/changer-mot-de-passe" : searchParams.get("redirect") || "/"
-    );
   }
 
   return (
