@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Engine, bindparam, text
@@ -191,3 +192,29 @@ class DepotDecisionsSql:
         """)
         with self._moteur.connect() as connexion:
             return connexion.execute(requete, {"agence_id": agence_id}).scalar_one()
+
+    def existe_decision_accordee_depuis(
+        self, societaire_id: str, depuis: datetime, entree_actuelle: dict[str, object]
+    ) -> bool:
+        # entree IS DISTINCT FROM : exclut un simple retry de la meme demande (double-clic,
+        # retry reseau), deja couvert par la deduplication de `enregistrer` ci-dessus.
+        requete = text("""
+            SELECT 1 FROM decision_scoring
+            WHERE societaire_id = :societaire_id
+              AND tranche IN ('accord', 'accord_sous_condition')
+              AND horodatage >= :depuis
+              AND entree IS DISTINCT FROM :entree_actuelle
+            LIMIT 1
+        """).bindparams(bindparam("entree_actuelle", type_=JSONB))
+        with self._moteur.connect() as connexion:
+            return (
+                connexion.execute(
+                    requete,
+                    {
+                        "societaire_id": societaire_id,
+                        "depuis": depuis,
+                        "entree_actuelle": entree_actuelle,
+                    },
+                ).first()
+                is not None
+            )

@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -57,6 +58,14 @@ def test_registre_avec_limite_excessive_est_rejete() -> None:
     # Plafond serveur sur `limite`, independant de ce que le client demande.
     reponse = _connecte("auditeur.interne").get("/api/v1/registre", params={"limite": 999999})
     assert reponse.status_code == 422
+
+
+def test_registre_avec_limite_ou_decalage_negatif_est_rejete() -> None:
+    # Round 3 du pentest : une valeur negative atteignait le LIMIT/OFFSET SQL et remontait
+    # en 500 brut au lieu d'un 422 propre.
+    client = _connecte("auditeur.interne")
+    assert client.get("/api/v1/registre", params={"limite": -1}).status_code == 422
+    assert client.get("/api/v1/registre", params={"decalage": -1}).status_code == 422
 
 
 def test_lecture_grille_autorisee_a_lagent() -> None:
@@ -122,11 +131,25 @@ def test_version_grille_trop_longue_est_rejetee() -> None:
     assert reponse.status_code == 422
 
 
+def test_scorecard_modifie_est_rejete() -> None:
+    # pdo/score_reference/odds_reference ne sont plus editables par ce canal (round 3 du
+    # pentest : un appel API direct pouvait changer la mise a l'echelle du score pour tout le
+    # reseau sans aucun garde-fou, alors que l'ecran ne le permet plus).
+    payload = _payload_grille("v0.5-scorecard-modifie")
+    payload["scorecard"] = {"pdo": 5.0, "score_reference": 600, "odds_reference": 50}
+    reponse = _connecte("superviseur.reseau").post("/api/v1/parametrage/grille", json=payload)
+    assert reponse.status_code == 422
+    assert reponse.json()["code"] == "scorecard_immuable"
+
+
 def test_doublon_version_grille_renvoie_409_puis_une_version_unique_reussit() -> None:
     # Un doublon doit renvoyer 409 (pas 500), et surtout ne doit pas casser durablement
-    # l'endpoint pour les ecritures suivantes valides dans le meme process.
+    # l'endpoint pour les ecritures suivantes valides dans le meme process. Suffixe unique :
+    # la base de test n'est pas reinitialisee entre deux executions manuelles de la suite,
+    # un nom de version fixe entrerait en collision avec un run precedent.
     client = _connecte("superviseur.reseau")
-    version = "v0.4-doublon-test"
+    # Reste sous max_length=30 (schemas/grille.py) meme avec le suffixe "-suite" ci-dessous.
+    version = f"v-doublon-{uuid.uuid4().hex[:8]}"
 
     premiere = client.post("/api/v1/parametrage/grille", json=_payload_grille(version))
     assert premiere.status_code == 200
@@ -135,7 +158,5 @@ def test_doublon_version_grille_renvoie_409_puis_une_version_unique_reussit() ->
     assert doublon.status_code == 409
     assert doublon.json()["code"] == "version_deja_existante"
 
-    ensuite = client.post(
-        "/api/v1/parametrage/grille", json=_payload_grille("v0.4-doublon-test-suite")
-    )
+    ensuite = client.post("/api/v1/parametrage/grille", json=_payload_grille(f"{version}-suite"))
     assert ensuite.status_code == 200

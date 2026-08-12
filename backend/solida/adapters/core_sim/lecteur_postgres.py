@@ -105,6 +105,17 @@ class LecteurCoreSimPostgres:
                 for ligne in lignes
             ]
 
+    def compter_societaires(self, terme: str, agence_id: str | None = None) -> int:
+        requete = text("""
+            SELECT count(*) FROM societaires s
+            WHERE (s.nom_complet ILIKE '%' || :terme || '%' OR s.numero_membre = :terme)
+              AND (CAST(:agence_id AS text) IS NULL OR s.caisse_id = :agence_id)
+        """)
+        with self._moteur.connect() as connexion:
+            return connexion.execute(
+                requete, {"terme": terme, "agence_id": agence_id}
+            ).scalar_one()
+
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
         requete = text("""
             SELECT s.societaire_id, s.numero_membre, s.nom_complet, s.caisse_id, s.date_adhesion,

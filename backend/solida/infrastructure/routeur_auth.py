@@ -75,10 +75,14 @@ async def connexion(
     # juste l'en-tete standard, deja envoye par tout client HTTP a chaque requete. Suffisant
     # pour signaler "connexion depuis un appareil inhabituel" sans collecte intrusive.
     navigateur = requete.headers.get("user-agent")
+    # Le verrou porte sur identifiant+IP, pas identifiant seul : sinon n'importe qui connaissant
+    # un identifiant peut le verrouiller 15 min sans avoir de compte, depuis n'importe quelle IP.
+    # Contrepartie assumee : un attaquant reparti sur plusieurs IP a son propre compteur par IP
+    # (protection contre le brute-force distribue legerement affaiblie), cf.
+    # docs/backend/03-decisions-provisoires-a-revoir.md.
+    cle_verrou = f"{demande.identifiant}:{ip}"
     depuis = datetime.now(UTC) - FENETRE_VERROUILLAGE
-    echecs_recents = audit.compter_evenements_recents(
-        "connexion_echouee", demande.identifiant, depuis
-    )
+    echecs_recents = audit.compter_evenements_recents("connexion_echouee", cle_verrou, depuis)
     if echecs_recents >= LIMITE_ECHECS_CONNEXION:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
@@ -92,7 +96,7 @@ async def connexion(
         audit.enregistrer_evenement(
             "connexion_echouee",
             demande.identifiant,
-            demande.identifiant,
+            cle_verrou,
             {"navigateur": navigateur},
             ip,
         )

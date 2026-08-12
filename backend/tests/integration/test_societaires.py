@@ -68,6 +68,15 @@ def test_recherche_avec_limite_excessive_est_rejetee(client_agent: TestClient) -
     assert reponse.status_code == 422
 
 
+def test_recherche_avec_limite_negative_est_rejetee(client_agent: TestClient) -> None:
+    # Round 3 du pentest : une valeur negative atteignait le LIMIT SQL et remontait en 500
+    # brut au lieu d'un 422 propre.
+    reponse = client_agent.get(
+        "/api/v1/societaires/recherche", params={"terme": "an", "limite": -1}
+    )
+    assert reponse.status_code == 422
+
+
 def test_dossier_dun_societaire_de_son_agence_est_accessible(
     client_agent: TestClient, societaire_agence_agent: str
 ) -> None:
@@ -86,3 +95,32 @@ def test_dossier_dun_societaire_dune_autre_agence_est_refuse(
 def test_dossier_introuvable_renvoie_404(client_agent: TestClient) -> None:
     reponse = client_agent.get("/api/v1/societaires/SOC-INEXISTANT/dossier")
     assert reponse.status_code == 404
+
+
+def test_identifiant_de_forme_invalide_renvoie_422(client_agent: TestClient) -> None:
+    # Round 3 du pentest : un `/` encode dans l'identifiant remontait en 500 brut. Selon que
+    # le routeur decode `%2F` avant ou apres le matching de route, la reponse est soit 404
+    # (route non trouvee) soit 422 (notre validation de forme) — les deux sont sans fuite,
+    # jamais un 500 brut.
+    reponse = client_agent.get("/api/v1/societaires/SOC-1%2F2/dossier")
+    assert reponse.status_code in {404, 422}
+    if reponse.status_code == 422:
+        assert reponse.json()["detail"]["code"] == "identifiant_invalide"
+
+
+def test_total_de_recherche_reflete_le_vrai_nombre_de_correspondances_pas_la_page(
+    client_agent: TestClient,
+) -> None:
+    # Round 3 du pentest : `total` valait `len(elements)` (la taille de la page), pas le vrai
+    # nombre de correspondances — indetectable qu'une recherche a beaucoup plus de resultats
+    # que la page renvoyee. Une page plus petite doit avoir moins d'`elements` mais le meme
+    # `total` qu'une page plus large, sur le meme terme.
+    petite_page = client_agent.get(
+        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 1}
+    ).json()
+    grande_page = client_agent.get(
+        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 50}
+    ).json()
+    assert len(petite_page["elements"]) == 1
+    assert petite_page["total"] == grande_page["total"]
+    assert petite_page["total"] >= len(grande_page["elements"])

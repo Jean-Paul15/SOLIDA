@@ -26,7 +26,10 @@ class EntreeScoring(BaseModel):
     societaire_id: str
     produit_id: str
     montant_demande: int = Field(gt=0)
-    duree_demandee_mois: int = Field(gt=0)
+    # le=1200 (100 ans) : plafond technique anti-overflow, pas une borne produit — celle-ci
+    # reste appliquee en aval via le catalogue CORE-SIM (duree_min_mois/duree_max_mois par
+    # produit, scorer_demande.py).
+    duree_demandee_mois: int = Field(gt=0, le=1200)
     objet_credit: ObjetCredit
     groupe_id: str | None = None
     actualisation: ActualisationSituation | None = None

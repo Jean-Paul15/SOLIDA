@@ -9,6 +9,7 @@ from solida.domain.erreurs import (
     ErreurDomaine,
     MontantDemandeInvalide,
     ProduitIntrouvable,
+    ScorecardImmuable,
     SocietaireIntrouvable,
     SurEndettement,
     VersionGrilleDejaExistante,
@@ -29,6 +30,7 @@ _STATUTS_PAR_ERREUR: list[tuple[type[ErreurDomaine], int, str]] = [
     (DureeDemandeeInvalide, 422, "duree_invalide"),
     (SurEndettement, 422, "sur_endettement"),
     (VersionGrilleDejaExistante, 409, "version_deja_existante"),
+    (ScorecardImmuable, 422, "scorecard_immuable"),
     (ErreurDomaine, 400, "regle_metier"),
 ]
 

@@ -12,9 +12,10 @@ routeur = APIRouter(prefix="/api/v1/registre", tags=["registre"])
 
 @routeur.get("", response_model=PageRegistre)
 def lister(
-    # Plafond serveur, meme raisonnement que societaires.py:recherche.
-    limite: int = Query(default=20, le=50),
-    decalage: int = 0,
+    # Plafond serveur, meme raisonnement que societaires.py:recherche. ge=0 sur les deux :
+    # une valeur negative atteignait le LIMIT/OFFSET SQL et remontait en 500 brut.
+    limite: int = Query(default=20, ge=0, le=50),
+    decalage: int = Query(default=0, ge=0),
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: ListerDecisions = Depends(lister_decisions),
 ) -> PageRegistre:

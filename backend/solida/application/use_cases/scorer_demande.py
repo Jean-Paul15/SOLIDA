@@ -1,6 +1,7 @@
 import math
 import uuid
 from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 
 from solida.domain.erreurs import (
     AccesRefuse,
@@ -45,6 +46,13 @@ AVERTISSEMENT_MODELE_SUBSTITUT = (
     "Score calculé avec un modèle de substitution (probabilité fixe), pas le modèle "
     "réel entraîné : à recalibrer entièrement dès qu'il existe."
 )
+
+# Reprend la duree de session deja actee (DUREE_SESSION_SECONDES, infrastructure/auth.py — pas
+# importable ici, l'application ne depend pas de l'infrastructure) plutot que d'inventer un
+# nouveau seuil : au-dela d'une session de guichet, CORE-SIM a normalement eu le temps de
+# refleter un octroi confirme ; en-deca, deux "accord" pour le meme societaire sont un signal de
+# multi-octroi que le controle a_credit_en_cours seul ne voit pas encore.
+FENETRE_MULTI_OCTROI = timedelta(hours=8)
 
 
 def _revenu_effectif(demande: DemandeScoring, revenu_declare: int | None) -> int:
@@ -171,6 +179,14 @@ class ScorerDemande:
             raise SurEndettement(
                 f"Le sociétaire {demande.societaire_id} a déjà un crédit en cours : un "
                 "nouvel octroi ne peut pas être confirmé par ce canal."
+            )
+        depuis = datetime.now(UTC) - FENETRE_MULTI_OCTROI
+        if self.depot_decisions.existe_decision_accordee_depuis(
+            demande.societaire_id, depuis, entree_brute
+        ):
+            raise SurEndettement(
+                f"Le sociétaire {demande.societaire_id} a déjà une décision accordée récente en "
+                "attente de reflet dans CORE-SIM : un nouvel octroi ne peut pas être confirmé."
             )
 
         groupe = self.lecteur.charger_groupe(demande.societaire_id)

@@ -155,6 +155,37 @@ def test_connexion_se_verrouille_apres_cinq_echecs(client: TestClient) -> None:
     assert reponse_bloquee.status_code == 429
 
 
+def test_connexion_se_verrouille_par_identifiant_et_ip_pas_identifiant_seul(
+    client: TestClient,
+) -> None:
+    # Round 3 du pentest : n'importe qui connaissant un identifiant pouvait le verrouiller
+    # 15 min sans jamais avoir de mot de passe correct, depuis une seule IP. Deux IP distinctes
+    # (X-Real-IP, ce que pose nginx en prod) attaquant le meme identifiant ont chacune leur
+    # propre compteur : la seconde IP n'est pas bloquee par les echecs de la premiere.
+    identifiant = f"compte.verrouillage.ip.test.{uuid.uuid4().hex[:8]}"
+    for _ in range(5):
+        reponse = client.post(
+            "/api/v1/auth/connexion",
+            json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
+            headers={"X-Real-IP": "203.0.113.10"},
+        )
+        assert reponse.status_code == 401
+
+    bloquee_meme_ip = client.post(
+        "/api/v1/auth/connexion",
+        json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
+        headers={"X-Real-IP": "203.0.113.10"},
+    )
+    assert bloquee_meme_ip.status_code == 429
+
+    pas_bloquee_autre_ip = client.post(
+        "/api/v1/auth/connexion",
+        json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
+        headers={"X-Real-IP": "203.0.113.99"},
+    )
+    assert pas_bloquee_autre_ip.status_code == 401
+
+
 def test_une_nouvelle_connexion_revoque_la_precedente() -> None:
     premier_client = TestClient(app)
     premier_client.post(

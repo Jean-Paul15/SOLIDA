@@ -42,12 +42,23 @@ def client_superviseur() -> TestClient:
     return client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def societaire_agence_agent() -> str:
+    # Un societaire distinct par test (pas `scope="module"` partage) : plusieurs tests de ce
+    # module confirment un octroi "accord" sur ce fixture, et le controle multi-octroi
+    # (finding 12, round 3 du pentest) bloquerait alors tous les tests suivants du module qui
+    # reutiliseraient le meme societaire, meme sans rapport avec ce qu'ils testent.
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
     with moteur.connect() as connexion:
         ligne = connexion.execute(
-            text("SELECT societaire_id FROM societaires WHERE caisse_id = 'CAI-00' LIMIT 1")
+            text("""
+                SELECT s.societaire_id FROM societaires s
+                WHERE s.caisse_id = 'CAI-00' AND NOT EXISTS (
+                    SELECT 1 FROM credits c
+                    WHERE c.societaire_id = s.societaire_id AND c.statut = 'en_cours'
+                )
+                ORDER BY random() LIMIT 1
+            """)
         ).first()
     assert ligne is not None
     return ligne.societaire_id
@@ -255,6 +266,37 @@ def test_sur_endettement_bloque_la_confirmation(
     )
     assert reponse.status_code == 422
     assert reponse.json()["code"] == "sur_endettement"
+
+
+def test_duree_demandee_excessive_est_rejetee(
+    client_agent: TestClient, societaire_agence_agent: str
+) -> None:
+    # Round 3 du pentest : une duree demesuree remontait en 500 (overflow) avant meme
+    # d'atteindre la validation metier du catalogue produit.
+    demande = _demande(societaire_agence_agent)
+    demande["duree_demandee_mois"] = 99_999_999_999
+    reponse = client_agent.post("/api/v1/scoring/previsualiser", json=demande)
+    assert reponse.status_code == 422
+
+
+def test_deuxieme_octroi_pour_le_meme_societaire_est_bloque(
+    client_agent: TestClient, societaire_agence_agent: str
+) -> None:
+    # Round 3 du pentest (multi-octroi) : deux "accord" confirmes coup sur coup pour le meme
+    # societaire passaient tous les deux, la table CORE-SIM n'ayant pas encore le temps de
+    # refleter le premier credit. Deux demandes differentes (objet distinct) pour eviter la
+    # deduplication de doublon exact deja en place.
+    demande = _demande(societaire_agence_agent)
+    demande["objet_credit"] = "equipement"
+    premiere = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    assert premiere.status_code == 201
+    if premiere.json()["tranche"] not in {"accord", "accord_sous_condition"}:
+        pytest.skip("Le scoring de ce societaire ne produit pas un accord dans ce jeu de donnees")
+
+    demande["objet_credit"] = "habitat"
+    deuxieme = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    assert deuxieme.status_code == 422
+    assert deuxieme.json()["code"] == "sur_endettement"
 
 
 pytestmark_archivage = pytest.mark.skipif(

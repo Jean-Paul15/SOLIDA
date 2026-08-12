@@ -52,3 +52,8 @@ class SurEndettement(ErreurDomaine):
 
 class VersionGrilleDejaExistante(ErreurDomaine):
     """Une configuration de grille porte déjà ce `version_grille`."""
+
+
+class ScorecardImmuable(ErreurDomaine):
+    """pdo/score_reference/odds_reference ne se modifient plus par ce canal (calibration en
+    attente du modèle réel, cf. docs/backend/03-decisions-provisoires-a-revoir.md)."""
