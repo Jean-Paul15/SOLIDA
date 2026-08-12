@@ -58,21 +58,26 @@ tranché :
   défaut observés en rétro-test, pour remplacer les boutons désactivés par des préréglages
   réellement sélectionnables.
 
-## Décision en attente : frein de volume sur les lectures (recherche/dossier sociétaire)
+## Décision en attente : seuil d'alerte sur le volume de lecture (recherche/dossier sociétaire)
 
 Le pentest round 3 a démontré qu'un agent légitime peut parcourir tout le fichier de son agence
-(paginer `recherche` sur de nombreux termes, puis `dossier` sur chaque résultat) sans aucune
-limite de volume. La visibilité est corrigée (`recherche` et `dossier` écrivent désormais dans
-`journal_audit`, IP réelle comprise), mais **aucun seuil de blocage n'est ajouté ici** :
+(paginer `recherche` sur de nombreux termes, puis `dossier` sur chaque résultat) sans qu'aucune
+alerte ne se déclenche. Corrigé depuis : `recherche`/`dossier` journalisent IP réelle et
+navigateur, et `backend/solida/batch/jobs/detecter_lectures_anormales.py` écrit une alerte
+(`alerte_volume_lecture`) au-delà de 100 lectures/heure par acteur — **jamais de blocage
+automatique** (voir `docs/backend/07-monitoring-securite.md` pour le détail et le rationnel).
+Ce qui reste réellement en attente :
 
-- **Ce qui manque** : un nombre de lectures/heure au-delà duquel bloquer ou exiger une nouvelle
-  authentification, propre au volume de travail normal d'un agent (taille d'agence, période de
-  campagne, etc.) — une valeur non documentée nulle part, que ce dossier n'a pas mandat d'inventer.
-- **Qui tranche** : le responsable risque/opérations (rôle `superviseur` ou `administrateur`),
-  une fois un volume de lecture normal observé en usage réel (les logs `recherche_societaires`/
-  `consultation_dossier` de `journal_audit` fournissent déjà la matière pour cette observation).
-- **Attendu** : un seuil (et sa réponse — blocage dur, ralentissement, alerte seule) dérivé de
-  cette observation, pas d'une intuition.
+- **Le seuil (100/heure)** est repris de la recommandation du rapport de pentest, pas mesuré sur
+  un usage réel — un point de départ, pas une valeur figée.
+- **Qui tranche la valeur définitive** : le responsable risque/opérations (rôle `superviseur` ou
+  `administrateur`), une fois un volume de lecture normal observé en production (les logs
+  `recherche_societaires`/`consultation_dossier` de `journal_audit` fournissent déjà la matière).
+- **Attendu** : un ajustement de `SEUIL_LECTURES` dans `detecter_lectures_anormales.py` dérivé de
+  cette observation, pas d'une intuition. La réponse à une alerte reste humaine (revue puis,
+  si besoin, blocage via `cli_provisionner_comptes bloquer`) — ce point-là n'est pas en attente,
+  déjà tranché explicitement pour éviter qu'un seuil automatique ne devienne un vecteur de déni
+  de service.
 
 ## Périmètre administrateur modèle : confirmé hors SOLIDA
 
