@@ -32,6 +32,16 @@ def client_auditeur() -> TestClient:
     return client
 
 
+@pytest.fixture
+def client_superviseur() -> TestClient:
+    client = TestClient(app)
+    client.post(
+        "/api/v1/auth/connexion",
+        json={"identifiant": "superviseur.reseau", "mot_de_passe": "solida-demo"},
+    )
+    return client
+
+
 @pytest.fixture(scope="module")
 def societaire_agence_agent() -> str:
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
@@ -40,6 +50,23 @@ def societaire_agence_agent() -> str:
             text("SELECT societaire_id FROM societaires WHERE caisse_id = 'CAI-00' LIMIT 1")
         ).first()
     assert ligne is not None
+    return ligne.societaire_id
+
+
+@pytest.fixture(scope="module")
+def societaire_avec_credit_en_cours() -> str:
+    moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
+    with moteur.connect() as connexion:
+        ligne = connexion.execute(
+            text("""
+                SELECT s.societaire_id FROM societaires s
+                JOIN credits c ON c.societaire_id = s.societaire_id
+                WHERE s.caisse_id = 'CAI-00' AND c.statut = 'en_cours'
+                LIMIT 1
+            """)
+        ).first()
+    if ligne is None:
+        pytest.skip("Aucun societaire CAI-00 avec un credit en cours dans ce jeu de donnees")
     return ligne.societaire_id
 
 
@@ -112,6 +139,22 @@ def test_confirmer_puis_relire_la_decision(
     assert reponse_fiche.json()["fiche_id"] == decision_id
 
 
+def test_confirmations_dupliquees_renvoient_la_meme_decision(
+    client_agent: TestClient, societaire_agence_agent: str
+) -> None:
+    # Deux confirmations identiques (double-clic, retry reseau) dans une fenetre courte ne
+    # doivent pas persister deux decisions distinctes.
+    demande = _demande(societaire_agence_agent)
+    demande["objet_credit"] = "urgence_sante"  # objet distinct des autres tests de ce module
+
+    premiere = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    assert premiere.status_code == 201
+    deuxieme = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    assert deuxieme.status_code == 201
+
+    assert premiere.json()["decision_id"] == deuxieme.json()["decision_id"]
+
+
 def test_confirmer_un_societaire_introuvable_renvoie_404(client_agent: TestClient) -> None:
     reponse = client_agent.post("/api/v1/scoring/confirmer", json=_demande("SOC-INEXISTANT"))
     assert reponse.status_code == 404
@@ -161,6 +204,57 @@ def test_agent_ne_peut_pas_scorer_hors_de_son_agence(
         "/api/v1/scoring/confirmer", json=_demande(societaire_autre_agence)
     )
     assert reponse.status_code == 403
+
+
+def test_superviseur_ne_peut_pas_previsualiser(
+    client_superviseur: TestClient, societaire_agence_agent: str
+) -> None:
+    # Le superviseur parametre la grille (POST /parametrage/grille) mais ne doit pas pouvoir
+    # aussi octroyer un credit lui-meme — separation des devoirs.
+    reponse = client_superviseur.post(
+        "/api/v1/scoring/previsualiser", json=_demande(societaire_agence_agent)
+    )
+    assert reponse.status_code == 403
+
+
+def test_superviseur_ne_peut_pas_confirmer(
+    client_superviseur: TestClient, societaire_agence_agent: str
+) -> None:
+    reponse = client_superviseur.post(
+        "/api/v1/scoring/confirmer", json=_demande(societaire_agence_agent)
+    )
+    assert reponse.status_code == 403
+
+
+def test_decision_id_non_uuid_renvoie_422(client_agent: TestClient) -> None:
+    reponse = client_agent.get("/api/v1/scoring/pas-un-uuid")
+    assert reponse.status_code == 422
+    assert reponse.json()["detail"]["code"] == "identifiant_invalide"
+
+
+def test_decision_id_uuid_inexistant_renvoie_404(client_agent: TestClient) -> None:
+    reponse = client_agent.get("/api/v1/scoring/00000000-0000-0000-0000-000000000000")
+    assert reponse.status_code == 404
+
+
+def test_sur_endettement_bloque_la_previsualisation(
+    client_agent: TestClient, societaire_avec_credit_en_cours: str
+) -> None:
+    reponse = client_agent.post(
+        "/api/v1/scoring/previsualiser", json=_demande(societaire_avec_credit_en_cours)
+    )
+    assert reponse.status_code == 422
+    assert reponse.json()["code"] == "sur_endettement"
+
+
+def test_sur_endettement_bloque_la_confirmation(
+    client_agent: TestClient, societaire_avec_credit_en_cours: str
+) -> None:
+    reponse = client_agent.post(
+        "/api/v1/scoring/confirmer", json=_demande(societaire_avec_credit_en_cours)
+    )
+    assert reponse.status_code == 422
+    assert reponse.json()["code"] == "sur_endettement"
 
 
 pytestmark_archivage = pytest.mark.skipif(

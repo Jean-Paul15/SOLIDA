@@ -24,3 +24,4 @@ class Societaire:
     parts_sociales_montant: int
     revenu_mensuel_declare: int | None
     groupe_id: str | None
+    a_credit_en_cours: bool

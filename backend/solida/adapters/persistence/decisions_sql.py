@@ -85,6 +85,18 @@ class DepotDecisionsSql:
         self._moteur = moteur
 
     def enregistrer(self, decision: DecisionAEnregistrer) -> DecisionEnregistree:
+        # Un double-clic ou un retry reseau renvoie la meme requete (memes societaire/agent/
+        # entree) en l'espace de quelques secondes : plutot que d'inserer un doublon, on
+        # renvoie la decision deja persistee la plus recente.
+        requete_doublon = text("""
+            SELECT d.*, u.nom_complet AS agent_nom, u.agence_id AS agent_agence_id
+            FROM decision_scoring d
+            JOIN utilisateur u ON u.id = d.agent_id
+            WHERE d.societaire_id = :societaire_id AND d.agent_id = :agent_id
+              AND d.entree = :entree AND d.horodatage > now() - interval '10 seconds'
+            ORDER BY d.horodatage DESC LIMIT 1
+        """).bindparams(bindparam("entree", type_=JSONB))
+
         # bindparams(type_=JSONB) : psycopg3 n'adapte pas un dict Python tout seul, il faut
         # lui dire explicitement de le serialiser en JSONB plutot que de tenter un %s brut.
         instruction = text("""
@@ -104,6 +116,17 @@ class DepotDecisionsSql:
             bindparam("resultat_complementaire", type_=JSONB),
         )
         with self._moteur.connect() as connexion:
+            doublon = connexion.execute(
+                requete_doublon,
+                {
+                    "societaire_id": decision.societaire_id,
+                    "agent_id": uuid.UUID(decision.agent_id),
+                    "entree": decision.entree,
+                },
+            ).first()
+            if doublon is not None:
+                return _ligne_vers_decision(doublon, doublon.agent_nom, doublon.agent_agence_id)
+
             ligne = connexion.execute(
                 instruction,
                 {

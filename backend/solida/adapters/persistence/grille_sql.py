@@ -2,7 +2,9 @@ from typing import Any
 
 from sqlalchemy import Engine, bindparam, text
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.exc import IntegrityError
 
+from solida.domain.erreurs import VersionGrilleDejaExistante
 from solida.domain.rules.grille import ParametresGrille
 from solida.domain.rules.progressif import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
@@ -99,17 +101,28 @@ class DepotGrilleSql:
             RETURNING *
         """).bindparams(bindparam("seuils", type_=JSONB))
         with self._moteur.connect() as connexion:
-            connexion.execute(text("UPDATE grille_decision SET active = false WHERE active = true"))
-            ligne = connexion.execute(
-                instruction,
-                {
-                    "version_grille": configuration.version_grille,
-                    "seuils": _configuration_vers_seuils(configuration),
-                    "pdo": configuration.scorecard.pdo,
-                    "score_reference": configuration.scorecard.score_reference,
-                    "odds_reference": configuration.scorecard.odds_reference,
-                    "auteur": configuration.auteur,
-                },
-            ).one()
+            try:
+                connexion.execute(
+                    text("UPDATE grille_decision SET active = false WHERE active = true")
+                )
+                ligne = connexion.execute(
+                    instruction,
+                    {
+                        "version_grille": configuration.version_grille,
+                        "seuils": _configuration_vers_seuils(configuration),
+                        "pdo": configuration.scorecard.pdo,
+                        "score_reference": configuration.scorecard.score_reference,
+                        "odds_reference": configuration.scorecard.odds_reference,
+                        "auteur": configuration.auteur,
+                    },
+                ).one()
+            except IntegrityError as erreur:
+                # rollback() explicite : sans lui, la connexion reste dans un etat de
+                # transaction avortee, reutilise en echec par les appels suivants sur le
+                # meme pool jusqu'a ce qu'il soit recycle.
+                connexion.rollback()
+                raise VersionGrilleDejaExistante(
+                    f"La version de grille {configuration.version_grille!r} existe déjà."
+                ) from erreur
             connexion.commit()
         return _ligne_vers_configuration(ligne)

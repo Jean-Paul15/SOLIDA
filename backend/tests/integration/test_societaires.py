@@ -60,6 +60,14 @@ def test_recherche_ne_renvoie_que_lagence_de_lagent(client_agent: TestClient) ->
     assert all(e["agence"] == "CAI-00" for e in elements)
 
 
+def test_recherche_avec_limite_excessive_est_rejetee(client_agent: TestClient) -> None:
+    # Plafond serveur sur `limite`, independant de ce que le client demande.
+    reponse = client_agent.get(
+        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 999999}
+    )
+    assert reponse.status_code == 422
+
+
 def test_dossier_dun_societaire_de_son_agence_est_accessible(
     client_agent: TestClient, societaire_agence_agent: str
 ) -> None:

@@ -19,12 +19,44 @@ def _connecte(identifiant: str) -> TestClient:
     return client
 
 
+def _payload_grille(version_grille: str, **surcharges_grille: float) -> dict[str, object]:
+    grille = {
+        "marge": 0.15,
+        "lgd": 0.75,
+        "multiplicateur_accord": 0.6,
+        "multiplicateur_vigilance": 1.0,
+        "multiplicateur_examen": 1.6,
+        **surcharges_grille,
+    }
+    return {
+        "version_grille": version_grille,
+        "grille": grille,
+        "progressif": {
+            "coefficient_progression": 1.5,
+            "montant_plancher": 50000,
+            "plafonds_produits": {"prod-individuel": 2000000},
+            "plafond_primo_emprunteur": 150000,
+            "modulation_base": 1.3,
+            "modulation_pente": 2.0,
+            "modulation_min": 0.4,
+            "modulation_max": 1.2,
+        },
+        "scorecard": {"pdo": 20, "score_reference": 600, "odds_reference": 50},
+    }
+
+
 def test_registre_est_accessible_a_tout_role_authentifie() -> None:
     reponse = _connecte("auditeur.interne").get("/api/v1/registre")
     assert reponse.status_code == 200
     corps = reponse.json()
     assert "elements" in corps
     assert "total" in corps
+
+
+def test_registre_avec_limite_excessive_est_rejete() -> None:
+    # Plafond serveur sur `limite`, independant de ce que le client demande.
+    reponse = _connecte("auditeur.interne").get("/api/v1/registre", params={"limite": 999999})
+    assert reponse.status_code == 422
 
 
 def test_lecture_grille_autorisee_a_lagent() -> None:
@@ -70,27 +102,40 @@ def test_lecture_grille_autorisee_au_superviseur() -> None:
 
 def test_modification_grille_refusee_a_lauditeur() -> None:
     reponse = _connecte("auditeur.interne").post(
-        "/api/v1/parametrage/grille",
-        json={
-            "version_grille": "v0.2-refusee",
-            "grille": {
-                "marge": 0.15,
-                "lgd": 0.75,
-                "multiplicateur_accord": 0.6,
-                "multiplicateur_vigilance": 1.0,
-                "multiplicateur_examen": 1.6,
-            },
-            "progressif": {
-                "coefficient_progression": 1.5,
-                "montant_plancher": 50000,
-                "plafonds_produits": {"prod-individuel": 2000000},
-                "plafond_primo_emprunteur": 150000,
-                "modulation_base": 1.3,
-                "modulation_pente": 2.0,
-                "modulation_min": 0.4,
-                "modulation_max": 1.2,
-            },
-            "scorecard": {"pdo": 20, "score_reference": 600, "odds_reference": 50},
-        },
+        "/api/v1/parametrage/grille", json=_payload_grille("v0.2-refusee")
     )
     assert reponse.status_code == 403
+
+
+def test_marge_hors_bornes_est_rejetee() -> None:
+    # Les bornes du slider UI (5-30%) doivent aussi etre imposees cote serveur.
+    reponse = _connecte("superviseur.reseau").post(
+        "/api/v1/parametrage/grille", json=_payload_grille("v0.3-marge-hors-bornes", marge=5.0)
+    )
+    assert reponse.status_code == 422
+
+
+def test_version_grille_trop_longue_est_rejetee() -> None:
+    reponse = _connecte("superviseur.reseau").post(
+        "/api/v1/parametrage/grille", json=_payload_grille("v" * 40)
+    )
+    assert reponse.status_code == 422
+
+
+def test_doublon_version_grille_renvoie_409_puis_une_version_unique_reussit() -> None:
+    # Un doublon doit renvoyer 409 (pas 500), et surtout ne doit pas casser durablement
+    # l'endpoint pour les ecritures suivantes valides dans le meme process.
+    client = _connecte("superviseur.reseau")
+    version = "v0.4-doublon-test"
+
+    premiere = client.post("/api/v1/parametrage/grille", json=_payload_grille(version))
+    assert premiere.status_code == 200
+
+    doublon = client.post("/api/v1/parametrage/grille", json=_payload_grille(version))
+    assert doublon.status_code == 409
+    assert doublon.json()["code"] == "version_deja_existante"
+
+    ensuite = client.post(
+        "/api/v1/parametrage/grille", json=_payload_grille("v0.4-doublon-test-suite")
+    )
+    assert ensuite.status_code == 200

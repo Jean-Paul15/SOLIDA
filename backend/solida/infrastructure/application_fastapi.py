@@ -10,6 +10,8 @@ from solida.domain.erreurs import (
     MontantDemandeInvalide,
     ProduitIntrouvable,
     SocietaireIntrouvable,
+    SurEndettement,
+    VersionGrilleDejaExistante,
 )
 from solida.infrastructure import routeur_auth
 from solida.infrastructure.journalisation import configurer_journalisation
@@ -25,6 +27,8 @@ _STATUTS_PAR_ERREUR: list[tuple[type[ErreurDomaine], int, str]] = [
     (DonneesInsuffisantes, 422, "donnees_insuffisantes"),
     (MontantDemandeInvalide, 422, "montant_invalide"),
     (DureeDemandeeInvalide, 422, "duree_invalide"),
+    (SurEndettement, 422, "sur_endettement"),
+    (VersionGrilleDejaExistante, 409, "version_deja_existante"),
     (ErreurDomaine, 400, "regle_metier"),
 ]
 

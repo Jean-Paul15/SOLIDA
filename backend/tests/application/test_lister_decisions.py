@@ -55,6 +55,7 @@ def _societaire(societaire_id: str, agence: str) -> Societaire:
         parts_sociales_montant=10000,
         revenu_mensuel_declare=100000,
         groupe_id=None,
+        a_credit_en_cours=False,
     )
 
 

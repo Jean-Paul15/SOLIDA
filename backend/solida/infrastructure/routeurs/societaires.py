@@ -1,6 +1,6 @@
 from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from solida.adapters.http import mappers
 from solida.adapters.http.schemas.societaires import DossierSocietaire, ResultatRechercheSocietaire
@@ -29,7 +29,9 @@ def _agence_agent(utilisateur: Utilisateur) -> str | None:
 @routeur.get("/recherche")
 def rechercher(
     terme: str = "",
-    limite: int = 10,
+    # Plafond serveur : un compte superviseur/auditeur/administrateur n'est pas cloisonne par
+    # agence, `limite` doit donc etre borne independamment de ce que le client demande.
+    limite: int = Query(default=10, le=50),
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: RechercherSocietaire = Depends(rechercher_societaire),
 ) -> dict[str, object]:

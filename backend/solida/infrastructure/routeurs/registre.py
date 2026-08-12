@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from solida.adapters.http import mappers
 from solida.adapters.http.schemas.registre import PageRegistre
@@ -12,7 +12,8 @@ routeur = APIRouter(prefix="/api/v1/registre", tags=["registre"])
 
 @routeur.get("", response_model=PageRegistre)
 def lister(
-    limite: int = 20,
+    # Plafond serveur, meme raisonnement que societaires.py:recherche.
+    limite: int = Query(default=20, le=50),
     decalage: int = 0,
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: ListerDecisions = Depends(lister_decisions),

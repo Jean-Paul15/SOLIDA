@@ -9,6 +9,7 @@ from solida.domain.erreurs import (
     MontantDemandeInvalide,
     ProduitIntrouvable,
     SocietaireIntrouvable,
+    SurEndettement,
 )
 from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.core_sim import LecteurCoreSim
@@ -166,6 +167,11 @@ class ScorerDemande:
             )
         if agent_agence_id is not None and societaire.agence != agent_agence_id:
             raise AccesRefuse("Ce sociétaire n'appartient pas à votre agence.")
+        if societaire.a_credit_en_cours:
+            raise SurEndettement(
+                f"Le sociétaire {demande.societaire_id} a déjà un crédit en cours : un "
+                "nouvel octroi ne peut pas être confirmé par ce canal."
+            )
 
         groupe = self.lecteur.charger_groupe(demande.societaire_id)
         features_individuelles = self.feature_store.lire_individuelles(demande.societaire_id)
@@ -212,7 +218,14 @@ class ScorerDemande:
             (p for p in self.lecteur.charger_produits() if p.produit_id == demande.produit_id),
             None,
         )
-        if catalogue_produit is not None and not (
+        if catalogue_produit is None:
+            # Le produit existe dans les plafonds de la grille (vérifié ci-dessus) mais pas dans
+            # le catalogue CORE-SIM, seule source des bornes de durée : sans ce catalogue, aucune
+            # durée ne pourrait être validée. Rejeter plutôt que de calculer sans borne.
+            raise ProduitIntrouvable(
+                f"Le produit {demande.produit_id!r} n'a pas de catalogue de durées valide."
+            )
+        if not (
             catalogue_produit.duree_min_mois
             <= demande.duree_demandee_mois
             <= catalogue_produit.duree_max_mois

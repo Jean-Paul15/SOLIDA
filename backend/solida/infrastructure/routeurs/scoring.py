@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from solida.adapters.http import mappers
@@ -34,6 +36,22 @@ def _erreur_introuvable() -> HTTPException:
     )
 
 
+def _valider_decision_id(decision_id: str) -> None:
+    """Rejette explicitement un format invalide avant toute requête DB : sans ça,
+    `uuid.UUID(...)` lève une `ValueError` non interceptée plus bas dans la pile,
+    remontant en 500 générique au lieu d'un 422 propre."""
+    try:
+        uuid.UUID(decision_id)
+    except ValueError as erreur:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "identifiant_invalide",
+                "message": "L'identifiant de décision n'est pas un UUID valide.",
+            },
+        ) from erreur
+
+
 def _demande_depuis_entree(entree: EntreeScoring) -> DemandeScoring:
     return DemandeScoring(
         societaire_id=entree.societaire_id,
@@ -57,7 +75,7 @@ def _demande_depuis_entree(entree: EntreeScoring) -> DemandeScoring:
 @routeur.post("/previsualiser", response_model=ResultatScoring)
 def previsualiser(
     entree: EntreeScoring,
-    utilisateur: Utilisateur = Depends(exige_role("agent", "superviseur")),
+    utilisateur: Utilisateur = Depends(exige_role("agent")),
     cas_usage: ScorerDemande = Depends(scorer_demande),
 ) -> ResultatScoring:
     agent_agence_id = utilisateur.agence_id if utilisateur.role == "agent" else None
@@ -74,7 +92,7 @@ def previsualiser(
 @routeur.post("/confirmer", response_model=ResultatScoring, status_code=status.HTTP_201_CREATED)
 def confirmer(
     entree: EntreeScoring,
-    utilisateur: Utilisateur = Depends(exige_role("agent", "superviseur")),
+    utilisateur: Utilisateur = Depends(exige_role("agent")),
     cas_usage: ScorerDemande = Depends(scorer_demande),
 ) -> ResultatScoring:
     agent_agence_id = utilisateur.agence_id if utilisateur.role == "agent" else None
@@ -99,6 +117,7 @@ def lire(
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: LireDecision = Depends(lire_decision),
 ) -> ResultatScoring:
+    _valider_decision_id(decision_id)
     decision = cas_usage.executer(decision_id)
     if decision is None:
         raise _erreur_introuvable()
@@ -112,6 +131,7 @@ def fiche(
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: GenererFiche = Depends(generer_fiche),
 ) -> FicheJustification:
+    _valider_decision_id(decision_id)
     resultat = cas_usage.executer(decision_id)
     if resultat is None:
         raise _erreur_introuvable()
@@ -127,6 +147,7 @@ def fiche_pdf(
     cas_usage: GenererFiche = Depends(generer_fiche),
     generateur: GenerateurFichePdfWeasyPrint = Depends(generateur_fiche_pdf),
 ) -> Response:
+    _valider_decision_id(decision_id)
     resultat = cas_usage.executer(decision_id)
     if resultat is None:
         raise _erreur_introuvable()
@@ -143,9 +164,10 @@ def fiche_pdf(
 @routeur.post("/{decision_id}/archiver")
 def archiver(
     decision_id: str,
-    utilisateur: Utilisateur = Depends(exige_role("agent", "superviseur")),
+    utilisateur: Utilisateur = Depends(exige_role("agent")),
     cas_usage: ArchiverFiche = Depends(archiver_fiche),
 ) -> dict[str, str]:
+    _valider_decision_id(decision_id)
     fiche_id = cas_usage.executer(
         decision_id,
         archive_par=utilisateur.nom_complet,

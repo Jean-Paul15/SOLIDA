@@ -63,8 +63,13 @@ données CORE-SIM qui peuvent avoir changé depuis.
 
 ## Rôles autorisés par endpoint
 
-`POST /scoring` : `agent`, `superviseur` (pas `auditeur` — lecture seule par définition du rôle ;
-pas `administrateur` — explicitement « sans scoring »). `GET /parametrage/grille` : `superviseur`,
-`auditeur`, `administrateur`. `POST /parametrage/grille` : `superviseur` seul. Le reste
+`POST /scoring` (`previsualiser`, `confirmer`, `archiver`) : `agent` seul — `superviseur` en est
+délibérément exclu, séparation des devoirs entre qui paramètre la grille et qui octroie un crédit
+avec cette grille (pas `auditeur` — lecture seule par définition du rôle ; pas `administrateur` —
+explicitement « sans scoring »). `GET /parametrage/grille` : `superviseur`,
+`auditeur`, `administrateur`, `agent` (l'agent doit pouvoir situer son score par rapport aux
+seuils de la grille qui a produit sa décision — explicabilité — sans pouvoir la modifier ; c'est
+distinct de l'écran de paramétrage lui-même, réservé côté frontend à `superviseur`/`auditeur`/
+`administrateur`). `POST /parametrage/grille` : `superviseur` seul. Le reste
 (`recherche`, `dossier`, `groupe`, `scoring/{id}`, `fiche`, `registre`) : tout rôle authentifié,
 avec le cloisonnement par agence ci-dessus en plus pour `agent`.

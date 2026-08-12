@@ -44,3 +44,11 @@ class DureeDemandeeInvalide(ErreurDomaine):
 
 class ProduitIntrouvable(ErreurDomaine):
     """Aucun produit de crédit ne correspond à l'identifiant fourni."""
+
+
+class SurEndettement(ErreurDomaine):
+    """Le sociétaire a déjà un crédit en cours : refus d'un nouvel octroi par ce canal."""
+
+
+class VersionGrilleDejaExistante(ErreurDomaine):
+    """Une configuration de grille porte déjà ce `version_grille`."""
