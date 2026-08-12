@@ -62,7 +62,13 @@ def rechercher(
         "recherche_societaires",
         str(utilisateur.id),
         terme,
-        {"nombre_resultats": len(resultats)},
+        {
+            "nombre_resultats": len(resultats),
+            # Contexte pour une revue humaine d'une alerte de volume, pas un filtre : un
+            # User-Agent se falsifie en une ligne (curl -H "User-Agent: ..."), jamais un
+            # critere de blocage automatique a lui seul.
+            "navigateur": requete.headers.get("user-agent"),
+        },
         adresse_ip_client(requete),
     )
     return {
@@ -104,7 +110,11 @@ def dossier(
         raise AccesRefuse("Ce sociétaire n'appartient pas à votre agence.")
 
     audit.enregistrer_evenement(
-        "consultation_dossier", str(utilisateur.id), societaire_id, {}, adresse_ip_client(requete)
+        "consultation_dossier",
+        str(utilisateur.id),
+        societaire_id,
+        {"navigateur": requete.headers.get("user-agent")},
+        adresse_ip_client(requete),
     )
     return mappers.dossier_vers_schema(resultat)
 

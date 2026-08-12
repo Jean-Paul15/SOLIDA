@@ -6,6 +6,9 @@ class Configuration(BaseSettings):
 
     solida_database_url: str
     solida_database_url_async: str
+    # Vide par defaut : seul le job de purge du journal d'audit en a besoin, pas l'API — un
+    # defaut requis ici forcerait tout deploiement a la fournir meme sans jamais l'utiliser.
+    solida_purge_database_url: str = ""
     coresim_database_url: str
     secret_auth: str
     environnement: str = "developpement"

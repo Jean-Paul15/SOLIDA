@@ -8,6 +8,10 @@ convergent PCI-DSS, FISMA, HIPAA, SOX et GLBA pour ce type de journal — voir
 `docs/backend/03-decisions-provisoires-a-revoir.md` pour le détail de cet arbitrage et
 la source des chiffres.
 
+`journal_audit` est en insertion seule (trigger `journal_audit_insertion_seule`) : seul ce
+script, connecté avec le rôle dédié `solida_purge`, peut réellement supprimer une ligne
+périmée — voir `docs/backend/07-monitoring-securite.md`.
+
 Aucun ordonnanceur n'existe dans la pile SOLIDA (pas de conteneur cron) : ce script
 s'exécute manuellement ou via une tâche planifiée externe (cron de l'hôte), pas tout
 seul. À planifier en production, par exemple une fois par jour :
@@ -25,7 +29,7 @@ from datetime import UTC, datetime, timedelta
 
 import sqlalchemy as sa
 
-from solida.infrastructure.database import moteur_solida
+from solida.infrastructure.database import moteur_purge_audit, moteur_solida
 
 logger = logging.getLogger(__name__)
 
@@ -36,20 +40,22 @@ def purger(essai_a_blanc: bool = False) -> int:
     """Supprime les entrées de `journal_audit` plus vieilles que `RETENTION`.
 
     Renvoie le nombre de lignes supprimées — ou, en essai à blanc, le nombre de lignes
-    qui l'auraient été, sans rien supprimer.
+    qui l'auraient été, sans rien supprimer. `journal_audit` est en insertion seule (trigger
+    `journal_audit_insertion_seule`) : seule une connexion `solida_purge` qui pose le flag de
+    session attendu par le trigger peut réellement supprimer une ligne, d'où la connexion
+    dédiée (`moteur_purge_audit`) au lieu de `moteur_solida()` pour le DELETE.
     """
     seuil = datetime.now(UTC) - RETENTION
-    moteur = moteur_solida()
 
     if essai_a_blanc:
         instruction = sa.text("SELECT count(*) FROM journal_audit WHERE horodatage < :seuil")
-        with moteur.connect() as connexion:
+        with moteur_solida().connect() as connexion:
             return int(connexion.execute(instruction, {"seuil": seuil}).scalar_one())
 
     instruction = sa.text("DELETE FROM journal_audit WHERE horodatage < :seuil")
-    with moteur.connect() as connexion:
+    with moteur_purge_audit().begin() as connexion:
+        connexion.execute(sa.text("SET LOCAL solida.purge_audit = 'on'"))
         resultat = connexion.execute(instruction, {"seuil": seuil})
-        connexion.commit()
         return resultat.rowcount
 
 

@@ -89,6 +89,7 @@ services:
       POSTGRES_USER: ${SOLIDA_APP_USER}
       POSTGRES_PASSWORD: ${SOLIDA_APP_PASSWORD}
       SOLIDA_LECTURE_PASSWORD: ${SOLIDA_LECTURE_PASSWORD}
+      SOLIDA_PURGE_PASSWORD: ${SOLIDA_PURGE_PASSWORD}
     volumes:
       - pgdata_solida:/var/lib/postgresql/data
       - ./infra/postgres/solida-init.sh:/docker-entrypoint-initdb.d/solida-init.sh:ro
@@ -127,6 +128,7 @@ services:
     environment:
       SOLIDA_DATABASE_URL: ${SOLIDA_DATABASE_URL}
       SOLIDA_DATABASE_URL_ASYNC: ${SOLIDA_DATABASE_URL_ASYNC}
+      SOLIDA_PURGE_DATABASE_URL: ${SOLIDA_PURGE_DATABASE_URL}
       CORESIM_DATABASE_URL: ${CORESIM_DATABASE_URL}
       SECRET_AUTH: ${SECRET_AUTH}
       ENVIRONNEMENT: ${ENVIRONNEMENT}

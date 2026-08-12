@@ -15,6 +15,8 @@ Usage :
       --identifiant agent.lome
   docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes debloquer \
       --identifiant agent.lome
+  docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes \
+      lister-bloques
 """
 
 import argparse
@@ -157,6 +159,22 @@ def bloquer_compte(identifiant: str) -> None:
     print(f"Compte '{identifiant}' désactivé et ses sessions révoquées.")
 
 
+def lister_comptes_bloques() -> list[dict[str, object]]:
+    """Lecture seule : comptes désactivés (`is_active = false`), les plus récents d'abord.
+    Un administrateur y décide ensuite, au cas par cas, d'un `debloquer` — cette fonction ne
+    débloque jamais rien elle-même."""
+    with moteur_solida().connect() as connexion:
+        lignes = connexion.execute(
+            sa.text("""
+                SELECT identifiant, nom_complet, role, agence_id, desactive_le
+                FROM utilisateur
+                WHERE is_active = false
+                ORDER BY desactive_le DESC NULLS LAST
+            """)
+        )
+        return [dict(ligne._mapping) for ligne in lignes]
+
+
 def debloquer_compte(identifiant: str) -> None:
     with moteur_solida().begin() as connexion:
         ligne = connexion.execute(
@@ -191,6 +209,10 @@ def _construire_analyseur() -> argparse.ArgumentParser:
     debloquer = sous_commandes.add_parser("debloquer", help="Réactive un compte désactivé.")
     debloquer.add_argument("--identifiant", required=True)
 
+    sous_commandes.add_parser(
+        "lister-bloques", help="Liste les comptes désactivés (lecture seule)."
+    )
+
     return analyseur
 
 
@@ -212,6 +234,15 @@ def main() -> None:
         bloquer_compte(arguments.identifiant)
     elif arguments.commande == "debloquer":
         debloquer_compte(arguments.identifiant)
+    elif arguments.commande == "lister-bloques":
+        comptes = lister_comptes_bloques()
+        if not comptes:
+            print("Aucun compte désactivé.")
+        for compte in comptes:
+            print(
+                f"{compte['identifiant']} — {compte['nom_complet']} ({compte['role']}, "
+                f"{compte['agence_id'] or 'sans agence'}) — désactivé le {compte['desactive_le']}"
+            )
 
 
 if __name__ == "__main__":

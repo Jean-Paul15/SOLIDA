@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy as sa
 
 from solida.batch.jobs.purger_journal_audit import RETENTION, purger
-from solida.infrastructure.database import moteur_solida
+from solida.infrastructure.database import moteur_purge_audit, moteur_solida
 
 pytestmark = pytest.mark.skipif(
     "SOLIDA_DATABASE_URL_ASYNC" not in os.environ,
@@ -33,11 +33,13 @@ def _inserer(horodatage: datetime) -> uuid.UUID:
 
 
 def _nettoyer() -> None:
-    with moteur_solida().connect() as connexion:
+    # journal_audit est en insertion seule (trigger journal_audit_insertion_seule) : seule une
+    # connexion solida_purge avec le flag de session peut reellement supprimer une ligne.
+    with moteur_purge_audit().begin() as connexion:
+        connexion.execute(sa.text("SET LOCAL solida.purge_audit = 'on'"))
         connexion.execute(
             sa.text("DELETE FROM journal_audit WHERE type = :type"), {"type": _TYPE_TEST}
         )
-        connexion.commit()
 
 
 def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -> None:
