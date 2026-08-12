@@ -152,6 +152,50 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
   (nommage `snake_case`, `{elements, total}`) reste une convention posée pour l'occasion, pas la
   reprise d'une spécification externe.
 
+## Verrouillage de connexion : clé identifiant+IP (pentest round 3, finding 2)
+
+Le compteur d'échecs (`LIMITE_ECHECS_CONNEXION = 5` / `FENETRE_VERROUILLAGE = 15 min`,
+`routeur_auth.py`) comptait uniquement par identifiant : n'importe qui connaissant un identifiant
+valide pouvait verrouiller ce compte 15 minutes sans jamais avoir de mot de passe correct — DoS
+anonyme ciblé, confirmé par le pentest round 3. Passé à une clé `identifiant:ip` (IP réelle,
+restaurée derrière le tunnel Cloudflare via le module `realip` de nginx, cf. `infra/nginx/
+nginx.conf`). Compromis assumé : un attaquant réparti sur plusieurs IP a désormais un compteur
+distinct par IP, donc une protection légèrement affaiblie contre le brute-force distribué au
+profit de la suppression du DoS anonyme mono-IP. CAPTCHA/preuve de travail écartés (nouvelle
+dépendance non listée dans `pyproject.toml`, hors périmètre Règle Zéro).
+
+## Immutabilité des paramètres scorecard via l'API (pentest round 3, finding 9)
+
+`pdo`, `score_reference` et `odds_reference` n'étaient bornés que par `gt=0` côté schéma HTTP
+(`schemas/grille.py`) — un appel API direct (hors UI) pouvait donc changer la mise à l'échelle
+du score pour tout le réseau sans aucun garde-fou, alors que `03-MODELE/
+10-politique-credit-decisions-en-attente.md` documente déjà que ces trois valeurs ne sont plus
+éditables depuis l'écran Politique de crédit (transmises inchangées) tant que le modèle réel
+n'est pas calibré. Plutôt qu'inventer une plage numérique non documentée (violerait la Règle
+Zéro), le serveur impose désormais cette invariance déjà actée : toute tentative de changer ces
+trois valeurs par rapport à la grille active est rejetée (`422 scorecard_immuable`). Se lève
+automatiquement le jour où la calibration réelle (cf. section « Le modèle lui-même » ci-dessus)
+est actée et qu'un vrai processus de recalibrage est défini.
+
+## Auto-contrôle multi-octroi (pentest round 3, finding 12)
+
+Le contrôle de sur-endettement (`societaire.a_credit_en_cours`) ne lit que CORE-SIM ; deux
+décisions `confirmer` valides confirmées coup sur coup pour le même sociétaire passaient toutes
+les deux, puisque CORE-SIM n'a par construction pas encore le temps de refléter la première.
+Recherche faite (protocole §2, plusieurs sources croisées sur les systèmes d'origination de
+crédit — LOS) : la dé-duplication contre les propres décisions internes du système (pas
+seulement contre un bureau/système externe) est une pratique de base documentée des LOS,
+justement à cause de ce délai. SOLIDA bloque donc désormais une nouvelle confirmation si une
+décision `accord`/`accord_sous_condition` existe déjà pour ce sociétaire dans la fenêtre
+`FENETRE_MULTI_OCTROI` (`scorer_demande.py`).
+
+Fenêtre choisie : 8 heures, la durée de session déjà actée ailleurs (`DUREE_SESSION_SECONDES`,
+`infrastructure/auth.py`) plutôt qu'un nouveau chiffre inventé pour l'occasion — au-delà d'une
+session de guichet, CORE-SIM est censé avoir eu le temps de refléter un octroi confirmé. Cette
+fenêtre est un point de départ technique, pas une vérité mesurée sur un vrai délai de
+décaissement : à ajuster le jour où une intégration réelle avec le décaissement existe (SOLIDA
+reste lecture seule sur CORE-SIM, aucun changement de ce côté).
+
 ## Blocage connu : `next build` (image `front` de production)
 
 Depuis le 2026-08-05, `npm run build` (donc `docker compose build front`, cible `runner`) échoue de

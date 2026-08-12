@@ -58,6 +58,22 @@ tranché :
   défaut observés en rétro-test, pour remplacer les boutons désactivés par des préréglages
   réellement sélectionnables.
 
+## Décision en attente : frein de volume sur les lectures (recherche/dossier sociétaire)
+
+Le pentest round 3 a démontré qu'un agent légitime peut parcourir tout le fichier de son agence
+(paginer `recherche` sur de nombreux termes, puis `dossier` sur chaque résultat) sans aucune
+limite de volume. La visibilité est corrigée (`recherche` et `dossier` écrivent désormais dans
+`journal_audit`, IP réelle comprise), mais **aucun seuil de blocage n'est ajouté ici** :
+
+- **Ce qui manque** : un nombre de lectures/heure au-delà duquel bloquer ou exiger une nouvelle
+  authentification, propre au volume de travail normal d'un agent (taille d'agence, période de
+  campagne, etc.) — une valeur non documentée nulle part, que ce dossier n'a pas mandat d'inventer.
+- **Qui tranche** : le responsable risque/opérations (rôle `superviseur` ou `administrateur`),
+  une fois un volume de lecture normal observé en usage réel (les logs `recherche_societaires`/
+  `consultation_dossier` de `journal_audit` fournissent déjà la matière pour cette observation).
+- **Attendu** : un seuil (et sa réponse — blocage dur, ralentissement, alerte seule) dérivé de
+  cette observation, pas d'une intuition.
+
 ## Périmètre administrateur modèle : confirmé hors SOLIDA
 
 Calibration, validation et publication du modèle restent hors du périmètre applicatif de SOLIDA,
