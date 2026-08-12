@@ -37,7 +37,7 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} />
+      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
       <div className="mx-auto w-full max-w-[1440px] px-6 pt-4">
         <Link
           href={`/societaires/${resultat.societaire_id}`}

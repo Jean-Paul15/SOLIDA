@@ -29,7 +29,7 @@ export default async function PageRegistre() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} />
+      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-4 px-6 py-6">
         <Link
           href="/"

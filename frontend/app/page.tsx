@@ -8,7 +8,7 @@ export default async function PageRecherche() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} />
+      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
       <main className="flex-1 px-6">
         <RechercheSocietaire />
       </main>

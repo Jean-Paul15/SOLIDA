@@ -6,13 +6,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { peutAccederPolitiqueCredit } from "@/lib/roles";
 
 interface EnTeteProps {
   agence?: string | null;
   utilisateur?: string;
+  role?: string;
 }
 
-export function EnTete({ agence, utilisateur }: EnTeteProps) {
+export function EnTete({ agence, utilisateur, role }: EnTeteProps) {
   const router = useRouter();
   const [deconnexionEnCours, setDeconnexionEnCours] = useState(false);
 
@@ -46,9 +48,11 @@ export function EnTete({ agence, utilisateur }: EnTeteProps) {
             <Link href="/registre" className="hover:text-neutre-950">
               Registre
             </Link>
-            <Link href="/parametrage/grille" className="hover:text-neutre-950">
-              Grille
-            </Link>
+            {peutAccederPolitiqueCredit(role) && (
+              <Link href="/parametrage/grille" className="hover:text-neutre-950">
+                Politique de crédit
+              </Link>
+            )}
           </nav>
         )}
       </div>

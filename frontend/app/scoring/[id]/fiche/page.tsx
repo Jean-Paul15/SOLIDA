@@ -36,7 +36,7 @@ export default async function PageFiche({ params }: PageFicheProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} />
+      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
       <div className="mx-auto w-full max-w-[1000px] px-6 pt-4">
         <Link
           href={`/scoring/${decisionId}`}

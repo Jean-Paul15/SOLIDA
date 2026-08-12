@@ -1,18 +1,23 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { EnTete } from "@/components/solida/EnTete";
-import { GrilleParametrage } from "@/components/solida/GrilleParametrage";
+import { PolitiqueCredit } from "@/components/solida/PolitiqueCredit";
 import { fetchBackend } from "@/lib/backend";
 import type {
   ConfigurationGrilleApi,
   DecisionRegistreApi,
   ProduitCreditApi,
 } from "@/lib/contracts";
+import { peutAccederPolitiqueCredit } from "@/lib/roles";
 import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
 
 export default async function PageGrille() {
   const session = await lireSession();
   exigerMotDePasseAJour(session);
+  if (!peutAccederPolitiqueCredit(session?.role)) {
+    redirect("/acces-refuse");
+  }
 
   const [reponseGrille, reponseRegistre, reponseProduits] = await Promise.all([
     fetchBackend("/api/v1/parametrage/grille"),
@@ -35,7 +40,7 @@ export default async function PageGrille() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} />
+      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-4 px-6 py-6">
         <Link
           href="/"
@@ -46,15 +51,15 @@ export default async function PageGrille() {
         </Link>
         <div>
           <h1 className="font-serif-title text-lg font-semibold text-neutre-950">
-            Paramétrage de la grille de décision
+            Politique de crédit
           </h1>
           <p className="text-sm text-neutre-500">
-            Ajuster les seuils sans réentraîner le modèle. L&rsquo;aperçu se recalcule sur
-            l&rsquo;historique en direct.
+            Seuils de décision, plafonds par produit et simulation d&rsquo;impact sur le
+            portefeuille.
           </p>
         </div>
         {configurationInitiale ? (
-          <GrilleParametrage
+          <PolitiqueCredit
             configurationInitiale={configurationInitiale}
             scoresHistoriques={scoresHistoriques}
             role={session?.role}

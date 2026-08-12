@@ -7,7 +7,7 @@ export default async function PageChangementMotDePasse() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} />
+      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
       <main className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center gap-6 px-6 py-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-serif-title text-lg font-semibold text-neutre-950">

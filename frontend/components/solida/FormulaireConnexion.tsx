@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cheminRelatifSur } from "@/lib/redirect";
 
 export function FormulaireConnexion() {
   const router = useRouter();
@@ -56,7 +57,9 @@ export function FormulaireConnexion() {
       const { doit_changer_mot_de_passe }: { doit_changer_mot_de_passe: boolean } =
         await reponse.json();
       router.push(
-        doit_changer_mot_de_passe ? "/changer-mot-de-passe" : searchParams.get("redirect") || "/"
+        doit_changer_mot_de_passe
+          ? "/changer-mot-de-passe"
+          : cheminRelatifSur(searchParams.get("redirect"))
       );
     } catch {
       setErreur("Connexion au serveur impossible. Vérifiez votre réseau et réessayez.");
