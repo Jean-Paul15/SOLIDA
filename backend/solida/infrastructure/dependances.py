@@ -27,12 +27,12 @@ from solida.application.use_cases.lister_societaires_recents import ListerSociet
 from solida.application.use_cases.rechercher_societaire import RechercherSocietaire
 from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.infrastructure.config import Configuration
-from solida.infrastructure.database import moteur_coresim, moteur_solida
+from solida.infrastructure.database import coresim_engine, solida_engine
 
 
 @lru_cache
 def _lecteur() -> LecteurCoreSimPostgres:
-    return LecteurCoreSimPostgres(moteur_coresim())
+    return LecteurCoreSimPostgres(coresim_engine())
 
 
 @lru_cache
@@ -47,17 +47,17 @@ def _modele() -> ModeleConstant:
 
 @lru_cache
 def _depot_decisions() -> DepotDecisionsSql:
-    return DepotDecisionsSql(moteur_solida())
+    return DepotDecisionsSql(solida_engine())
 
 
 @lru_cache
 def _depot_grille() -> DepotGrilleSql:
-    return DepotGrilleSql(moteur_solida())
+    return DepotGrilleSql(solida_engine())
 
 
 @lru_cache
 def journal_audit() -> JournalAuditSql:
-    return JournalAuditSql(moteur_solida())
+    return JournalAuditSql(solida_engine())
 
 
 @lru_cache
@@ -79,7 +79,7 @@ def _depot_fiches() -> DepotFichesSeaweedfs:
 
 @lru_cache
 def _depot_fiches_archivees() -> FichesArchiveesSql:
-    return FichesArchiveesSql(moteur_solida())
+    return FichesArchiveesSql(solida_engine())
 
 
 @lru_cache

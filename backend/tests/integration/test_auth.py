@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from solida.domain.erreurs import AccesRefuse
 from solida.infrastructure.application_fastapi import app
-from solida.infrastructure.auth import exige_role
+from solida.infrastructure.auth import require_role
 
 
 class _UtilisateurFactice:
@@ -15,15 +15,15 @@ class _UtilisateurFactice:
         self.role = role
 
 
-def test_exige_role_refuse_un_role_absent_de_la_liste() -> None:
-    dependance = exige_role("superviseur", "administrateur")
+def test_require_role_refuse_un_role_absent_de_la_liste() -> None:
+    dependance = require_role("superviseur", "administrateur")
 
     with pytest.raises(AccesRefuse):
         asyncio.run(dependance(_UtilisateurFactice("agent")))  # type: ignore[arg-type]
 
 
-def test_exige_role_laisse_passer_un_role_autorise() -> None:
-    dependance = exige_role("superviseur", "administrateur")
+def test_require_role_laisse_passer_un_role_autorise() -> None:
+    dependance = require_role("superviseur", "administrateur")
     utilisateur = _UtilisateurFactice("superviseur")
 
     resultat = asyncio.run(dependance(utilisateur))  # type: ignore[arg-type]
@@ -275,7 +275,7 @@ def test_changer_mot_de_passe_reussit_et_leve_le_drapeau(client: TestClient) -> 
 def test_une_session_inactive_depuis_plus_de_15_minutes_expire(client: TestClient) -> None:
     import sqlalchemy as sa
 
-    from solida.infrastructure.database import moteur_solida
+    from solida.infrastructure.database import solida_engine
 
     client.post(
         "/api/v1/auth/connexion",
@@ -284,7 +284,7 @@ def test_une_session_inactive_depuis_plus_de_15_minutes_expire(client: TestClien
     jeton = client.cookies.get("solida_session")
     assert jeton is not None
 
-    with moteur_solida().begin() as connexion:
+    with solida_engine().begin() as connexion:
         connexion.execute(
             sa.text("""
                 UPDATE access_token SET derniere_activite_le = now() - interval '16 minutes'

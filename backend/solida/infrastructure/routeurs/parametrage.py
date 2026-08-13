@@ -11,10 +11,10 @@ from solida.domain.rules.progressif import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
 from solida.domain.values.grille import ConfigurationGrille as ConfigurationGrilleDomaine
 from solida.domain.values.montant import Montant
-from solida.infrastructure.auth import exige_role
+from solida.infrastructure.auth import require_role
 from solida.infrastructure.dependances import lire_grille_active, modifier_grille
 
-routeur = APIRouter(prefix="/api/v1/parametrage", tags=["parametrage"])
+router = APIRouter(prefix="/api/v1/parametrage", tags=["parametrage"])
 
 ROLES_LECTURE_GRILLE = ("superviseur", "auditeur", "administrateur", "agent")
 """Lecture seule, y compris pour l'agent : il doit pouvoir situer un score par rapport aux
@@ -22,18 +22,18 @@ seuils de la grille qui a produit sa décision (explicabilité), sans pouvoir la
 `POST /grille` (ci-dessous) reste réservé à la supervision."""
 
 
-@routeur.get("/grille", response_model=ConfigurationGrille)
+@router.get("/grille", response_model=ConfigurationGrille)
 def lire(
-    utilisateur: Utilisateur = Depends(exige_role(*ROLES_LECTURE_GRILLE)),
+    utilisateur: Utilisateur = Depends(require_role(*ROLES_LECTURE_GRILLE)),
     cas_usage: LireGrilleActive = Depends(lire_grille_active),
 ) -> ConfigurationGrille:
     return mappers.grille_vers_schema(cas_usage.executer())
 
 
-@routeur.post("/grille", response_model=ConfigurationGrille)
+@router.post("/grille", response_model=ConfigurationGrille)
 def modifier(
     nouvelle: NouvelleConfigurationGrille,
-    utilisateur: Utilisateur = Depends(exige_role("superviseur")),
+    utilisateur: Utilisateur = Depends(require_role("superviseur")),
     cas_usage: ModifierGrille = Depends(modifier_grille),
 ) -> ConfigurationGrille:
     configuration = ConfigurationGrilleDomaine(

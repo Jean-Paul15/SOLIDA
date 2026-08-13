@@ -11,7 +11,7 @@ from solida.application.use_cases.consulter_dossier import ConsulterDossier
 from solida.application.use_cases.lister_societaires_recents import ListerSocietairesRecents
 from solida.application.use_cases.rechercher_societaire import RechercherSocietaire
 from solida.domain.erreurs import AccesRefuse
-from solida.infrastructure.auth import adresse_ip_client, current_active_user
+from solida.infrastructure.auth import client_ip_address, current_active_user
 from solida.infrastructure.dependances import (
     consulter_dossier,
     journal_audit,
@@ -19,7 +19,7 @@ from solida.infrastructure.dependances import (
     rechercher_societaire,
 )
 
-routeur = APIRouter(prefix="/api/v1/societaires", tags=["societaires"])
+router = APIRouter(prefix="/api/v1/societaires", tags=["societaires"])
 
 
 def _agence_agent(utilisateur: Utilisateur) -> str | None:
@@ -44,7 +44,7 @@ def _valider_forme_identifiant(societaire_id: str) -> None:
         )
 
 
-@routeur.get("/recherche")
+@router.get("/recherche")
 def rechercher(
     requete: Request,
     terme: str = "",
@@ -69,7 +69,7 @@ def rechercher(
             # critere de blocage automatique a lui seul.
             "navigateur": requete.headers.get("user-agent"),
         },
-        adresse_ip_client(requete),
+        client_ip_address(requete),
     )
     return {
         "elements": [ResultatRechercheSocietaire.model_validate(asdict(r)) for r in resultats],
@@ -77,7 +77,7 @@ def rechercher(
     }
 
 
-@routeur.get("/recents")
+@router.get("/recents")
 def recents(
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: ListerSocietairesRecents = Depends(lister_societaires_recents),
@@ -86,7 +86,7 @@ def recents(
     return {"elements": [ResultatRechercheSocietaire.model_validate(asdict(r)) for r in resultats]}
 
 
-@routeur.get("/{societaire_id}/dossier", response_model=DossierSocietaire)
+@router.get("/{societaire_id}/dossier", response_model=DossierSocietaire)
 def dossier(
     societaire_id: str,
     requete: Request,
@@ -114,12 +114,12 @@ def dossier(
         str(utilisateur.id),
         societaire_id,
         {"navigateur": requete.headers.get("user-agent")},
-        adresse_ip_client(requete),
+        client_ip_address(requete),
     )
     return mappers.dossier_vers_schema(resultat)
 
 
-@routeur.get("/{societaire_id}/groupe")
+@router.get("/{societaire_id}/groupe")
 def groupe(
     societaire_id: str,
     utilisateur: Utilisateur = Depends(current_active_user),

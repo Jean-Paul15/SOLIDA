@@ -39,7 +39,7 @@ Quatre étapes dans un seul fichier (`frontend/Dockerfile`) :
 2. `dev` — cible du service `front-dev` (développement local uniquement), code monté en volume
 3. `builder` — `next build`, sortie `standalone`
 4. `runner` — cible du service `front` (celui que `docker compose up` démarre et que nginx route),
-   image finale minimale, utilisateur non-root (`node`), healthcheck sur `/api/v1/sante`
+   image finale minimale, utilisateur non-root (`node`), healthcheck sur `/api/v1/health`
 
 ## Sécurité du conteneur
 

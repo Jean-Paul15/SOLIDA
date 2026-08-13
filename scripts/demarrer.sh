@@ -169,8 +169,8 @@ attendre_disponibilite() {
   local pret_api=0 pret_front=0
 
   while [ "$attente" -lt "$max_secondes" ]; do
-    if [ "$pret_api" -eq 0 ] && curl -fsS -o /dev/null "http://localhost/api/v1/sante" 2>/dev/null; then
-      pret_api=1; ok "API accessible (http://localhost/api/v1/sante)"
+    if [ "$pret_api" -eq 0 ] && curl -fsS -o /dev/null "http://localhost/api/v1/health" 2>/dev/null; then
+      pret_api=1; ok "API accessible (http://localhost/api/v1/health)"
     fi
     if [ "$pret_front" -eq 0 ] && curl -fsS -o /dev/null "http://localhost/" 2>/dev/null; then
       pret_front=1; ok "Interface accessible (http://localhost/)"

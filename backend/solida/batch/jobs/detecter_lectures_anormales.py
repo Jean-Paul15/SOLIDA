@@ -36,7 +36,7 @@ from datetime import UTC, datetime, timedelta
 import sqlalchemy as sa
 
 from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
-from solida.infrastructure.database import moteur_solida
+from solida.infrastructure.database import solida_engine
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ def detecter(depuis: datetime | None = None) -> list[ActeurEnAlerte]:
         HAVING count(*) > :seuil
         ORDER BY nb DESC
     """)
-    with moteur_solida().connect() as connexion:
+    with solida_engine().connect() as connexion:
         lignes = connexion.execute(
             instruction,
             {"types": list(TYPES_LECTURE), "depuis": seuil_temporel, "seuil": SEUIL_LECTURES},
@@ -81,7 +81,7 @@ def alerter(essai_a_blanc: bool = False) -> list[ActeurEnAlerte]:
     if essai_a_blanc or not depasses:
         return depasses
 
-    audit = JournalAuditSql(moteur_solida())
+    audit = JournalAuditSql(solida_engine())
     for acteur in depasses:
         audit.enregistrer_evenement(
             "alerte_volume_lecture",

@@ -14,7 +14,7 @@ from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.domain.erreurs import AccesRefuse
 from solida.domain.values.decision import DecisionEnregistree
 from solida.domain.values.demande import ActualisationSituation, DemandeScoring
-from solida.infrastructure.auth import current_active_user, exige_role
+from solida.infrastructure.auth import current_active_user, require_role
 from solida.infrastructure.dependances import (
     archiver_fiche,
     generateur_fiche_pdf,
@@ -23,7 +23,7 @@ from solida.infrastructure.dependances import (
     scorer_demande,
 )
 
-routeur = APIRouter(prefix="/api/v1/scoring", tags=["scoring"])
+router = APIRouter(prefix="/api/v1/scoring", tags=["scoring"])
 
 
 def _erreur_introuvable() -> HTTPException:
@@ -72,10 +72,10 @@ def _demande_depuis_entree(entree: EntreeScoring) -> DemandeScoring:
     )
 
 
-@routeur.post("/previsualiser", response_model=ResultatScoring)
+@router.post("/previsualiser", response_model=ResultatScoring)
 def previsualiser(
     entree: EntreeScoring,
-    utilisateur: Utilisateur = Depends(exige_role("agent")),
+    utilisateur: Utilisateur = Depends(require_role("agent")),
     cas_usage: ScorerDemande = Depends(scorer_demande),
 ) -> ResultatScoring:
     agent_agence_id = utilisateur.agence_id if utilisateur.role == "agent" else None
@@ -89,10 +89,10 @@ def previsualiser(
     return mappers.decision_a_enregistrer_vers_resultat_scoring(decision)
 
 
-@routeur.post("/confirmer", response_model=ResultatScoring, status_code=status.HTTP_201_CREATED)
+@router.post("/confirmer", response_model=ResultatScoring, status_code=status.HTTP_201_CREATED)
 def confirmer(
     entree: EntreeScoring,
-    utilisateur: Utilisateur = Depends(exige_role("agent")),
+    utilisateur: Utilisateur = Depends(require_role("agent")),
     cas_usage: ScorerDemande = Depends(scorer_demande),
 ) -> ResultatScoring:
     agent_agence_id = utilisateur.agence_id if utilisateur.role == "agent" else None
@@ -111,7 +111,7 @@ def _verifier_acces_agence(utilisateur: Utilisateur, decision: DecisionEnregistr
         raise AccesRefuse("Cette décision ne concerne pas votre agence.")
 
 
-@routeur.get("/{decision_id}", response_model=ResultatScoring)
+@router.get("/{decision_id}", response_model=ResultatScoring)
 def lire(
     decision_id: str,
     utilisateur: Utilisateur = Depends(current_active_user),
@@ -125,7 +125,7 @@ def lire(
     return mappers.decision_vers_resultat_scoring(decision)
 
 
-@routeur.get("/{decision_id}/fiche", response_model=FicheJustification)
+@router.get("/{decision_id}/fiche", response_model=FicheJustification)
 def fiche(
     decision_id: str,
     utilisateur: Utilisateur = Depends(current_active_user),
@@ -140,7 +140,7 @@ def fiche(
     return mappers.fiche_vers_schema(decision, entete)
 
 
-@routeur.get("/{decision_id}/fiche/pdf")
+@router.get("/{decision_id}/fiche/pdf")
 def fiche_pdf(
     decision_id: str,
     utilisateur: Utilisateur = Depends(current_active_user),
@@ -161,10 +161,10 @@ def fiche_pdf(
     )
 
 
-@routeur.post("/{decision_id}/archiver")
+@router.post("/{decision_id}/archiver")
 def archiver(
     decision_id: str,
-    utilisateur: Utilisateur = Depends(exige_role("agent")),
+    utilisateur: Utilisateur = Depends(require_role("agent")),
     cas_usage: ArchiverFiche = Depends(archiver_fiche),
 ) -> dict[str, str]:
     _valider_decision_id(decision_id)

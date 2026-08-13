@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy as sa
 
 from solida.batch.jobs.purger_journal_audit import RETENTION, purger
-from solida.infrastructure.database import moteur_purge_audit, moteur_solida
+from solida.infrastructure.database import purge_audit_engine, solida_engine
 
 pytestmark = pytest.mark.skipif(
     "SOLIDA_DATABASE_URL_ASYNC" not in os.environ,
@@ -18,8 +18,8 @@ _TYPE_TEST = "test_purge_journal_audit"
 
 def _inserer(horodatage: datetime) -> uuid.UUID:
     evenement_id = uuid.uuid4()
-    moteur = moteur_solida()
-    with moteur.connect() as connexion:
+    engine = solida_engine()
+    with engine.connect() as connexion:
         connexion.execute(
             sa.text("""
                 INSERT INTO journal_audit
@@ -35,7 +35,7 @@ def _inserer(horodatage: datetime) -> uuid.UUID:
 def _nettoyer() -> None:
     # journal_audit est en insertion seule (trigger journal_audit_insertion_seule) : seule une
     # connexion solida_purge avec le flag de session peut reellement supprimer une ligne.
-    with moteur_purge_audit().begin() as connexion:
+    with purge_audit_engine().begin() as connexion:
         connexion.execute(sa.text("SET LOCAL solida.purge_audit = 'on'"))
         connexion.execute(
             sa.text("DELETE FROM journal_audit WHERE type = :type"), {"type": _TYPE_TEST}
@@ -47,7 +47,7 @@ def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -
     _inserer(maintenant - RETENTION - timedelta(days=1))  # au-dela : doit disparaitre
     _inserer(maintenant - timedelta(days=1))  # en-deca : doit rester
     try:
-        with moteur_solida().connect() as connexion:
+        with solida_engine().connect() as connexion:
             avant = connexion.execute(
                 sa.text("SELECT count(*) FROM journal_audit WHERE type = :type"),
                 {"type": _TYPE_TEST},
@@ -56,7 +56,7 @@ def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -
 
         nb_supprimes = purger()
 
-        with moteur_solida().connect() as connexion:
+        with solida_engine().connect() as connexion:
             restantes = connexion.execute(
                 sa.text("SELECT count(*) FROM journal_audit WHERE type = :type"),
                 {"type": _TYPE_TEST},
@@ -73,7 +73,7 @@ def test_essai_a_blanc_ne_supprime_rien() -> None:
         nb_concernees = purger(essai_a_blanc=True)
         assert nb_concernees >= 1
 
-        with moteur_solida().connect() as connexion:
+        with solida_engine().connect() as connexion:
             restantes = connexion.execute(
                 sa.text("SELECT count(*) FROM journal_audit WHERE type = :type"),
                 {"type": _TYPE_TEST},

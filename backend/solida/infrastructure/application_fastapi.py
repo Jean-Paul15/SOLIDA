@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from solida.adapters.http.routeurs import sante
+from solida.adapters.http.routeurs import health
 from solida.domain.erreurs import (
     AccesRefuse,
     DonneesInsuffisantes,
@@ -14,10 +14,16 @@ from solida.domain.erreurs import (
     SurEndettement,
     VersionGrilleDejaExistante,
 )
-from solida.infrastructure import routeur_auth
-from solida.infrastructure.journalisation import configurer_journalisation
-from solida.infrastructure.middleware_journalisation import MiddlewareJournalisationAcces
-from solida.infrastructure.routeurs import parametrage, produits, registre, scoring, societaires
+from solida.infrastructure.journalisation import configure_logging
+from solida.infrastructure.middleware_journalisation import AccessLoggingMiddleware
+from solida.infrastructure.routeurs import (
+    auth,
+    parametrage,
+    produits,
+    registre,
+    scoring,
+    societaires,
+)
 
 # Traduction des exceptions du domaine vers un statut HTTP : la plus specifique
 # d'abord, ErreurDomaine servant de repli pour toute regle metier non listee ici.
@@ -36,16 +42,16 @@ _STATUTS_PAR_ERREUR: list[tuple[type[ErreurDomaine], int, str]] = [
 
 
 def creer_application() -> FastAPI:
-    configurer_journalisation()
+    configure_logging()
     application = FastAPI(title="SOLIDA API")
-    application.add_middleware(MiddlewareJournalisationAcces)
-    application.include_router(sante.routeur)
-    application.include_router(routeur_auth.routeur)
-    application.include_router(societaires.routeur)
-    application.include_router(scoring.routeur)
-    application.include_router(registre.routeur)
-    application.include_router(parametrage.routeur)
-    application.include_router(produits.routeur)
+    application.add_middleware(AccessLoggingMiddleware)
+    application.include_router(health.router)
+    application.include_router(auth.router)
+    application.include_router(societaires.router)
+    application.include_router(scoring.router)
+    application.include_router(registre.router)
+    application.include_router(parametrage.router)
+    application.include_router(produits.router)
 
     for classe_erreur, statut, code in _STATUTS_PAR_ERREUR:
 

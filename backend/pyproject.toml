@@ -40,7 +40,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 extend-immutable-calls = [
     "fastapi.Depends",
     "fastapi.params.Depends",
-    "solida.infrastructure.auth.exige_role",
+    "solida.infrastructure.auth.require_role",
 ]
 
 [tool.mypy]

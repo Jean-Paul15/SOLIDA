@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // Le navigateur appelle toujours /api/v1/... en meme origine : cette reecriture route
-// tout ce qui n'est pas deja une route Next.js locale (ex. /api/v1/sante) vers le backend
+// tout ce qui n'est pas deja une route Next.js locale (ex. /api/v1/health) vers le backend
 // reel, sans que le code client n'ait besoin de connaitre son adresse.
 const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL ?? "http://localhost:8000";
 

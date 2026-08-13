@@ -28,7 +28,7 @@ import sqlalchemy as sa
 from fastapi_users.password import PasswordHelper
 
 from solida.adapters.persistence.modeles_sqlalchemy import ROLES_VALIDES
-from solida.infrastructure.database import moteur_solida
+from solida.infrastructure.database import solida_engine
 
 MOT_DE_PASSE_DEMO = "solida-demo"
 
@@ -71,7 +71,7 @@ COMPTES_DEMO: list[dict[str, str | None]] = [
 ]
 
 
-def _generer_mot_de_passe() -> str:
+def _generate_password() -> str:
     return secrets.token_urlsafe(12)
 
 
@@ -93,7 +93,7 @@ def creer_compte(
     if role not in ROLES_VALIDES:
         raise SystemExit(f"Rôle invalide : {role!r}. Attendu : {ROLES_VALIDES}.")
 
-    mot_de_passe_final = mot_de_passe or _generer_mot_de_passe()
+    mot_de_passe_final = mot_de_passe or _generate_password()
     hachage = PasswordHelper().hash(mot_de_passe_final)
     instruction = sa.text("""
         INSERT INTO utilisateur
@@ -109,7 +109,7 @@ def creer_compte(
             agence_id = excluded.agence_id,
             doit_changer_mot_de_passe = excluded.doit_changer_mot_de_passe
     """)
-    with moteur_solida().begin() as connexion:
+    with solida_engine().begin() as connexion:
         connexion.execute(
             instruction,
             {
@@ -143,7 +143,7 @@ def provisionner_demo() -> None:
 
 
 def bloquer_compte(identifiant: str) -> None:
-    with moteur_solida().begin() as connexion:
+    with solida_engine().begin() as connexion:
         ligne = connexion.execute(
             sa.text("""
                 UPDATE utilisateur SET is_active = false, desactive_le = :maintenant
@@ -163,7 +163,7 @@ def lister_comptes_bloques() -> list[dict[str, object]]:
     """Lecture seule : comptes désactivés (`is_active = false`), les plus récents d'abord.
     Un administrateur y décide ensuite, au cas par cas, d'un `debloquer` — cette fonction ne
     débloque jamais rien elle-même."""
-    with moteur_solida().connect() as connexion:
+    with solida_engine().connect() as connexion:
         lignes = connexion.execute(
             sa.text("""
                 SELECT identifiant, nom_complet, role, agence_id, desactive_le
@@ -176,7 +176,7 @@ def lister_comptes_bloques() -> list[dict[str, object]]:
 
 
 def debloquer_compte(identifiant: str) -> None:
-    with moteur_solida().begin() as connexion:
+    with solida_engine().begin() as connexion:
         ligne = connexion.execute(
             sa.text("""
                 UPDATE utilisateur SET is_active = true, desactive_le = NULL
@@ -190,7 +190,7 @@ def debloquer_compte(identifiant: str) -> None:
     print(f"Compte '{identifiant}' réactivé.")
 
 
-def _construire_analyseur() -> argparse.ArgumentParser:
+def _build_parser() -> argparse.ArgumentParser:
     analyseur = argparse.ArgumentParser(description=__doc__)
     sous_commandes = analyseur.add_subparsers(dest="commande", required=True)
 
@@ -217,7 +217,7 @@ def _construire_analyseur() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    arguments = _construire_analyseur().parse_args()
+    arguments = _build_parser().parse_args()
     if arguments.commande == "demo":
         provisionner_demo()
     elif arguments.commande == "creer":

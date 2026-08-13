@@ -4,7 +4,7 @@
 
 `frontend/next.config.ts` réécrit `/api/v1/:path*` vers `${BACKEND_INTERNAL_URL}/api/v1/:path*`
 (variable d'environnement, `http://api:8000` dans `docker-compose.yml`). Une route Next.js
-locale existante (ex. `app/api/v1/sante/route.ts`, conservée comme sonde de vie du conteneur
+locale existante (ex. `app/api/v1/health/route.ts`, conservée comme sonde de vie du conteneur
 `front` indépendante du backend) est toujours servie en priorité — Next.js vérifie le système de
 fichiers avant d'appliquer une réécriture "afterFiles" (comportement documenté, vérifié avant
 d'écrire la config). Toutes les autres routes `app/api/v1/**` (mocks) ont été supprimées : plus

@@ -29,7 +29,7 @@ from datetime import UTC, datetime, timedelta
 
 import sqlalchemy as sa
 
-from solida.infrastructure.database import moteur_purge_audit, moteur_solida
+from solida.infrastructure.database import purge_audit_engine, solida_engine
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +43,17 @@ def purger(essai_a_blanc: bool = False) -> int:
     qui l'auraient été, sans rien supprimer. `journal_audit` est en insertion seule (trigger
     `journal_audit_insertion_seule`) : seule une connexion `solida_purge` qui pose le flag de
     session attendu par le trigger peut réellement supprimer une ligne, d'où la connexion
-    dédiée (`moteur_purge_audit`) au lieu de `moteur_solida()` pour le DELETE.
+    dédiée (`purge_audit_engine`) au lieu de `solida_engine()` pour le DELETE.
     """
     seuil = datetime.now(UTC) - RETENTION
 
     if essai_a_blanc:
         instruction = sa.text("SELECT count(*) FROM journal_audit WHERE horodatage < :seuil")
-        with moteur_solida().connect() as connexion:
+        with solida_engine().connect() as connexion:
             return int(connexion.execute(instruction, {"seuil": seuil}).scalar_one())
 
     instruction = sa.text("DELETE FROM journal_audit WHERE horodatage < :seuil")
-    with moteur_purge_audit().begin() as connexion:
+    with purge_audit_engine().begin() as connexion:
         connexion.execute(sa.text("SET LOCAL solida.purge_audit = 'on'"))
         resultat = connexion.execute(instruction, {"seuil": seuil})
         return resultat.rowcount

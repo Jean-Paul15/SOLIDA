@@ -155,7 +155,7 @@ certains champs de présentation. Ces valeurs sont **estimées, pas mesurées** 
 ## Verrouillage de connexion : clé identifiant+IP (pentest round 3, finding 2)
 
 Le compteur d'échecs (`LIMITE_ECHECS_CONNEXION = 5` / `FENETRE_VERROUILLAGE = 15 min`,
-`routeur_auth.py`) comptait uniquement par identifiant : n'importe qui connaissant un identifiant
+`routeurs/auth.py`) comptait uniquement par identifiant : n'importe qui connaissant un identifiant
 valide pouvait verrouiller ce compte 15 minutes sans jamais avoir de mot de passe correct — DoS
 anonyme ciblé, confirmé par le pentest round 3. Passé à une clé `identifiant:ip` (IP réelle,
 restaurée derrière le tunnel Cloudflare via le module `realip` de nginx, cf. `infra/nginx/

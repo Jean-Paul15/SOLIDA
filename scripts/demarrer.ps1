@@ -177,8 +177,8 @@ function Wait-Disponibilite {
     while ($attente -lt $maxSecondes) {
         if (-not $pretApi) {
             try {
-                $r = Invoke-WebRequest -Uri "http://localhost/api/v1/sante" -UseBasicParsing -TimeoutSec 5
-                if ($r.StatusCode -eq 200) { $pretApi = $true; Show-Ok "API accessible (http://localhost/api/v1/sante)" }
+                $r = Invoke-WebRequest -Uri "http://localhost/api/v1/health" -UseBasicParsing -TimeoutSec 5
+                if ($r.StatusCode -eq 200) { $pretApi = $true; Show-Ok "API accessible (http://localhost/api/v1/health)" }
             } catch {}
         }
         if (-not $pretFront) {

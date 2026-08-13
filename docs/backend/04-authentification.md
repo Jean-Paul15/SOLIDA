@@ -13,10 +13,10 @@ révocabilité totale priment sur la réduction de charge sur `access_token`, n�
 d'une coopérative.
 
 **Une seule session active par compte** : toute nouvelle connexion révoque les jetons précédents du
-même utilisateur (`revoquer_jetons_utilisateur`) — motivé par le risque explicite d'un poste
+même utilisateur (`revoke_user_tokens`) — motivé par le risque explicite d'un poste
 partagé en agence, pas seulement un choix de simplicité.
 
-Connexion par `identifiant` (pas par e-mail) : `GestionnaireUtilisateurs.authentifier_par_identifiant`
+Connexion par `identifiant` (pas par e-mail) : `UserManager.authenticate_by_identifier`
 reproduit la mitigation de `BaseUserManager.authenticate()` contre les attaques par mesure de temps
 (un mot de passe est haché même quand l'identifiant n'existe pas). Verrouillage après 5 échecs de
 connexion sur 15 minutes pour un même `identifiant` (comptés dans `journal_audit`, réponse 429
@@ -44,7 +44,7 @@ ouverte ; révoque toutes les sessions du compte après changement, y compris la
 ## Rôles et cloisonnement
 
 Quatre rôles en base (`utilisateur.role`) : `agent` (limité à son `agence_id`), `superviseur`,
-`auditeur`, `administrateur`. `exige_role(*roles)` (dépendance FastAPI) refuse l'accès à
+`auditeur`, `administrateur`. `require_role(*roles)` (dépendance FastAPI) refuse l'accès à
 l'endpoint si le rôle courant n'y figure pas — **un contrôle nécessaire mais pas suffisant** : le
 cloisonnement par agence pour le rôle `agent` doit être revérifié dans chaque cas d'usage qui lit
 ou écrit une donnée liée à une agence, jamais seulement à l'entrée du routeur. Le frontend peut

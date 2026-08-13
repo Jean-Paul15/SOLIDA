@@ -13,16 +13,16 @@ Tout passe par `journal_audit` (table unique, en insertion seule — voir plus b
 
 | Type | Où | Ce qu'il capture |
 |---|---|---|
-| `connexion_reussie` / `connexion_echouee` | `routeur_auth.py` | identifiant, IP réelle, navigateur |
-| `deconnexion` | `routeur_auth.py` | IP réelle, navigateur |
-| `mot_de_passe_change` | `routeur_auth.py` | IP réelle, navigateur |
+| `connexion_reussie` / `connexion_echouee` | `routeurs/auth.py` | identifiant, IP réelle, navigateur |
+| `deconnexion` | `routeurs/auth.py` | IP réelle, navigateur |
+| `mot_de_passe_change` | `routeurs/auth.py` | IP réelle, navigateur |
 | `recherche_societaires` | `societaires.py` | acteur, terme, nombre de résultats, IP réelle, navigateur |
 | `consultation_dossier` | `societaires.py` | acteur, sociétaire consulté, IP réelle, navigateur |
 | `scoring_previsualise` / `scoring_confirme` | `scorer_demande.py` | acteur, sociétaire |
 | `fiche_archivee` | `archiver_fiche.py` | acteur, décision archivée |
 | `alerte_volume_lecture` | `detecter_lectures_anormales.py` (nouveau) | acteur, volume constaté, seuil |
 
-Le verrou de connexion (`routeur_auth.py`, 5 échecs / 15 min) est indexé sur `identifiant + IP
+Le verrou de connexion (`routeurs/auth.py`, 5 échecs / 15 min) est indexé sur `identifiant + IP
 réelle` depuis le round 3 du pentest — pas l'identifiant seul, pour qu'un anonyme ne puisse pas
 verrouiller un compte connu sans jamais avoir de mot de passe correct. L'IP réelle est restaurée
 derrière le tunnel Cloudflare par le module `realip` de nginx (`infra/nginx/nginx.conf`), qui ne

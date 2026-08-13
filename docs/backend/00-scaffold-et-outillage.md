@@ -7,7 +7,7 @@
 le contenu métier arrive module par module (domaine, ports, adaptateur `ModeleConstant`, persistance,
 auth, routeurs HTTP).
 
-Seul code réel à ce stade : `adapters/http/routeurs/sante.py` (`GET /api/v1/sante`, même contrat
+Seul code réel à ce stade : `adapters/http/routeurs/health.py` (`GET /api/v1/health`, même contrat
 que le mock frontend) et `infrastructure/application_fastapi.py` qui l'assemble — un contrôle de
 santé complet de bout en bout plutôt que des modules vides prétendant faire quelque chose.
 
