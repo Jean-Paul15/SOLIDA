@@ -36,10 +36,10 @@ import {
 } from "@/lib/credit";
 import { formaterMontant } from "@/lib/format";
 import { LIBELLE_OBJET_CREDIT } from "@/lib/libelles";
-import { usePrevisualisation } from "@/lib/previsualisation-context";
+import { usePreview } from "@/lib/preview-context";
 import { trouverProduit } from "@/lib/produits";
-import { ErreurService } from "@/lib/services/erreur-service";
-import { previsualiserScore } from "@/lib/services/scoring";
+import { ApiError } from "@/lib/services/error-service";
+import { previewScore } from "@/lib/services/scoring";
 
 // Catalogue de durees "standard" (aligne sur simulateur/config.yaml, duree_mois_choix) : filtre
 // ensuite aux bornes reelles du produit selectionne plutot qu'affiche une liste universelle qui
@@ -66,7 +66,7 @@ export function NouvelleDemandeSheet({
   produits,
 }: NouvelleDemandeSheetProps) {
   const router = useRouter();
-  const { definirPrevisualisation } = usePrevisualisation();
+  const { definirPrevisualisation } = usePreview();
   const [sheetOuvert, setSheetOuvert] = useState(false);
   const [produitId, setProduitId] = useState(produits[0]?.produit_id ?? "");
   const [montant, setMontant] = useState(500000);
@@ -119,12 +119,12 @@ export function NouvelleDemandeSheet({
         : undefined,
     };
     try {
-      const resultat = await previsualiserScore(entree);
+      const resultat = await previewScore(entree);
       definirPrevisualisation({ entree, resultat, societaireNom: nomComplet });
       setSheetOuvert(false);
       router.push("/scoring/previsualisation");
     } catch (e) {
-      setErreur(e instanceof ErreurService ? e.message : "Le calcul du score a échoué.");
+      setErreur(e instanceof ApiError ? e.message : "Le calcul du score a échoué.");
     } finally {
       setEnCours(false);
     }

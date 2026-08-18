@@ -1,16 +1,13 @@
-import { leverSiEnErreur } from "@/lib/services/erreur-service";
+import { throwIfError } from "@/lib/services/error-service";
 
-export async function changerMotDePasse(
-  motDePasseActuel: string,
-  nouveauMotDePasse: string
-): Promise<void> {
-  const reponse = await fetch("/api/v1/auth/changer-mot-de-passe", {
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await fetch("/api/v1/auth/changer-mot-de-passe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      mot_de_passe_actuel: motDePasseActuel,
-      nouveau_mot_de_passe: nouveauMotDePasse,
+      mot_de_passe_actuel: currentPassword,
+      nouveau_mot_de_passe: newPassword,
     }),
   });
-  await leverSiEnErreur(reponse);
+  await throwIfError(response);
 }

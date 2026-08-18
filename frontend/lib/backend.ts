@@ -8,11 +8,11 @@ const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL ?? "http://localho
  * depuis le serveur Next.js n'a pas de navigateur pour le faire ; le cookie de session doit
  * être transmis explicitement, sinon le backend voit une requête non authentifiée.
  */
-export async function fetchBackend(chemin: string, init?: RequestInit): Promise<Response> {
-  const enTeteCookie = (await cookies()).toString();
-  return fetch(`${BACKEND_INTERNAL_URL}${chemin}`, {
+export async function fetchBackend(path: string, init?: RequestInit): Promise<Response> {
+  const cookieHeader = (await cookies()).toString();
+  return fetch(`${BACKEND_INTERNAL_URL}${path}`, {
     ...init,
-    headers: { ...init?.headers, cookie: enTeteCookie },
+    headers: { ...init?.headers, cookie: cookieHeader },
     cache: "no-store",
   });
 }

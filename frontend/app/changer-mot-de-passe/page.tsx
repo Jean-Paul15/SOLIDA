@@ -1,9 +1,9 @@
 import { EnTete } from "@/components/solida/EnTete";
 import { FormulaireChangementMotDePasse } from "@/components/solida/FormulaireChangementMotDePasse";
-import { lireSession } from "@/lib/session";
+import { readSession } from "@/lib/session";
 
 export default async function PageChangementMotDePasse() {
-  const session = await lireSession();
+  const session = await readSession();
 
   return (
     <div className="flex min-h-screen flex-col">

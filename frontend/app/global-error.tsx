@@ -1,7 +1,7 @@
 "use client";
 
 // Explicite plutôt que de laisser Next.js générer son propre fallback interne : ce dernier
-// tente d'utiliser le contexte du layout racine (TooltipProvider, PrevisualisationProvider),
+// tente d'utiliser le contexte du layout racine (TooltipProvider, PreviewProvider),
 // indisponible lors du rendu d'une erreur globale, ce qui fait échouer le pré-rendu en
 // production (bug Next.js 16 documenté : vercel/next.js#84994, #86178). Ce composant ne doit
 // donc dépendre d'aucun provider — il remplace entièrement le layout racine, pas seulement

@@ -15,10 +15,10 @@ export interface Session {
  * cookie côté frontend : le cookie est un jeton opaque géré par FastAPI-Users, le frontend
  * n'a aucun moyen de le lire ni de lui faire confiance directement.
  */
-export async function lireSession(): Promise<Session | null> {
-  const reponse = await fetchBackend("/api/v1/auth/moi");
-  if (!reponse.ok) return null;
-  return reponse.json();
+export async function readSession(): Promise<Session | null> {
+  const response = await fetchBackend("/api/v1/auth/moi");
+  if (!response.ok) return null;
+  return response.json();
 }
 
 /**
@@ -26,7 +26,7 @@ export async function lireSession(): Promise<Session | null> {
  * tant que le mot de passe par défaut n'a pas été changé, aucun autre écran n'est
  * accessible.
  */
-export function exigerMotDePasseAJour(session: Session | null): void {
+export function enforcePasswordUpToDate(session: Session | null): void {
   if (session?.doit_changer_mot_de_passe) {
     redirect("/changer-mot-de-passe");
   }
@@ -38,8 +38,8 @@ export function exigerMotDePasseAJour(session: Session | null): void {
  * une absence légitime de résultat. La confondre avec une liste vide ou un 404 masquerait
  * l'échec d'authentification à l'agent (audit F5) au lieu de le renvoyer se reconnecter.
  */
-export function redirigerSiNonAuthentifie(reponse: Response): void {
-  if (reponse.status === 401) {
+export function redirectIfUnauthenticated(response: Response): void {
+  if (response.status === 401) {
     redirect("/connexion");
   }
 }
@@ -50,8 +50,8 @@ export function redirigerSiNonAuthentifie(reponse: Response): void {
  * confondre avec `notFound()`, qui affiche « page introuvable » et masquerait à l'agent
  * qu'il vient de heurter une frontière d'accès plutôt qu'un identifiant invalide.
  */
-export function redirigerSiAccesRefuse(reponse: Response): void {
-  if (reponse.status === 403) {
+export function redirectIfAccessDenied(response: Response): void {
+  if (response.status === 403) {
     redirect("/acces-refuse");
   }
 }

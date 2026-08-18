@@ -5,14 +5,14 @@ import type { DecisionRegistreVue } from "@/components/solida/RegistreDecisions"
 import { RegistreDecisions } from "@/components/solida/RegistreDecisions";
 import { fetchBackend } from "@/lib/backend";
 import type { DecisionRegistreApi } from "@/lib/contracts";
-import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
+import { enforcePasswordUpToDate, readSession, redirectIfUnauthenticated } from "@/lib/session";
 
 export default async function PageRegistre() {
-  const session = await lireSession();
-  exigerMotDePasseAJour(session);
+  const session = await readSession();
+  enforcePasswordUpToDate(session);
 
   const reponse = await fetchBackend("/api/v1/registre?limite=100");
-  redirigerSiNonAuthentifie(reponse);
+  redirectIfUnauthenticated(reponse);
   const { elements }: { elements: DecisionRegistreApi[]; total: number } = reponse.ok
     ? await reponse.json()
     : { elements: [], total: 0 };

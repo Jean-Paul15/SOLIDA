@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { PrevisualisationProvider } from "@/lib/previsualisation-context";
+import { PreviewProvider } from "@/lib/preview-context";
 import { ibmPlexMono, ibmPlexSans, sourceSerif4 } from "./fonts";
 import "./globals.css";
 
@@ -17,9 +17,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body
         className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${sourceSerif4.variable} font-sans antialiased`}
       >
-        <PrevisualisationProvider>
+        <PreviewProvider>
           <TooltipProvider>{children}</TooltipProvider>
-        </PrevisualisationProvider>
+        </PreviewProvider>
         <Toaster />
       </body>
     </html>

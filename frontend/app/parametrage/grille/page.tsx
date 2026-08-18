@@ -10,11 +10,11 @@ import type {
   ProduitCreditApi,
 } from "@/lib/contracts";
 import { peutAccederPolitiqueCredit } from "@/lib/roles";
-import { exigerMotDePasseAJour, lireSession, redirigerSiNonAuthentifie } from "@/lib/session";
+import { enforcePasswordUpToDate, readSession, redirectIfUnauthenticated } from "@/lib/session";
 
 export default async function PageGrille() {
-  const session = await lireSession();
-  exigerMotDePasseAJour(session);
+  const session = await readSession();
+  enforcePasswordUpToDate(session);
   if (!peutAccederPolitiqueCredit(session?.role)) {
     redirect("/acces-refuse");
   }
@@ -24,9 +24,9 @@ export default async function PageGrille() {
     fetchBackend("/api/v1/registre?limite=100"),
     fetchBackend("/api/v1/produits"),
   ]);
-  redirigerSiNonAuthentifie(reponseGrille);
-  redirigerSiNonAuthentifie(reponseRegistre);
-  redirigerSiNonAuthentifie(reponseProduits);
+  redirectIfUnauthenticated(reponseGrille);
+  redirectIfUnauthenticated(reponseRegistre);
+  redirectIfUnauthenticated(reponseProduits);
 
   const configurationInitiale: ConfigurationGrilleApi | null = reponseGrille.ok
     ? await reponseGrille.json()

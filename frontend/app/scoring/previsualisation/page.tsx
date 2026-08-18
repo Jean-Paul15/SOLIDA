@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ResultatScoringVue } from "@/components/solida/ResultatScoringVue";
-import { ErreurService } from "@/lib/services/erreur-service";
-import { confirmerDecision } from "@/lib/services/scoring";
-import { usePrevisualisation } from "@/lib/previsualisation-context";
+import { ApiError } from "@/lib/services/error-service";
+import { confirmDecision } from "@/lib/services/scoring";
+import { usePreview } from "@/lib/preview-context";
 
 export default function PagePrevisualisationScoring() {
   const router = useRouter();
-  const { previsualisation, definirPrevisualisation } = usePrevisualisation();
+  const { previsualisation, definirPrevisualisation } = usePreview();
   const [confirmationEnCours, setConfirmationEnCours] = useState(false);
 
   if (!previsualisation) {
@@ -34,12 +34,12 @@ export default function PagePrevisualisationScoring() {
   async function surConfirmer() {
     setConfirmationEnCours(true);
     try {
-      const enregistre = await confirmerDecision(entree);
+      const enregistre = await confirmDecision(entree);
       toast.success("Décision enregistrée.");
       definirPrevisualisation(null);
       router.push(`/scoring/${enregistre.decision_id}`);
     } catch (e) {
-      toast.error(e instanceof ErreurService ? e.message : "L'enregistrement a échoué.");
+      toast.error(e instanceof ApiError ? e.message : "L'enregistrement a échoué.");
       setConfirmationEnCours(false);
     }
   }

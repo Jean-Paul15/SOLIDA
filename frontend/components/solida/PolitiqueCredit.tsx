@@ -13,7 +13,7 @@ import type { ConfigurationGrilleApi, ProduitCreditApi } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
 import { LIBELLE_TRANCHE } from "@/lib/libelles";
 import { peutModifierGrille } from "@/lib/roles";
-import { ErreurService, leverSiEnErreur } from "@/lib/services/erreur-service";
+import { ApiError, throwIfError } from "@/lib/services/error-service";
 import {
   probabiliteDepuisScore,
   scoreDepuisProbabilite,
@@ -109,11 +109,11 @@ export function PolitiqueCredit({
           scorecard: { pdo, score_reference: scoreReference, odds_reference: oddsReference },
         }),
       });
-      await leverSiEnErreur(reponse);
+      await throwIfError(reponse);
       setVersion(nouvelleVersion);
       toast.success(`Politique de crédit ${nouvelleVersion} enregistrée`);
     } catch (e) {
-      toast.error(e instanceof ErreurService ? e.message : "L'enregistrement a échoué.");
+      toast.error(e instanceof ApiError ? e.message : "L'enregistrement a échoué.");
     } finally {
       setEnregistrementEnCours(false);
     }

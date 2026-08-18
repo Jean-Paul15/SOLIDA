@@ -13,7 +13,7 @@ const ROUTES_PROTEGEES = [
   "/changer-mot-de-passe",
 ];
 
-function versConnexion(request: NextRequest): NextResponse {
+function toLogin(request: NextRequest): NextResponse {
   const url = request.nextUrl.clone();
   url.pathname = "/connexion";
   url.searchParams.set("redirect", request.nextUrl.pathname);
@@ -22,27 +22,27 @@ function versConnexion(request: NextRequest): NextResponse {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
-  const estProtegee = ROUTES_PROTEGEES.some(
+  const isProtected = ROUTES_PROTEGEES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
-  if (!estProtegee) {
+  if (!isProtected) {
     return NextResponse.next();
   }
 
-  const jeton = request.cookies.get(SESSION_COOKIE);
-  if (!jeton) {
-    return versConnexion(request);
+  const token = request.cookies.get(SESSION_COOKIE);
+  if (!token) {
+    return toLogin(request);
   }
 
   // La seule présence du cookie ne prouve rien (un cookie forgé de même nom suffirait) : sa
   // validité doit être vérifiée auprès du backend avant de laisser passer une page protégée.
   const verification = await fetch(`${BACKEND_INTERNAL_URL}/api/v1/auth/moi`, {
-    headers: { cookie: `${SESSION_COOKIE}=${jeton.value}` },
+    headers: { cookie: `${SESSION_COOKIE}=${token.value}` },
   }).catch(() => null);
 
   if (!verification || !verification.ok) {
-    return versConnexion(request);
+    return toLogin(request);
   }
 
   return NextResponse.next();

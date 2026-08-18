@@ -1,8 +1,8 @@
 import type { SyntheseGroupe } from "@/lib/contracts";
-import { leverSiEnErreur } from "@/lib/services/erreur-service";
+import { throwIfError } from "@/lib/services/error-service";
 
-export async function lireGroupe(societaireId: string): Promise<SyntheseGroupe> {
-  const reponse = await fetch(`/api/v1/societaires/${societaireId}/groupe`);
-  await leverSiEnErreur(reponse);
-  return reponse.json();
+export async function fetchGroup(societaireId: string): Promise<SyntheseGroupe> {
+  const response = await fetch(`/api/v1/societaires/${societaireId}/groupe`);
+  await throwIfError(response);
+  return response.json();
 }

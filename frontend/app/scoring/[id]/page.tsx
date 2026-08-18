@@ -6,10 +6,10 @@ import { ResultatScoringVue } from "@/components/solida/ResultatScoringVue";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ResultatScoring } from "@/lib/contracts";
 import {
-  exigerMotDePasseAJour,
-  lireSession,
-  redirigerSiAccesRefuse,
-  redirigerSiNonAuthentifie,
+  enforcePasswordUpToDate,
+  readSession,
+  redirectIfAccessDenied,
+  redirectIfUnauthenticated,
 } from "@/lib/session";
 
 interface PageResultatScoringProps {
@@ -19,21 +19,21 @@ interface PageResultatScoringProps {
 export default async function PageResultatScoring({ params }: PageResultatScoringProps) {
   const { id: decisionId } = await params;
   const reponse = await fetchBackend(`/api/v1/scoring/${decisionId}`);
-  redirigerSiNonAuthentifie(reponse);
-  redirigerSiAccesRefuse(reponse);
+  redirectIfUnauthenticated(reponse);
+  redirectIfAccessDenied(reponse);
   if (!reponse.ok) notFound();
   const resultat: ResultatScoring = await reponse.json();
 
   const reponseDossier = await fetchBackend(
     `/api/v1/societaires/${resultat.societaire_id}/dossier`
   );
-  redirigerSiNonAuthentifie(reponseDossier);
-  redirigerSiAccesRefuse(reponseDossier);
+  redirectIfUnauthenticated(reponseDossier);
+  redirectIfAccessDenied(reponseDossier);
   if (!reponseDossier.ok) notFound();
   const dossier: DossierSocietaire = await reponseDossier.json();
 
-  const session = await lireSession();
-  exigerMotDePasseAJour(session);
+  const session = await readSession();
+  enforcePasswordUpToDate(session);
 
   return (
     <div className="flex min-h-screen flex-col">

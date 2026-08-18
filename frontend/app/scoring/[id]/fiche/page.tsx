@@ -7,10 +7,10 @@ import { FicheActions } from "@/components/solida/FicheActions";
 import { fetchBackend } from "@/lib/backend";
 import type { FicheJustification, ProduitCreditApi } from "@/lib/contracts";
 import {
-  exigerMotDePasseAJour,
-  lireSession,
-  redirigerSiAccesRefuse,
-  redirigerSiNonAuthentifie,
+  enforcePasswordUpToDate,
+  readSession,
+  redirectIfAccessDenied,
+  redirectIfUnauthenticated,
 } from "@/lib/session";
 
 const VERSION_APPLICATION = "solida-frontend-0.1.0";
@@ -25,14 +25,14 @@ export default async function PageFiche({ params }: PageFicheProps) {
     fetchBackend(`/api/v1/scoring/${decisionId}/fiche`),
     fetchBackend("/api/v1/produits"),
   ]);
-  redirigerSiNonAuthentifie(reponse);
-  redirigerSiAccesRefuse(reponse);
+  redirectIfUnauthenticated(reponse);
+  redirectIfAccessDenied(reponse);
   if (!reponse.ok) notFound();
   const ficheData: FicheJustification = await reponse.json();
   const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
 
-  const session = await lireSession();
-  exigerMotDePasseAJour(session);
+  const session = await readSession();
+  enforcePasswordUpToDate(session);
 
   return (
     <div className="flex min-h-screen flex-col">

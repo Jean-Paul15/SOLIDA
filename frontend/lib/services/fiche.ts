@@ -1,6 +1,6 @@
-import { leverSiEnErreur } from "@/lib/services/erreur-service";
+import { throwIfError } from "@/lib/services/error-service";
 
-export async function archiverFiche(decisionId: string): Promise<void> {
-  const reponse = await fetch(`/api/v1/scoring/${decisionId}/archiver`, { method: "POST" });
-  await leverSiEnErreur(reponse);
+export async function archiveFiche(decisionId: string): Promise<void> {
+  const response = await fetch(`/api/v1/scoring/${decisionId}/archiver`, { method: "POST" });
+  await throwIfError(response);
 }

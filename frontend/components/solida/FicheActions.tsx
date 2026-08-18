@@ -4,8 +4,8 @@ import { Download, Loader2, Printer, Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { archiverFiche } from "@/lib/services/fiche";
-import { ErreurService } from "@/lib/services/erreur-service";
+import { archiveFiche } from "@/lib/services/fiche";
+import { ApiError } from "@/lib/services/error-service";
 
 interface FicheActionsProps {
   decisionId: string;
@@ -18,11 +18,11 @@ export function FicheActions({ decisionId }: FicheActionsProps) {
   async function surArchiver() {
     setArchivageEnCours(true);
     try {
-      await archiverFiche(decisionId);
+      await archiveFiche(decisionId);
       toast.success("Fiche archivée.");
       setArchivee(true);
     } catch (e) {
-      toast.error(e instanceof ErreurService ? e.message : "L'archivage a échoué.");
+      toast.error(e instanceof ApiError ? e.message : "L'archivage a échoué.");
     } finally {
       setArchivageEnCours(false);
     }

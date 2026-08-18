@@ -21,10 +21,10 @@ import { formaterMontant } from "@/lib/format";
 import { trouverProduit } from "@/lib/produits";
 import { peutScorer } from "@/lib/roles";
 import {
-  exigerMotDePasseAJour,
-  lireSession,
-  redirigerSiAccesRefuse,
-  redirigerSiNonAuthentifie,
+  enforcePasswordUpToDate,
+  readSession,
+  redirectIfAccessDenied,
+  redirectIfUnauthenticated,
 } from "@/lib/session";
 
 const LIBELLE_SEGMENT: Record<string, string> = {
@@ -56,14 +56,14 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
     fetchBackend(`/api/v1/societaires/${id}/dossier`),
     fetchBackend("/api/v1/produits"),
   ]);
-  redirigerSiNonAuthentifie(reponse);
-  redirigerSiAccesRefuse(reponse);
+  redirectIfUnauthenticated(reponse);
+  redirectIfAccessDenied(reponse);
   if (!reponse.ok) notFound();
   const dossier: DossierSocietaire = await reponse.json();
   const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
 
-  const session = await lireSession();
-  exigerMotDePasseAJour(session);
+  const session = await readSession();
+  enforcePasswordUpToDate(session);
   const { identite, activite, epargne, historique_credit, alertes, groupe } = dossier;
   const anciennete = `${Math.floor(identite.anciennete_mois / 12)} an(s) ${identite.anciennete_mois % 12} mois`;
 

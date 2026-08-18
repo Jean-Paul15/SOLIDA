@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { cheminRelatifSur } from "./redirect";
+import { safeRelativePath } from "./redirect";
 
-describe("cheminRelatifSur", () => {
+describe("safeRelativePath", () => {
   it("accepte un chemin relatif interne", () => {
-    expect(cheminRelatifSur("/dashboard")).toBe("/dashboard");
-    expect(cheminRelatifSur("/scoring/123/fiche")).toBe("/scoring/123/fiche");
+    expect(safeRelativePath("/dashboard")).toBe("/dashboard");
+    expect(safeRelativePath("/scoring/123/fiche")).toBe("/scoring/123/fiche");
   });
 
   it("replie sur / en l'absence de valeur", () => {
-    expect(cheminRelatifSur(null)).toBe("/");
-    expect(cheminRelatifSur("")).toBe("/");
+    expect(safeRelativePath(null)).toBe("/");
+    expect(safeRelativePath("")).toBe("/");
   });
 
   it("rejette une URL absolue (open redirect)", () => {
-    expect(cheminRelatifSur("https://evil.example.com")).toBe("/");
-    expect(cheminRelatifSur("http://evil.example.com/fake-session-expired")).toBe("/");
+    expect(safeRelativePath("https://evil.example.com")).toBe("/");
+    expect(safeRelativePath("http://evil.example.com/fake-session-expired")).toBe("/");
   });
 
   it("rejette un chemin protocol-relative", () => {
-    expect(cheminRelatifSur("//evil.example.com")).toBe("/");
+    expect(safeRelativePath("//evil.example.com")).toBe("/");
   });
 
   it("rejette un schéma non-http", () => {
-    expect(cheminRelatifSur("javascript:alert(1)")).toBe("/");
+    expect(safeRelativePath("javascript:alert(1)")).toBe("/");
   });
 });

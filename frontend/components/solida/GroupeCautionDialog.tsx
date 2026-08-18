@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { SyntheseGroupe } from "@/lib/contracts";
-import { lireGroupe } from "@/lib/services/societaires";
+import { fetchGroup } from "@/lib/services/societaires";
 
 const LIBELLE_ROLE: Record<string, string> = {
   membre: "Membre",
@@ -52,7 +52,7 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
     if (!ouvert || groupe || enCours) return;
     setEnCours(true);
     setErreur(null);
-    lireGroupe(societaireId)
+    fetchGroup(societaireId)
       .then(setGroupe)
       .catch(() => setErreur("Le groupe de caution n'a pas pu être chargé."))
       .finally(() => setEnCours(false));

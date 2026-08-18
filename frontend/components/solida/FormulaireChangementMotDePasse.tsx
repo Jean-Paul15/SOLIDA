@@ -12,8 +12,8 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
-import { ErreurService } from "@/lib/services/erreur-service";
-import { changerMotDePasse } from "@/lib/services/auth";
+import { ApiError } from "@/lib/services/error-service";
+import { changePassword } from "@/lib/services/auth";
 
 function ChampMotDePasse({
   id,
@@ -71,11 +71,11 @@ export function FormulaireChangementMotDePasse() {
 
     setEnCours(true);
     try {
-      await changerMotDePasse(actuel, nouveau);
+      await changePassword(actuel, nouveau);
       toast.success("Mot de passe modifié.");
       router.push("/");
     } catch (e) {
-      setErreur(e instanceof ErreurService ? e.message : "Le changement a échoué.");
+      setErreur(e instanceof ApiError ? e.message : "Le changement a échoué.");
     } finally {
       setEnCours(false);
     }
