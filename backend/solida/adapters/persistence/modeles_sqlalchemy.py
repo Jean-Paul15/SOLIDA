@@ -89,9 +89,7 @@ class DecisionScoring(Base):
     resultat_complementaire: Mapped[dict] = mapped_column(JSONB, default=dict)
     version_modele: Mapped[str] = mapped_column(String(30))
     version_grille: Mapped[str] = mapped_column(String(30))
-    horodatage: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    horodatage: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class FicheArchivee(Base):
@@ -106,9 +104,7 @@ class FicheArchivee(Base):
     )
     chemin_objet: Mapped[str] = mapped_column(String(200))
     archive_par: Mapped[str] = mapped_column(String(200))
-    archive_le: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    archive_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class JournalAudit(Base):
@@ -119,7 +115,5 @@ class JournalAudit(Base):
     acteur_id: Mapped[str] = mapped_column(String(100))
     objet: Mapped[str] = mapped_column(String(200))
     details: Mapped[dict] = mapped_column(JSON, default=dict)
-    horodatage: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    horodatage: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     adresse_ip: Mapped[str | None] = mapped_column(String(45), nullable=True)

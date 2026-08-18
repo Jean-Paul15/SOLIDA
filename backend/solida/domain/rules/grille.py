@@ -24,9 +24,7 @@ class ParametresGrille:
             self.multiplicateur_accord < self.multiplicateur_vigilance < self.multiplicateur_examen
         )
         if not croissants:
-            raise GrilleInvalide(
-                "Les multiplicateurs de zone doivent être strictement croissants."
-            )
+            raise GrilleInvalide("Les multiplicateurs de zone doivent être strictement croissants.")
 
     def seuil_economique(self) -> float:
         return self.marge / (self.marge + self.lgd)

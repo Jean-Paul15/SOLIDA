@@ -39,9 +39,7 @@ class JournalAuditSql:
             )
             connexion.commit()
 
-    def compter_evenements_recents(
-        self, type_evenement: str, objet: str, depuis: datetime
-    ) -> int:
+    def compter_evenements_recents(self, type_evenement: str, objet: str, depuis: datetime) -> int:
         instruction = text("""
             SELECT count(*) FROM journal_audit
             WHERE type = :type AND objet = :objet AND horodatage >= :depuis
@@ -52,9 +50,7 @@ class JournalAuditSql:
             )
             return int(resultat.scalar_one())
 
-    def lister_objets_recents(
-        self, type_evenement: str, acteur_id: str, limite: int
-    ) -> list[str]:
+    def lister_objets_recents(self, type_evenement: str, acteur_id: str, limite: int) -> list[str]:
         """`objet` distincts les plus récemment journalisés pour cet acteur, du plus
         récent au plus ancien — sert les "sociétaires récents" de l'agent connecté."""
         instruction = text("""

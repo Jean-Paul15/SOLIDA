@@ -1,0 +1,4 @@
+# ruff format (backend) ecrit toujours du LF ; sans ceci, core.autocrlf=true sur un
+# checkout Windows reconvertit les fichiers Python en CRLF et fait echouer
+# `ruff format --check` a chaque nouveau clone/checkout independamment du code.
+*.py text eol=lf

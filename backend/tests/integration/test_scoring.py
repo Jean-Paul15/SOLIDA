@@ -211,9 +211,7 @@ def test_auditeur_ne_peut_pas_scorer(
 def test_agent_ne_peut_pas_scorer_hors_de_son_agence(
     client_agent: TestClient, societaire_autre_agence: str
 ) -> None:
-    reponse = client_agent.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_autre_agence)
-    )
+    reponse = client_agent.post("/api/v1/scoring/confirmer", json=_demande(societaire_autre_agence))
     assert reponse.status_code == 403
 
 
@@ -339,4 +337,3 @@ def test_archiver_une_fiche(client_agent: TestClient, societaire_agence_agent: s
         ).first()
     assert ligne is not None
     assert ligne.chemin_objet.startswith("fiches/")
-

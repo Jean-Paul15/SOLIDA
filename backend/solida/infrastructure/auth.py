@@ -87,9 +87,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[Utilisateur, uuid.UUID]):
             raise exceptions.UserNotExists()
         return utilisateur
 
-    async def change_password(
-        self, utilisateur: Utilisateur, nouveau_mot_de_passe: str
-    ) -> None:
+    async def change_password(self, utilisateur: Utilisateur, nouveau_mot_de_passe: str) -> None:
         password_hash = self.password_helper.hash(nouveau_mot_de_passe)
         await self.user_db.update(
             utilisateur,
@@ -141,9 +139,7 @@ authentication_backend = AuthenticationBackend(
     get_strategy=get_strategy,
 )
 
-fastapi_users = FastAPIUsers[Utilisateur, uuid.UUID](
-    get_user_manager, [authentication_backend]
-)
+fastapi_users = FastAPIUsers[Utilisateur, uuid.UUID](get_user_manager, [authentication_backend])
 
 MAX_INACTIVITY_DURATION = timedelta(minutes=15)
 """Expiration par inactivité, vérifiée côté serveur à chaque requête — un minuteur
@@ -156,6 +152,7 @@ def client_ip_address(request: Request) -> str | None:
     lui-même. `request.client.host` ne sert qu'en développement local, quand l'API est
     appelée directement sans passer par nginx."""
     return request.headers.get("x-real-ip") or (request.client.host if request.client else None)
+
 
 _active_user_dependency = fastapi_users.current_user(active=True)
 
@@ -194,9 +191,7 @@ def require_role(*allowed_roles: str) -> Callable[..., Coroutine[None, None, Uti
 
     async def dependency(utilisateur: Utilisateur = Depends(current_active_user)) -> Utilisateur:
         if utilisateur.role not in allowed_roles:
-            raise AccesRefuse(
-                f"Le rôle '{utilisateur.role}' n'a pas accès à cette action."
-            )
+            raise AccesRefuse(f"Le rôle '{utilisateur.role}' n'a pas accès à cette action.")
         return utilisateur
 
     return dependency

@@ -217,9 +217,7 @@ class ScorerDemande:
         contributions_log_odds = self.modele.contributions(features_dict)
 
         configuration = self.depot_grille.lire_active()
-        plafond_produit_montant = configuration.progressif.plafonds_produits.get(
-            demande.produit_id
-        )
+        plafond_produit_montant = configuration.progressif.plafonds_produits.get(demande.produit_id)
         if plafond_produit_montant is None:
             raise ProduitIntrouvable(
                 f"Aucun produit de crédit ne correspond à l'identifiant {demande.produit_id!r}."

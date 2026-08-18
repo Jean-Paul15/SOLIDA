@@ -42,9 +42,7 @@ _DEFINITIONS: dict[str, _Definition] = {
         "Incidents de remboursement antérieurs", "historique", "entier"
     ),
     "max_jours_retard_historique": _Definition("Retard maximal observé", "historique", "jours"),
-    "montant_max_rembourse": _Definition(
-        "Plus gros montant déjà remboursé", "historique", "fcfa"
-    ),
+    "montant_max_rembourse": _Definition("Plus gros montant déjà remboursé", "historique", "fcfa"),
     "numero_cycle": _Definition("Cycle de crédit", "historique", "entier"),
     "parts_sociales_montant": _Definition("Montant des parts sociales", "profil", "fcfa"),
     "nb_personnes_a_charge": _Definition("Personnes à charge", "profil", "entier"),

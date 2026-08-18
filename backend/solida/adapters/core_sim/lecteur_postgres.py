@@ -112,9 +112,7 @@ class LecteurCoreSimPostgres:
               AND (CAST(:agence_id AS text) IS NULL OR s.caisse_id = :agence_id)
         """)
         with self._moteur.connect() as connexion:
-            return connexion.execute(
-                requete, {"terme": terme, "agence_id": agence_id}
-            ).scalar_one()
+            return connexion.execute(requete, {"terme": terme, "agence_id": agence_id}).scalar_one()
 
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
         requete = text("""

@@ -100,9 +100,7 @@ async def connexion(
             {"navigateur": navigateur},
             ip,
         )
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED, "Identifiant ou mot de passe incorrect."
-        )
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Identifiant ou mot de passe incorrect.")
 
     # Une seule session active par compte : la nouvelle connexion révoque les précédentes.
     await revoke_user_tokens(session, utilisateur.id)
