@@ -1,0 +1,158 @@
+from datetime import UTC, datetime
+
+import pytest
+
+from solida.application.use_cases.scorer_demande_validations import (
+    valider_acces_agence,
+    valider_duree_dans_bornes,
+    valider_montant_sous_plafond,
+    valider_pas_de_credit_en_cours,
+    valider_pas_de_multi_octroi,
+    valider_plafond_produit,
+    valider_produit_catalogue,
+    valider_societaire_trouve,
+)
+from solida.domain.entities.produit_credit import ProduitCredit
+from solida.domain.entities.societaire import Societaire
+from solida.domain.erreurs import (
+    AccesRefuse,
+    DureeDemandeeInvalide,
+    MontantDemandeInvalide,
+    ProduitIntrouvable,
+    SocietaireIntrouvable,
+    SurEndettement,
+)
+from solida.domain.values.montant import Montant
+
+
+def _societaire(**overrides: object) -> Societaire:
+    valeurs: dict[str, object] = {
+        "societaire_id": "SOC-1",
+        "numero_membre": "100001",
+        "nom_complet": "Test Societaire",
+        "agence": "CAI-00",
+        "date_adhesion": datetime(2020, 1, 1, tzinfo=UTC).date(),
+        "anciennete_mois": 48,
+        "segment": "individuel",
+        "age": 35,
+        "zone": "urbain",
+        "nb_personnes_a_charge": 2,
+        "niveau_instruction": None,
+        "parts_sociales_montant": 10000,
+        "revenu_mensuel_declare": 150000,
+        "groupe_id": None,
+        "a_credit_en_cours": False,
+    }
+    valeurs.update(overrides)
+    return Societaire(**valeurs)  # type: ignore[arg-type]
+
+
+def _produit(**overrides: object) -> ProduitCredit:
+    valeurs: dict[str, object] = {
+        "produit_id": "PROD-1",
+        "libelle": "Produit test",
+        "type_garantie": "individuelle",
+        "montant_min": 50000,
+        "montant_max": 1000000,
+        "duree_min_mois": 3,
+        "duree_max_mois": 24,
+        "taux_annuel": 0.18,
+    }
+    valeurs.update(overrides)
+    return ProduitCredit(**valeurs)  # type: ignore[arg-type]
+
+
+class _DecisionRepositoryFactice:
+    def __init__(self, existe: bool) -> None:
+        self._existe = existe
+
+    def existe_decision_accordee_depuis(
+        self, societaire_id: str, depuis: datetime, entree_actuelle: dict[str, object]
+    ) -> bool:
+        return self._existe
+
+
+def test_valider_societaire_trouve_renvoie_le_societaire() -> None:
+    societaire = _societaire()
+
+    assert valider_societaire_trouve(societaire, "SOC-1") is societaire
+
+
+def test_valider_societaire_trouve_leve_si_absent() -> None:
+    with pytest.raises(SocietaireIntrouvable):
+        valider_societaire_trouve(None, "SOC-1")
+
+
+def test_valider_acces_agence_ok_si_meme_agence() -> None:
+    valider_acces_agence(_societaire(agence="CAI-00"), "CAI-00")
+
+
+def test_valider_acces_agence_ok_si_pas_de_cloisonnement() -> None:
+    valider_acces_agence(_societaire(agence="CAI-00"), None)
+
+
+def test_valider_acces_agence_leve_si_agence_differente() -> None:
+    with pytest.raises(AccesRefuse):
+        valider_acces_agence(_societaire(agence="CAI-00"), "CAI-07")
+
+
+def test_valider_pas_de_credit_en_cours_ok_si_aucun_credit() -> None:
+    valider_pas_de_credit_en_cours(_societaire(a_credit_en_cours=False), "SOC-1")
+
+
+def test_valider_pas_de_credit_en_cours_leve_si_credit_en_cours() -> None:
+    with pytest.raises(SurEndettement):
+        valider_pas_de_credit_en_cours(_societaire(a_credit_en_cours=True), "SOC-1")
+
+
+def test_valider_pas_de_multi_octroi_ok_si_aucune_decision_recente() -> None:
+    valider_pas_de_multi_octroi(
+        _DecisionRepositoryFactice(existe=False), "SOC-1", datetime.now(UTC), {}
+    )
+
+
+def test_valider_pas_de_multi_octroi_leve_si_decision_recente() -> None:
+    with pytest.raises(SurEndettement):
+        valider_pas_de_multi_octroi(
+            _DecisionRepositoryFactice(existe=True), "SOC-1", datetime.now(UTC), {}
+        )
+
+
+def test_valider_plafond_produit_renvoie_le_montant() -> None:
+    plafond = valider_plafond_produit({"PROD-1": Montant(500000)}, "PROD-1")
+
+    assert plafond == Montant(500000)
+
+
+def test_valider_plafond_produit_leve_si_absent_de_la_grille() -> None:
+    with pytest.raises(ProduitIntrouvable):
+        valider_plafond_produit({}, "PROD-1")
+
+
+def test_valider_montant_sous_plafond_ok_si_dans_la_limite() -> None:
+    valider_montant_sous_plafond(200000, Montant(500000))
+
+
+def test_valider_montant_sous_plafond_leve_si_depasse() -> None:
+    with pytest.raises(MontantDemandeInvalide):
+        valider_montant_sous_plafond(600000, Montant(500000))
+
+
+def test_valider_produit_catalogue_renvoie_le_produit() -> None:
+    produit = _produit()
+
+    assert valider_produit_catalogue([produit], "PROD-1") is produit
+
+
+def test_valider_produit_catalogue_leve_si_absent() -> None:
+    with pytest.raises(ProduitIntrouvable):
+        valider_produit_catalogue([], "PROD-1")
+
+
+def test_valider_duree_dans_bornes_ok_si_dans_les_bornes() -> None:
+    valider_duree_dans_bornes(12, _produit(duree_min_mois=3, duree_max_mois=24))
+
+
+def test_valider_duree_dans_bornes_leve_si_hors_bornes() -> None:
+    with pytest.raises(DureeDemandeeInvalide):
+        valider_duree_dans_bornes(36, _produit(duree_min_mois=3, duree_max_mois=24))
