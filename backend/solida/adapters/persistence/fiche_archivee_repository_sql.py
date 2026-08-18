@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import Engine, text
 
 
-class FichesArchiveesSql:
-    """Implémente `DepotFichesArchivees` contre `fiche_archivee` (schéma `solida`)."""
+class SqlFicheArchiveeRepository:
+    """Implémente `FicheArchiveeRepository` contre `fiche_archivee` (schéma `solida`)."""
 
     def __init__(self, moteur: Engine) -> None:
         self._moteur = moteur

@@ -12,7 +12,7 @@ from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
 from solida.adapters.ml.modele_constant import ModeleConstant
 from solida.adapters.pdf.rendu_fiche import GenerateurFichePdfWeasyPrint
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
-from solida.adapters.persistence.fiches_archivees_sql import FichesArchiveesSql
+from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
 from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
 from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
 from solida.adapters.storage.fiche_repository_seaweedfs import SeaweedfsFicheRepository
@@ -78,8 +78,8 @@ def _fiche_repository() -> SeaweedfsFicheRepository:
 
 
 @lru_cache
-def _depot_fiches_archivees() -> FichesArchiveesSql:
-    return FichesArchiveesSql(solida_engine())
+def _fiche_archivee_repository() -> SqlFicheArchiveeRepository:
+    return SqlFicheArchiveeRepository(solida_engine())
 
 
 @lru_cache
@@ -131,7 +131,7 @@ def archiver_fiche() -> ArchiverFiche:
         generer_fiche=generer_fiche(),
         generateur_pdf=_generateur_fiche_pdf(),
         fiche_repository=_fiche_repository(),
-        depot_fiches_archivees=_depot_fiches_archivees(),
+        fiche_archivee_repository=_fiche_archivee_repository(),
         journal_audit=journal_audit(),
     )
 
