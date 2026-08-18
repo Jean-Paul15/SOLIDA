@@ -26,10 +26,11 @@ def un_societaire_id(lecteur: LecteurCoreSimPostgres) -> str:
     return ligne.societaire_id
 
 
-def test_le_role_lecteur_ne_peut_pas_ecrire_dans_coresim(lecteur: LecteurCoreSimPostgres) -> None:
+def test_le_role_lecteur_ne_peut_pas_ecrire_dans_coresim() -> None:
+    moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
     with (
         pytest.raises(Exception, match="permission denied"),
-        lecteur._moteur.connect() as connexion,
+        moteur.connect() as connexion,
     ):
         connexion.execute(text("INSERT INTO societaires (societaire_id) VALUES ('X')"))
         connexion.commit()
@@ -59,7 +60,8 @@ def test_rechercher_par_numero_membre_exact(
 
 
 def test_capital_restant_du_est_nul_pour_un_credit_solde(lecteur: LecteurCoreSimPostgres) -> None:
-    with lecteur._moteur.connect() as connexion:
+    moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
+    with moteur.connect() as connexion:
         ligne = connexion.execute(
             text("SELECT societaire_id FROM credits WHERE statut = 'solde' LIMIT 1")
         ).first()
@@ -73,7 +75,8 @@ def test_capital_restant_du_est_nul_pour_un_credit_solde(lecteur: LecteurCoreSim
 def test_credit_en_souffrance_a_un_capital_restant_du_positif(
     lecteur: LecteurCoreSimPostgres,
 ) -> None:
-    with lecteur._moteur.connect() as connexion:
+    moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
+    with moteur.connect() as connexion:
         ligne = connexion.execute(
             text("SELECT societaire_id FROM credits WHERE statut = 'en_souffrance' LIMIT 1")
         ).first()
@@ -87,7 +90,8 @@ def test_credit_en_souffrance_a_un_capital_restant_du_positif(
 def test_charger_groupe_exclut_le_societaire_evalue_de_ses_propres_agregats(
     lecteur: LecteurCoreSimPostgres,
 ) -> None:
-    with lecteur._moteur.connect() as connexion:
+    moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
+    with moteur.connect() as connexion:
         ligne = connexion.execute(
             text("SELECT societaire_id FROM societaires WHERE gie_id IS NOT NULL LIMIT 1")
         ).first()
