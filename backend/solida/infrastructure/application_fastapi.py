@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from solida.adapters.http import auth_dependencies
-from solida.adapters.http.routeurs import health
 from solida.domain.erreurs import (
     AccesRefuse,
     DonneesInsuffisantes,
@@ -20,6 +19,7 @@ from solida.infrastructure.journalisation import configure_logging
 from solida.infrastructure.middleware_journalisation import AccessLoggingMiddleware
 from solida.infrastructure.routeurs import (
     auth,
+    health,
     parametrage,
     produits,
     registre,
