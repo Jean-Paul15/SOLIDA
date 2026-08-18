@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from solida.application.use_cases.generer_fiche import GenererFiche
 from solida.domain.erreurs import AccesRefuse
-from solida.domain.ports.archivage import DepotFiches
+from solida.domain.ports.archivage import FicheRepository
 from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.fiches_archivees import DepotFichesArchivees
 from solida.domain.ports.generateur_fiche import GenerateurFichePdf
@@ -13,7 +13,7 @@ from solida.domain.ports.generateur_fiche import GenerateurFichePdf
 class ArchiverFiche:
     generer_fiche: GenererFiche
     generateur_pdf: GenerateurFichePdf
-    depot_fiches: DepotFiches
+    fiche_repository: FicheRepository
     depot_fiches_archivees: DepotFichesArchivees
     journal_audit: JournalAudit
 
@@ -33,7 +33,7 @@ class ArchiverFiche:
 
         pdf = self.generateur_pdf.generer(decision, entete)
         chemin_objet = f"fiches/{datetime.now(UTC):%Y/%m}/{decision_id}.pdf"
-        self.depot_fiches.archiver(chemin_objet, pdf)
+        self.fiche_repository.archiver(chemin_objet, pdf)
         fiche_id = self.depot_fiches_archivees.enregistrer(decision_id, chemin_objet, archive_par)
         self.journal_audit.enregistrer_evenement("fiche_archivee", archive_par, decision_id, {})
         return fiche_id

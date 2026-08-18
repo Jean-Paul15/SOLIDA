@@ -15,7 +15,7 @@ from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepos
 from solida.adapters.persistence.fiches_archivees_sql import FichesArchiveesSql
 from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
 from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
-from solida.adapters.storage.depot_fiches_seaweedfs import DepotFichesSeaweedfs
+from solida.adapters.storage.fiche_repository_seaweedfs import SeaweedfsFicheRepository
 from solida.application.use_cases.archiver_fiche import ArchiverFiche
 from solida.application.use_cases.consulter_dossier import ConsulterDossier
 from solida.application.use_cases.generer_fiche import GenererFiche
@@ -72,9 +72,9 @@ def _client_seaweedfs() -> Minio:
 
 
 @lru_cache
-def _depot_fiches() -> DepotFichesSeaweedfs:
+def _fiche_repository() -> SeaweedfsFicheRepository:
     configuration = Configuration()
-    return DepotFichesSeaweedfs(_client_seaweedfs(), configuration.seaweedfs_bucket)
+    return SeaweedfsFicheRepository(_client_seaweedfs(), configuration.seaweedfs_bucket)
 
 
 @lru_cache
@@ -130,7 +130,7 @@ def archiver_fiche() -> ArchiverFiche:
     return ArchiverFiche(
         generer_fiche=generer_fiche(),
         generateur_pdf=_generateur_fiche_pdf(),
-        depot_fiches=_depot_fiches(),
+        fiche_repository=_fiche_repository(),
         depot_fiches_archivees=_depot_fiches_archivees(),
         journal_audit=journal_audit(),
     )

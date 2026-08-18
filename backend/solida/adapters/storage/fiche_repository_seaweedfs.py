@@ -5,8 +5,8 @@ from minio import Minio
 
 
 @dataclass(frozen=True)
-class DepotFichesSeaweedfs:
-    """Implémente `DepotFiches` contre la passerelle S3 de SeaweedFS — pas MinIO, mais la
+class SeaweedfsFicheRepository:
+    """Implémente `FicheRepository` contre la passerelle S3 de SeaweedFS — pas MinIO, mais la
     même API S3 : `minio` (client Python) fonctionne contre n'importe quel service
     compatible S3, pas seulement MinIO lui-même. Voir
     `docs/backend/03-decisions-provisoires-a-revoir.md` pour le choix de SeaweedFS."""
