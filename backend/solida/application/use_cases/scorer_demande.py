@@ -16,7 +16,7 @@ from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.ports.decisions import DecisionRepository
 from solida.domain.ports.feature_store import FeatureStore
-from solida.domain.ports.grille import DepotGrille
+from solida.domain.ports.grille import GrilleRepository
 from solida.domain.ports.modele import ModeleScoring
 from solida.domain.rules.cascade import ContexteCascade, ParametresCascade, determiner_mode
 from solida.domain.rules.echeance import (
@@ -122,7 +122,7 @@ class ScorerDemande:
     lecteur: LecteurCoreSim
     feature_store: FeatureStore
     modele: ModeleScoring
-    depot_grille: DepotGrille
+    grille_repository: GrilleRepository
     decision_repository: DecisionRepository
     journal_audit: JournalAudit
 
@@ -216,7 +216,7 @@ class ScorerDemande:
         probabilite = self.modele.predire(features_dict)
         contributions_log_odds = self.modele.contributions(features_dict)
 
-        configuration = self.depot_grille.lire_active()
+        configuration = self.grille_repository.lire_active()
         plafond_produit_montant = configuration.progressif.plafonds_produits.get(demande.produit_id)
         if plafond_produit_montant is None:
             raise ProduitIntrouvable(

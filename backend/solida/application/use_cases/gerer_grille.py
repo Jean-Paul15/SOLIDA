@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 
 from solida.domain.erreurs import ScorecardImmuable
-from solida.domain.ports.grille import DepotGrille
+from solida.domain.ports.grille import GrilleRepository
 from solida.domain.values.grille import ConfigurationGrille
 
 
 @dataclass(frozen=True)
 class LireGrilleActive:
-    depot: DepotGrille
+    grille_repository: GrilleRepository
 
     def executer(self) -> ConfigurationGrille:
-        return self.depot.lire_active()
+        return self.grille_repository.lire_active()
 
 
 @dataclass(frozen=True)
@@ -20,10 +20,10 @@ class ModifierGrille:
     ce cas d'usage suffit à la déclencher, pas besoin de la dupliquer ici.
     """
 
-    depot: DepotGrille
+    grille_repository: GrilleRepository
 
     def executer(self, nouvelle_configuration: ConfigurationGrille) -> ConfigurationGrille:
-        active = self.depot.lire_active()
+        active = self.grille_repository.lire_active()
         nouveau = nouvelle_configuration.scorecard
         actuel = active.scorecard
         # pdo/score_reference/odds_reference ne sont plus editables depuis l'ecran Politique de
@@ -39,4 +39,4 @@ class ModifierGrille:
                 "pdo, score_reference et odds_reference ne peuvent pas être modifiés tant que "
                 "le modèle réel n'est pas calibré."
             )
-        return self.depot.enregistrer_nouvelle_version(nouvelle_configuration)
+        return self.grille_repository.enregistrer_nouvelle_version(nouvelle_configuration)

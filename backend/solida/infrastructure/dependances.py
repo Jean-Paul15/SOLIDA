@@ -13,7 +13,7 @@ from solida.adapters.ml.modele_constant import ModeleConstant
 from solida.adapters.pdf.rendu_fiche import GenerateurFichePdfWeasyPrint
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
 from solida.adapters.persistence.fiches_archivees_sql import FichesArchiveesSql
-from solida.adapters.persistence.grille_sql import DepotGrilleSql
+from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
 from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
 from solida.adapters.storage.depot_fiches_seaweedfs import DepotFichesSeaweedfs
 from solida.application.use_cases.archiver_fiche import ArchiverFiche
@@ -51,8 +51,8 @@ def _decision_repository() -> SqlDecisionRepository:
 
 
 @lru_cache
-def _depot_grille() -> DepotGrilleSql:
-    return DepotGrilleSql(solida_engine())
+def _grille_repository() -> SqlGrilleRepository:
+    return SqlGrilleRepository(solida_engine())
 
 
 @lru_cache
@@ -104,7 +104,7 @@ def scorer_demande() -> ScorerDemande:
         lecteur=_lecteur(),
         feature_store=_feature_store(),
         modele=_modele(),
-        depot_grille=_depot_grille(),
+        grille_repository=_grille_repository(),
         decision_repository=_decision_repository(),
         journal_audit=journal_audit(),
     )
@@ -137,12 +137,12 @@ def archiver_fiche() -> ArchiverFiche:
 
 
 def lire_grille_active() -> LireGrilleActive:
-    return LireGrilleActive(depot=_depot_grille())
+    return LireGrilleActive(grille_repository=_grille_repository())
 
 
 def modifier_grille() -> ModifierGrille:
-    return ModifierGrille(depot=_depot_grille())
+    return ModifierGrille(grille_repository=_grille_repository())
 
 
 def lister_produits() -> ListerProduits:
-    return ListerProduits(lecteur=_lecteur(), depot_grille=_depot_grille())
+    return ListerProduits(lecteur=_lecteur(), grille_repository=_grille_repository())

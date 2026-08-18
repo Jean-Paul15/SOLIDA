@@ -73,8 +73,8 @@ def _configuration_vers_seuils(configuration: ConfigurationGrille) -> dict[str, 
     }
 
 
-class DepotGrilleSql:
-    """Implémente `DepotGrille` contre `grille_decision` (schéma `solida`)."""
+class SqlGrilleRepository:
+    """Implémente `GrilleRepository` contre `grille_decision` (schéma `solida`)."""
 
     def __init__(self, moteur: Engine) -> None:
         self._moteur = moteur
