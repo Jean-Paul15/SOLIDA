@@ -1,0 +1,77 @@
+"""Fabriques des adaptateurs concrets, partagées entre les modules `dependances/*.py` qui
+composent les cas d'usage. Seul ce module (avec `infrastructure/auth.py`) a le droit de
+connaître à la fois les ports du domaine et leurs implémentations concrètes.
+"""
+
+from functools import lru_cache
+
+from minio import Minio
+
+from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
+from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
+from solida.adapters.ml.scoring_model_constant import ConstantScoringModel
+from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
+from solida.adapters.persistence.audit_log_sql import SqlAuditLog
+from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
+from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
+from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
+from solida.adapters.storage.fiche_repository_seaweedfs import SeaweedfsFicheRepository
+from solida.infrastructure.config import Configuration
+from solida.infrastructure.database import coresim_engine, solida_engine
+
+
+@lru_cache
+def lecteur() -> LecteurCoreSimPostgres:
+    return LecteurCoreSimPostgres(coresim_engine())
+
+
+@lru_cache
+def feature_store() -> FeatureStoreCoreSim:
+    return FeatureStoreCoreSim(lecteur())
+
+
+@lru_cache
+def scoring_model() -> ConstantScoringModel:
+    return ConstantScoringModel()
+
+
+@lru_cache
+def decision_repository() -> SqlDecisionRepository:
+    return SqlDecisionRepository(solida_engine())
+
+
+@lru_cache
+def grille_repository() -> SqlGrilleRepository:
+    return SqlGrilleRepository(solida_engine())
+
+
+@lru_cache
+def audit_log() -> SqlAuditLog:
+    return SqlAuditLog(solida_engine())
+
+
+@lru_cache
+def _client_seaweedfs() -> Minio:
+    configuration = Configuration()
+    return Minio(
+        configuration.seaweedfs_endpoint,
+        access_key=configuration.seaweedfs_access_key,
+        secret_key=configuration.seaweedfs_secret_key,
+        secure=False,
+    )
+
+
+@lru_cache
+def fiche_repository() -> SeaweedfsFicheRepository:
+    configuration = Configuration()
+    return SeaweedfsFicheRepository(_client_seaweedfs(), configuration.seaweedfs_bucket)
+
+
+@lru_cache
+def fiche_archivee_repository() -> SqlFicheArchiveeRepository:
+    return SqlFicheArchiveeRepository(solida_engine())
+
+
+@lru_cache
+def fiche_pdf_generator() -> WeasyPrintFichePdfGenerator:
+    return WeasyPrintFichePdfGenerator()
