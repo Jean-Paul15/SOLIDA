@@ -18,6 +18,7 @@ import { MouvementsEpargne } from "@/components/solida/MouvementsEpargne";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ProduitCreditApi } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
+import { LIBELLE_STATUT_CREDIT } from "@/lib/libelles";
 import { trouverProduit } from "@/lib/produits";
 import { peutScorer } from "@/lib/roles";
 import {
@@ -40,14 +41,6 @@ const LIBELLE_NIVEAU_INSTRUCTION: Record<string, string> = {
   primaire: "Primaire",
   secondaire: "Secondaire",
   superieur: "Supérieur",
-};
-
-const LIBELLE_STATUT_CREDIT: Record<string, string> = {
-  en_cours: "En cours",
-  solde: "Solde",
-  en_souffrance: "En souffrance",
-  radie: "Radié",
-  restructure: "Restructuré",
 };
 
 export default async function PageDossier({ params }: { params: Promise<{ id: string }> }) {

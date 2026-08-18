@@ -1,4 +1,4 @@
-import type { ObjetCredit, Tranche } from "@/lib/contracts";
+import type { ObjetCredit, StatutCredit, Tranche } from "@/lib/contracts";
 
 export const LIBELLE_OBJET_CREDIT: Record<ObjetCredit, string> = {
   fonds_roulement: "Fonds de roulement",
@@ -9,6 +9,27 @@ export const LIBELLE_OBJET_CREDIT: Record<ObjetCredit, string> = {
   scolarite: "Scolarité",
   habitat: "Habitat",
   autre: "Autre",
+};
+
+/** Statut d'un crédit dans l'historique propre d'un sociétaire (`CreditResume.statut`). */
+export const LIBELLE_STATUT_CREDIT: Record<StatutCredit, string> = {
+  en_cours: "En cours",
+  solde: "Solde",
+  en_souffrance: "En souffrance",
+  radie: "Radié",
+  restructure: "Restructuré",
+};
+
+/** Statut d'un membre de groupe de caution (`MembreGroupe.statut_credit`) : ensemble de
+ * valeurs distinct de `StatutCredit` (inclut "aucun_credit", exclut "radie"/"restructure"). */
+export const LIBELLE_STATUT_CREDIT_MEMBRE: Record<
+  "aucun_credit" | "en_cours" | "solde" | "en_souffrance",
+  string
+> = {
+  aucun_credit: "Aucun crédit",
+  en_cours: "En cours",
+  solde: "Soldé",
+  en_souffrance: "En souffrance",
 };
 
 export const LIBELLE_TRANCHE: Record<Tranche, string> = {

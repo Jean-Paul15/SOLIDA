@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { SyntheseGroupe } from "@/lib/contracts";
+import { LIBELLE_STATUT_CREDIT_MEMBRE } from "@/lib/libelles";
 import { fetchGroup } from "@/lib/services/societaires";
 
 const LIBELLE_ROLE: Record<string, string> = {
@@ -29,13 +30,6 @@ const LIBELLE_ROLE: Record<string, string> = {
   presidente: "Présidente",
   tresoriere: "Trésorière",
   secretaire: "Secrétaire",
-};
-
-const LIBELLE_STATUT_CREDIT: Record<string, string> = {
-  aucun_credit: "Aucun crédit",
-  en_cours: "En cours",
-  solde: "Soldé",
-  en_souffrance: "En souffrance",
 };
 
 interface GroupeCautionDialogProps {
@@ -126,7 +120,7 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
                       <Badge
                         variant={m.statut_credit === "en_souffrance" ? "destructive" : "secondary"}
                       >
-                        {LIBELLE_STATUT_CREDIT[m.statut_credit]}
+                        {LIBELLE_STATUT_CREDIT_MEMBRE[m.statut_credit]}
                       </Badge>
                     </TableCell>
                     <TableCell>{m.caution_appelee ? "Oui" : "—"}</TableCell>

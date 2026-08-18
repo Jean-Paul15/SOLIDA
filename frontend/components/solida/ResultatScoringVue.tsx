@@ -11,7 +11,12 @@ import { NumberTicker } from "@/components/solida/NumberTicker";
 import type { ConfigurationGrilleApi, ResultatScoring, Tranche } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
 import { COULEUR_TRANCHE, LIBELLE_TRANCHE } from "@/lib/libelles";
-import { scoreDepuisProbabilite, seuilEconomique } from "@/lib/scorecard";
+import {
+  parametresGrilleDepuisApi,
+  parametresScorecardDepuisApi,
+  scoreDepuisProbabilite,
+  seuilEconomique,
+} from "@/lib/scorecard";
 
 const SCORE_MIN = 300;
 const SCORE_MAX = 850;
@@ -38,17 +43,8 @@ function positionSurJauge(score: number): number {
  */
 function bornesZones(configuration: ConfigurationGrilleApi) {
   const { grille, scorecard } = configuration;
-  const parametresScorecard = {
-    pdo: scorecard.pdo,
-    scoreReference: scorecard.score_reference,
-    oddsReference: scorecard.odds_reference,
-  };
-  const seuil = seuilEconomique({
-    marge: grille.marge,
-    lgd: grille.lgd,
-    multiplicateurAccord: grille.multiplicateur_accord,
-    multiplicateurExamen: grille.multiplicateur_examen,
-  });
+  const parametresScorecard = parametresScorecardDepuisApi(scorecard);
+  const seuil = seuilEconomique(parametresGrilleDepuisApi(grille));
   return {
     scoreAccord: scoreDepuisProbabilite(seuil * grille.multiplicateur_accord, parametresScorecard),
     scoreVigilance: scoreDepuisProbabilite(seuil, parametresScorecard),

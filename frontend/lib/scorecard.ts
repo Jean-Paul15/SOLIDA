@@ -1,4 +1,4 @@
-import type { Tranche } from "@/lib/contracts";
+import type { ParametresGrilleApi, ParametresScorecardApi, Tranche } from "@/lib/contracts";
 
 export interface ParametresScorecard {
   pdo: number;
@@ -11,6 +11,19 @@ export interface ParametresGrille {
   lgd: number;
   multiplicateurAccord: number;
   multiplicateurExamen: number;
+}
+
+export function parametresScorecardDepuisApi(api: ParametresScorecardApi): ParametresScorecard {
+  return { pdo: api.pdo, scoreReference: api.score_reference, oddsReference: api.odds_reference };
+}
+
+export function parametresGrilleDepuisApi(api: ParametresGrilleApi): ParametresGrille {
+  return {
+    marge: api.marge,
+    lgd: api.lgd,
+    multiplicateurAccord: api.multiplicateur_accord,
+    multiplicateurExamen: api.multiplicateur_examen,
+  };
 }
 
 /**
