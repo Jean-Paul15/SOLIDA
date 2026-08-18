@@ -17,7 +17,7 @@ from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.ports.decisions import DecisionRepository
 from solida.domain.ports.feature_store import FeatureStore
 from solida.domain.ports.grille import GrilleRepository
-from solida.domain.ports.modele import ModeleScoring
+from solida.domain.ports.modele import ScoringModel
 from solida.domain.rules.cascade import ContexteCascade, ParametresCascade, determiner_mode
 from solida.domain.rules.echeance import (
     TAUX_MENSUEL_DEMONSTRATION,
@@ -121,7 +121,7 @@ def _features_vers_dict(individuelles: FeaturesIndividuelles, en_groupe: bool) -
 class ScorerDemande:
     lecteur: LecteurCoreSim
     feature_store: FeatureStore
-    modele: ModeleScoring
+    scoring_model: ScoringModel
     grille_repository: GrilleRepository
     decision_repository: DecisionRepository
     journal_audit: JournalAudit
@@ -213,8 +213,8 @@ class ScorerDemande:
         resultat_cascade = determiner_mode(contexte_cascade, ParametresCascade())
 
         features_dict = _features_vers_dict(features_actualisees, features_solidaires.en_groupe)
-        probabilite = self.modele.predire(features_dict)
-        contributions_log_odds = self.modele.contributions(features_dict)
+        probabilite = self.scoring_model.predire(features_dict)
+        contributions_log_odds = self.scoring_model.contributions(features_dict)
 
         configuration = self.grille_repository.lire_active()
         plafond_produit_montant = configuration.progressif.plafonds_produits.get(demande.produit_id)
@@ -308,6 +308,6 @@ class ScorerDemande:
             trajectoire_progression=trajectoire,
             conditions_reexamen=conditions,
             avertissements=[AVERTISSEMENT_MODELE_SUBSTITUT],
-            version_modele=self.modele.version(),
+            version_modele=self.scoring_model.version(),
             version_grille=configuration.version_grille,
         )

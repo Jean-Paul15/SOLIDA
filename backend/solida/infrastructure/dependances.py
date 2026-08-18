@@ -9,7 +9,7 @@ from minio import Minio
 
 from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
 from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
-from solida.adapters.ml.modele_constant import ModeleConstant
+from solida.adapters.ml.scoring_model_constant import ConstantScoringModel
 from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
 from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
@@ -41,8 +41,8 @@ def _feature_store() -> FeatureStoreCoreSim:
 
 
 @lru_cache
-def _modele() -> ModeleConstant:
-    return ModeleConstant()
+def _scoring_model() -> ConstantScoringModel:
+    return ConstantScoringModel()
 
 
 @lru_cache
@@ -103,7 +103,7 @@ def scorer_demande() -> ScorerDemande:
     return ScorerDemande(
         lecteur=_lecteur(),
         feature_store=_feature_store(),
-        modele=_modele(),
+        scoring_model=_scoring_model(),
         grille_repository=_grille_repository(),
         decision_repository=_decision_repository(),
         journal_audit=journal_audit(),

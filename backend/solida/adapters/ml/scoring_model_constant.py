@@ -3,7 +3,7 @@ from solida.domain.values.probabilite import ProbabiliteDefaut
 VERSION = "constant-0.1.0"
 
 
-class ModeleConstant:
+class ConstantScoringModel:
     """Substitut du modèle réel : renvoie une probabilité de défaut fixe.
 
     Ce n'est pas un modèle déguisé : littéralement une constante, pour rester

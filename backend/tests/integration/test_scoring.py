@@ -116,7 +116,7 @@ def test_previsualiser_ne_persiste_rien(
     resultat = reponse.json()
     assert resultat["montant_demande"] == 100000
     assert resultat["tranche"] in {"accord", "accord_sous_condition", "comite_de_credit", "refus"}
-    # ModeleConstant renvoie une probabilité fixe (les features ne l'influencent pas) mais
+    # ConstantScoringModel renvoie une probabilité fixe (les features ne l'influencent pas) mais
     # produit une décomposition heuristique (pas apprise) pour que la fiche de justification
     # ne soit pas vide en attendant le vrai modèle (voir modele_constant.py et
     # docs/backend/03-decisions-provisoires-a-revoir.md).
