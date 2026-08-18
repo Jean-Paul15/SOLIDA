@@ -11,7 +11,7 @@ from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
 from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
 from solida.adapters.ml.modele_constant import ModeleConstant
 from solida.adapters.pdf.rendu_fiche import GenerateurFichePdfWeasyPrint
-from solida.adapters.persistence.decisions_sql import DepotDecisionsSql
+from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
 from solida.adapters.persistence.fiches_archivees_sql import FichesArchiveesSql
 from solida.adapters.persistence.grille_sql import DepotGrilleSql
 from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
@@ -46,8 +46,8 @@ def _modele() -> ModeleConstant:
 
 
 @lru_cache
-def _depot_decisions() -> DepotDecisionsSql:
-    return DepotDecisionsSql(solida_engine())
+def _decision_repository() -> SqlDecisionRepository:
+    return SqlDecisionRepository(solida_engine())
 
 
 @lru_cache
@@ -105,21 +105,21 @@ def scorer_demande() -> ScorerDemande:
         feature_store=_feature_store(),
         modele=_modele(),
         depot_grille=_depot_grille(),
-        depot_decisions=_depot_decisions(),
+        decision_repository=_decision_repository(),
         journal_audit=journal_audit(),
     )
 
 
 def lire_decision() -> LireDecision:
-    return LireDecision(depot=_depot_decisions())
+    return LireDecision(decision_repository=_decision_repository())
 
 
 def lister_decisions() -> ListerDecisions:
-    return ListerDecisions(depot=_depot_decisions(), lecteur=_lecteur())
+    return ListerDecisions(decision_repository=_decision_repository(), lecteur=_lecteur())
 
 
 def generer_fiche() -> GenererFiche:
-    return GenererFiche(depot_decisions=_depot_decisions(), lecteur=_lecteur())
+    return GenererFiche(decision_repository=_decision_repository(), lecteur=_lecteur())
 
 
 def generateur_fiche_pdf() -> GenerateurFichePdfWeasyPrint:

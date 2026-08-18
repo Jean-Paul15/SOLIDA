@@ -60,7 +60,7 @@ def _societaire(societaire_id: str, agence: str) -> Societaire:
 
 
 @dataclass
-class _DepotFactice:
+class _DecisionRepositoryFactice:
     decisions: list[DecisionEnregistree]
 
     def lister(
@@ -82,7 +82,7 @@ class _LecteurFactice:
 
 
 def test_decision_hors_agence_de_lagent_est_exclue_meme_si_le_depot_la_renvoie() -> None:
-    """`DepotDecisions.lister` filtre par l'agence de l'AGENT (seule donnée disponible côté SQL,
+    """`DecisionRepository.lister` filtre par l'agence de l'AGENT (seule donnée disponible côté SQL,
     CORE-SIM étant une base séparée jamais jointe) : une décision historique où le sociétaire
     n'appartient pas à la même agence que l'agent qui l'a notée doit être revalidée et exclue,
     pas seulement affichée avec une étiquette d'agence différente (voir la note dans
@@ -93,7 +93,7 @@ def test_decision_hors_agence_de_lagent_est_exclue_meme_si_le_depot_la_renvoie()
         _decision("D2", "SOC-2", agent_agence_id="CAI-00"),
     ]
     cas_usage = ListerDecisions(
-        depot=_DepotFactice(decisions),
+        decision_repository=_DecisionRepositoryFactice(decisions),
         lecteur=_LecteurFactice({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
     )
 
@@ -109,7 +109,7 @@ def test_superviseur_sans_filtre_agence_voit_tout() -> None:
         _decision("D2", "SOC-2", agent_agence_id=None),
     ]
     cas_usage = ListerDecisions(
-        depot=_DepotFactice(decisions),
+        decision_repository=_DecisionRepositoryFactice(decisions),
         lecteur=_LecteurFactice({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
     )
 

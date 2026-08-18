@@ -14,7 +14,7 @@ from solida.domain.erreurs import (
 )
 from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.core_sim import LecteurCoreSim
-from solida.domain.ports.decisions import DepotDecisions
+from solida.domain.ports.decisions import DecisionRepository
 from solida.domain.ports.feature_store import FeatureStore
 from solida.domain.ports.grille import DepotGrille
 from solida.domain.ports.modele import ModeleScoring
@@ -123,7 +123,7 @@ class ScorerDemande:
     feature_store: FeatureStore
     modele: ModeleScoring
     depot_grille: DepotGrille
-    depot_decisions: DepotDecisions
+    decision_repository: DecisionRepository
     journal_audit: JournalAudit
 
     def previsualiser(
@@ -154,7 +154,7 @@ class ScorerDemande:
         prévisualisation et la confirmation — limite documentée, acceptable pour cette
         passe) puis persiste, cette fois pour de bon."""
         decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
-        enregistree = self.depot_decisions.enregistrer(decision)
+        enregistree = self.decision_repository.enregistrer(decision)
         self.journal_audit.enregistrer_evenement(
             "scoring_confirme", agent_id, demande.societaire_id, {}
         )
@@ -181,7 +181,7 @@ class ScorerDemande:
                 "nouvel octroi ne peut pas être confirmé par ce canal."
             )
         depuis = datetime.now(UTC) - FENETRE_MULTI_OCTROI
-        if self.depot_decisions.existe_decision_accordee_depuis(
+        if self.decision_repository.existe_decision_accordee_depuis(
             demande.societaire_id, depuis, entree_brute
         ):
             raise SurEndettement(

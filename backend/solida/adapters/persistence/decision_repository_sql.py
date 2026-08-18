@@ -74,8 +74,8 @@ def _ligne_vers_decision(
     )
 
 
-class DepotDecisionsSql:
-    """Implémente `DepotDecisions` contre `decision_scoring` (schéma `solida`).
+class SqlDecisionRepository:
+    """Implémente `DecisionRepository` contre `decision_scoring` (schéma `solida`).
 
     N'exécute jamais d'UPDATE ni de DELETE sur cette table : le déclencheur
     `decision_scoring_insertion_seule` en base le refuserait de toute façon,
