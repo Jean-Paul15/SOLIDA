@@ -2,24 +2,15 @@ import { AlertTriangle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EnTete } from "@/components/solida/EnTete";
-import { GroupeCautionDialog } from "@/components/solida/GroupeCautionDialog";
-import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
 import { MouvementsEpargne } from "@/components/solida/MouvementsEpargne";
+import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
+import { PanneauActiviteEconomique } from "@/components/solida/PanneauActiviteEconomique";
+import { PanneauGarantie } from "@/components/solida/PanneauGarantie";
+import { PanneauProfil } from "@/components/solida/PanneauProfil";
+import { TableauHistoriqueCredit } from "@/components/solida/TableauHistoriqueCredit";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ProduitCreditApi } from "@/lib/contracts";
-import { formaterMontant } from "@/lib/format";
-import { LIBELLE_STATUT_CREDIT } from "@/lib/libelles";
-import { trouverProduit } from "@/lib/produits";
 import { peutScorer } from "@/lib/roles";
 import {
   enforcePasswordUpToDate,
@@ -34,13 +25,6 @@ const LIBELLE_SEGMENT: Record<string, string> = {
   jeune: "Jeune",
   femme_gie: "Groupement",
   agricole: "Agricole",
-};
-
-const LIBELLE_NIVEAU_INSTRUCTION: Record<string, string> = {
-  aucun: "Non renseigné",
-  primaire: "Primaire",
-  secondaire: "Secondaire",
-  superieur: "Supérieur",
 };
 
 export default async function PageDossier({ params }: { params: Promise<{ id: string }> }) {
@@ -116,57 +100,8 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
 
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-5 flex flex-col gap-4">
-            <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
-              <span className="text-xs font-medium text-neutre-500">Profil</span>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-neutre-500">Âge</span>
-                <span className="text-neutre-950">{identite.age} ans</span>
-                <span className="text-neutre-500">Personnes à charge</span>
-                <span className="text-neutre-950">{activite.nb_personnes_a_charge}</span>
-                <span className="text-neutre-500">Niveau d&rsquo;instruction</span>
-                <span className="text-neutre-950">
-                  {LIBELLE_NIVEAU_INSTRUCTION[identite.niveau_instruction ?? "aucun"]}
-                </span>
-                <span className="text-neutre-500">Parts sociales</span>
-                <span className="font-mono text-neutre-950">
-                  {formaterMontant(activite.parts_sociales_montant)}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
-              <span className="text-xs font-medium text-neutre-500">Activité économique</span>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-neutre-500">Secteur</span>
-                <span className="text-neutre-950">{activite.secteur}</span>
-                <span className="text-neutre-500">Ancienneté de l&rsquo;activité</span>
-                <span className="text-neutre-950">
-                  {Math.floor(activite.anciennete_activite_mois / 12)} an(s)
-                </span>
-                <span className="text-neutre-500">Revenu mensuel déclaré</span>
-                {activite.revenu_mensuel_declare ? (
-                  <span className="font-mono text-neutre-950">
-                    {formaterMontant(activite.revenu_mensuel_declare)}
-                  </span>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1 text-sm text-neutre-500 italic">
-                        Non renseigné <AlertTriangle className="size-3.5 text-alerte" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Ce champ est absent du dossier et sera imputé lors du scoring, ce qui réduit
-                      la précision.
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                <span className="text-neutre-500">Capacité de remboursement estimée</span>
-                <span className="font-mono text-neutre-950">
-                  {formaterMontant(activite.capacite_remboursement_estimee)}
-                </span>
-              </div>
-            </div>
+            <PanneauProfil identite={identite} activite={activite} />
+            <PanneauActiviteEconomique activite={activite} />
           </div>
 
           <div className="col-span-4">
@@ -174,92 +109,18 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="col-span-3">
-            {identite.segment === "femme_gie" && groupe ? (
-              <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
-                <span className="text-xs font-medium text-neutre-500">Groupe de caution</span>
-                <span className="text-sm font-medium text-neutre-950">{groupe.nom_groupe}</span>
-                {groupe.taux_remboursement_groupe !== null ? (
-                  <span className="font-mono text-lg text-neutre-950">
-                    {Math.round(groupe.taux_remboursement_groupe * 100)}%
-                  </span>
-                ) : (
-                  <span className="text-sm text-neutre-500">
-                    Le groupe ne dispose pas encore d&rsquo;un historique de remboursement
-                    suffisant. Le scoring s&rsquo;appuiera sur le profil individuel.
-                  </span>
-                )}
-                <GroupeCautionDialog societaireId={id} />
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
-                <span className="text-xs font-medium text-neutre-500">Épargne disponible</span>
-                <span className="font-mono text-lg text-neutre-950">
-                  {formaterMontant(epargne.solde_moyen_6m)}
-                </span>
-                <span className="text-xs text-neutre-500">
-                  Garantie de droit commun sur ce dossier.
-                </span>
-              </div>
-            )}
+            <PanneauGarantie
+              segment={identite.segment}
+              groupe={groupe}
+              societaireId={id}
+              epargne={epargne}
+            />
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium text-neutre-500">Historique de crédit</span>
-          {historique_credit.length === 0 ? (
-            <p className="text-sm text-neutre-500">
-              Premier crédit : ce sociétaire n&rsquo;a pas d&rsquo;historique d&rsquo;emprunt.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date de déblocage</TableHead>
-                  <TableHead>Produit</TableHead>
-                  <TableHead>Montant octroyé</TableHead>
-                  <TableHead>Durée</TableHead>
-                  <TableHead>Cycle</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Capital restant dû</TableHead>
-                  <TableHead>Retard maximal</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historique_credit.map((c) => (
-                  <TableRow key={c.credit_id}>
-                    <TableCell>{new Date(c.date_deblocage).toLocaleDateString("fr-FR")}</TableCell>
-                    <TableCell>
-                      {trouverProduit(produits, c.produit_id)?.libelle ?? c.produit_id}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formaterMontant(c.montant_octroye)}
-                    </TableCell>
-                    <TableCell>{c.duree_mois} mois</TableCell>
-                    <TableCell>{c.numero_cycle}</TableCell>
-                    <TableCell>
-                      <Badge variant={c.statut === "en_souffrance" ? "destructive" : "secondary"}>
-                        {LIBELLE_STATUT_CREDIT[c.statut]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formaterMontant(c.capital_restant_du)}
-                    </TableCell>
-                    <TableCell
-                      className={
-                        c.max_jours_retard > 90
-                          ? "text-decision-refus"
-                          : c.max_jours_retard > 0
-                            ? "text-alerte"
-                            : "text-neutre-700"
-                      }
-                    >
-                      {c.max_jours_retard} jour(s)
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <TableauHistoriqueCredit historique={historique_credit} produits={produits} />
         </div>
 
         <span className="text-xs text-neutre-500">
