@@ -1,7 +1,7 @@
 from typing import Protocol
 
 
-class JournalAudit(Protocol):
+class AuditLog(Protocol):
     """Chaque entrée : acteur, action, objet, horodatage. Jamais de mot de passe,
     jeton, nom complet de sociétaire ou montant associé à un identifiant
     nominatif dans `details` — les identifiants opaques suffisent au diagnostic.

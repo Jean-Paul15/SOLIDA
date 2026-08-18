@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import JSON, Engine, bindparam, text
 
 
-class JournalAuditSql:
-    """Implémente `JournalAudit` contre `journal_audit` (schéma `solida`)."""
+class SqlAuditLog:
+    """Implémente `AuditLog` contre `journal_audit` (schéma `solida`)."""
 
     def __init__(self, moteur: Engine) -> None:
         self._moteur = moteur

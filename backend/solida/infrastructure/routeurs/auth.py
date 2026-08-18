@@ -6,7 +6,7 @@ from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
+from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.modeles_sqlalchemy import AccessToken, Utilisateur
 from solida.domain.erreurs import AccesRefuse
 from solida.domain.rules.mot_de_passe import valider_mot_de_passe
@@ -21,7 +21,7 @@ from solida.infrastructure.auth import (
     load_common_passwords,
     revoke_user_tokens,
 )
-from solida.infrastructure.dependances import journal_audit
+from solida.infrastructure.dependances import audit_log
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -68,7 +68,7 @@ async def connexion(
     session: AsyncSession = Depends(get_session),
     gestionnaire: UserManager = Depends(get_user_manager),
     strategie: DatabaseStrategy[Utilisateur, uuid.UUID, AccessToken] = Depends(get_strategy),
-    audit: JournalAuditSql = Depends(journal_audit),
+    audit: SqlAuditLog = Depends(audit_log),
 ) -> ReponseConnexion:
     ip = client_ip_address(requete)
     # Navigateur declare (User-Agent), pas une empreinte technique (canvas/WebGL/polices) :
@@ -127,7 +127,7 @@ async def deconnexion(
     reponse: Response,
     utilisateur: Utilisateur = Depends(current_active_user),
     strategie: DatabaseStrategy[Utilisateur, uuid.UUID, AccessToken] = Depends(get_strategy),
-    audit: JournalAuditSql = Depends(journal_audit),
+    audit: SqlAuditLog = Depends(audit_log),
 ) -> dict[str, str]:
     jeton = requete.cookies.get(cookie_transport.cookie_name)
     if jeton is not None:
@@ -168,7 +168,7 @@ async def changer_mot_de_passe(
     session: AsyncSession = Depends(get_session),
     utilisateur: Utilisateur = Depends(current_active_user),
     gestionnaire: UserManager = Depends(get_user_manager),
-    audit: JournalAuditSql = Depends(journal_audit),
+    audit: SqlAuditLog = Depends(audit_log),
 ) -> dict[str, str]:
     # Le mot de passe actuel est exigé même en session déjà authentifiée : défense en
     # profondeur contre une session volée/laissée ouverte (OWASP Session Management).

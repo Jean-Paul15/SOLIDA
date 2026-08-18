@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from solida.domain.ports.audit import JournalAudit
+from solida.domain.ports.audit import AuditLog
 from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
 
@@ -15,12 +15,12 @@ class ListerSocietairesRecents:
     l'utiliser aussi pour l'écran de recherche n'ajoute aucune donnée nouvelle."""
 
     lecteur: LecteurCoreSim
-    journal_audit: JournalAudit
+    audit_log: AuditLog
 
     def executer(
         self, agent_id: str, limite: int = LIMITE_PAR_DEFAUT
     ) -> list[ResultatRechercheSocietaire]:
-        identifiants = self.journal_audit.lister_objets_recents(
+        identifiants = self.audit_log.lister_objets_recents(
             TYPE_EVENEMENT_CONSULTATION, agent_id, limite
         )
         resultats = []

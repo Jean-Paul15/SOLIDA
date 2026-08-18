@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from solida.application.use_cases.generer_fiche import GenererFiche
 from solida.domain.erreurs import AccesRefuse
 from solida.domain.ports.archivage import FicheRepository
-from solida.domain.ports.audit import JournalAudit
+from solida.domain.ports.audit import AuditLog
 from solida.domain.ports.fiches_archivees import FicheArchiveeRepository
 from solida.domain.ports.generateur_fiche import FichePdfGenerator
 
@@ -15,7 +15,7 @@ class ArchiverFiche:
     fiche_pdf_generator: FichePdfGenerator
     fiche_repository: FicheRepository
     fiche_archivee_repository: FicheArchiveeRepository
-    journal_audit: JournalAudit
+    audit_log: AuditLog
 
     def executer(
         self,
@@ -37,5 +37,5 @@ class ArchiverFiche:
         fiche_id = self.fiche_archivee_repository.enregistrer(
             decision_id, chemin_objet, archive_par
         )
-        self.journal_audit.enregistrer_evenement("fiche_archivee", archive_par, decision_id, {})
+        self.audit_log.enregistrer_evenement("fiche_archivee", archive_par, decision_id, {})
         return fiche_id

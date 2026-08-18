@@ -35,7 +35,7 @@ from datetime import UTC, datetime, timedelta
 
 import sqlalchemy as sa
 
-from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
+from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.infrastructure.database import solida_engine
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def alerter(essai_a_blanc: bool = False) -> list[ActeurEnAlerte]:
     if essai_a_blanc or not depasses:
         return depasses
 
-    audit = JournalAuditSql(solida_engine())
+    audit = SqlAuditLog(solida_engine())
     for acteur in depasses:
         audit.enregistrer_evenement(
             "alerte_volume_lecture",

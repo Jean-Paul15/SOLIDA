@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from solida.adapters.http import mappers
 from solida.adapters.http.schemas.societaires import DossierSocietaire, ResultatRechercheSocietaire
-from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
+from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.consulter_dossier import ConsulterDossier
 from solida.application.use_cases.lister_societaires_recents import ListerSocietairesRecents
@@ -13,8 +13,8 @@ from solida.application.use_cases.rechercher_societaire import RechercherSocieta
 from solida.domain.erreurs import AccesRefuse
 from solida.infrastructure.auth import client_ip_address, current_active_user
 from solida.infrastructure.dependances import (
+    audit_log,
     consulter_dossier,
-    journal_audit,
     lister_societaires_recents,
     rechercher_societaire,
 )
@@ -54,7 +54,7 @@ def rechercher(
     limite: int = Query(default=10, ge=0, le=50),
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: RechercherSocietaire = Depends(rechercher_societaire),
-    audit: JournalAuditSql = Depends(journal_audit),
+    audit: SqlAuditLog = Depends(audit_log),
 ) -> dict[str, object]:
     agence_agent = _agence_agent(utilisateur)
     resultats = cas_usage.executer(terme, limite, agence_agent)
@@ -92,7 +92,7 @@ def dossier(
     requete: Request,
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: ConsulterDossier = Depends(consulter_dossier),
-    audit: JournalAuditSql = Depends(journal_audit),
+    audit: SqlAuditLog = Depends(audit_log),
 ) -> DossierSocietaire:
     _valider_forme_identifiant(societaire_id)
     resultat = cas_usage.executer(societaire_id)

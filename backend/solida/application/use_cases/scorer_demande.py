@@ -12,7 +12,7 @@ from solida.domain.erreurs import (
     SocietaireIntrouvable,
     SurEndettement,
 )
-from solida.domain.ports.audit import JournalAudit
+from solida.domain.ports.audit import AuditLog
 from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.ports.decisions import DecisionRepository
 from solida.domain.ports.feature_store import FeatureStore
@@ -124,7 +124,7 @@ class ScorerDemande:
     scoring_model: ScoringModel
     grille_repository: GrilleRepository
     decision_repository: DecisionRepository
-    journal_audit: JournalAudit
+    audit_log: AuditLog
 
     def previsualiser(
         self,
@@ -137,7 +137,7 @@ class ScorerDemande:
         """Calcule le score sans l'enregistrer — l'agent doit encore confirmer avant que
         quoi que ce soit ne soit écrit dans le registre des décisions."""
         decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
-        self.journal_audit.enregistrer_evenement(
+        self.audit_log.enregistrer_evenement(
             "scoring_previsualise", agent_id, demande.societaire_id, {}
         )
         return decision
@@ -155,7 +155,7 @@ class ScorerDemande:
         passe) puis persiste, cette fois pour de bon."""
         decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
         enregistree = self.decision_repository.enregistrer(decision)
-        self.journal_audit.enregistrer_evenement(
+        self.audit_log.enregistrer_evenement(
             "scoring_confirme", agent_id, demande.societaire_id, {}
         )
         return enregistree

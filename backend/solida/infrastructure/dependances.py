@@ -11,10 +11,10 @@ from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
 from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
 from solida.adapters.ml.scoring_model_constant import ConstantScoringModel
 from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
+from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
 from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
 from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
-from solida.adapters.persistence.journal_audit_sql import JournalAuditSql
 from solida.adapters.storage.fiche_repository_seaweedfs import SeaweedfsFicheRepository
 from solida.application.use_cases.archiver_fiche import ArchiverFiche
 from solida.application.use_cases.consulter_dossier import ConsulterDossier
@@ -56,8 +56,8 @@ def _grille_repository() -> SqlGrilleRepository:
 
 
 @lru_cache
-def journal_audit() -> JournalAuditSql:
-    return JournalAuditSql(solida_engine())
+def audit_log() -> SqlAuditLog:
+    return SqlAuditLog(solida_engine())
 
 
 @lru_cache
@@ -96,7 +96,7 @@ def consulter_dossier() -> ConsulterDossier:
 
 
 def lister_societaires_recents() -> ListerSocietairesRecents:
-    return ListerSocietairesRecents(lecteur=_lecteur(), journal_audit=journal_audit())
+    return ListerSocietairesRecents(lecteur=_lecteur(), audit_log=audit_log())
 
 
 def scorer_demande() -> ScorerDemande:
@@ -106,7 +106,7 @@ def scorer_demande() -> ScorerDemande:
         scoring_model=_scoring_model(),
         grille_repository=_grille_repository(),
         decision_repository=_decision_repository(),
-        journal_audit=journal_audit(),
+        audit_log=audit_log(),
     )
 
 
@@ -132,7 +132,7 @@ def archiver_fiche() -> ArchiverFiche:
         fiche_pdf_generator=_fiche_pdf_generator(),
         fiche_repository=_fiche_repository(),
         fiche_archivee_repository=_fiche_archivee_repository(),
-        journal_audit=journal_audit(),
+        audit_log=audit_log(),
     )
 
 
