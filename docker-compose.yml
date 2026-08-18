@@ -52,6 +52,43 @@ services:
     profiles:
       - dev
 
+  # Uniquement pour le developpement local (make back-lint, back-typecheck, back-test,
+  # back-imports, ...) : jamais demarre par un simple "docker compose up", jamais route par
+  # nginx. Bind-mount du code source (comme front-dev) pour eviter un rebuild d'image a
+  # chaque iteration ; le volume nomme back_venv preserve le venv construit par l'image sous
+  # le bind-mount, meme role que front_node_modules/front_next_cache pour le frontend.
+  # ENVIRONNEMENT force a "developpement" (independamment de la valeur de .env, qui vaut
+  # "production" pour le service "api") : sinon les cookies de session Secure font echouer
+  # les tests d'integration en cascade avec des 401.
+  api-dev:
+    build:
+      context: ./backend
+    environment:
+      SOLIDA_DATABASE_URL: ${SOLIDA_DATABASE_URL}
+      SOLIDA_DATABASE_URL_ASYNC: ${SOLIDA_DATABASE_URL_ASYNC}
+      SOLIDA_PURGE_DATABASE_URL: ${SOLIDA_PURGE_DATABASE_URL}
+      CORESIM_DATABASE_URL: ${CORESIM_DATABASE_URL}
+      SECRET_AUTH: ${SECRET_AUTH}
+      ENVIRONNEMENT: developpement
+      SEAWEEDFS_ENDPOINT: seaweedfs:8333
+      SEAWEEDFS_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY}
+      SEAWEEDFS_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY}
+      SEAWEEDFS_BUCKET: solida-fiches
+    volumes:
+      - ./backend:/app
+      - back_venv:/app/.venv
+    networks:
+      - solida
+    depends_on:
+      postgres-solida:
+        condition: service_healthy
+      postgres-coresim:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+    profiles:
+      - dev
+
   postgres-coresim:
     image: postgres:16.14
     # `-c timezone=UTC` plutot que la variable d'environnement TZ : initdb ne fixe le GUC
@@ -204,6 +241,7 @@ services:
 volumes:
   front_node_modules:
   front_next_cache:
+  back_venv:
   pgdata_coresim:
   pgdata_solida:
   seaweedfs_data:

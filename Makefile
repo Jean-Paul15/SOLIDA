@@ -1,4 +1,5 @@
-.PHONY: front-install front-dev front-lint front-typecheck front-test front-build front-down
+.PHONY: front-install front-dev front-lint front-typecheck front-test front-build front-down \
+	back-install back-lint back-typecheck back-test back-imports
 
 front-install:
 	docker compose --profile dev run --rm front-dev npm install
@@ -20,3 +21,18 @@ front-test:
 
 front-build:
 	docker compose --profile dev run --rm front-dev npm run build
+
+back-install:
+	docker compose --profile dev run --rm api-dev uv sync --locked
+
+back-lint:
+	docker compose --profile dev run --rm api-dev sh -c "uv run ruff check . && uv run ruff format --check ."
+
+back-typecheck:
+	docker compose --profile dev run --rm api-dev uv run mypy solida
+
+back-test:
+	docker compose --profile dev run --rm api-dev uv run pytest
+
+back-imports:
+	docker compose --profile dev run --rm api-dev uv run lint-imports
