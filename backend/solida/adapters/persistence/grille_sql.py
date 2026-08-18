@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from solida.domain.erreurs import VersionGrilleDejaExistante
 from solida.domain.rules.grille import ParametresGrille
-from solida.domain.rules.progressif import ParametresProgressif
+from solida.domain.rules.progressif_plafond import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
 from solida.domain.values.grille import ConfigurationGrille
 from solida.domain.values.montant import Montant

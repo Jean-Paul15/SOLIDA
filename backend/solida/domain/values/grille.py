@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from solida.domain.rules.grille import ParametresGrille
-from solida.domain.rules.progressif import ParametresProgressif
+from solida.domain.rules.progressif_plafond import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
 
 

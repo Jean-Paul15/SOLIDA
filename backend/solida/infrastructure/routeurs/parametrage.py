@@ -7,7 +7,7 @@ from solida.adapters.http.schemas.grille import ConfigurationGrille, NouvelleCon
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.gerer_grille import LireGrilleActive, ModifierGrille
 from solida.domain.rules.grille import ParametresGrille
-from solida.domain.rules.progressif import ParametresProgressif
+from solida.domain.rules.progressif_plafond import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
 from solida.domain.values.grille import ConfigurationGrille as ConfigurationGrilleDomaine
 from solida.domain.values.montant import Montant

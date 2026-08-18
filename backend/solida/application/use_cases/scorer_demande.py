@@ -25,13 +25,13 @@ from solida.domain.rules.echeance import (
     calculer_taux_endettement,
 )
 from solida.domain.rules.grille import decider
-from solida.domain.rules.progressif import (
+from solida.domain.rules.progressif_plafond import calculer_plafond
+from solida.domain.rules.progressif_reexamen import (
     ParametresReexamen,
     SituationReexamen,
-    calculer_plafond,
-    calculer_trajectoire,
     lister_conditions_reexamen,
 )
+from solida.domain.rules.progressif_trajectoire import calculer_trajectoire
 from solida.domain.rules.scorecard import (
     calculer_score,
     decomposer_en_points,
