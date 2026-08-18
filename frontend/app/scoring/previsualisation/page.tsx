@@ -31,7 +31,7 @@ export default function PagePrevisualisationScoring() {
 
   const { entree, resultat, societaireNom } = previsualisation;
 
-  async function surConfirmer() {
+  async function handleConfirm() {
     setConfirmationEnCours(true);
     try {
       const enregistre = await confirmDecision(entree);
@@ -44,7 +44,7 @@ export default function PagePrevisualisationScoring() {
     }
   }
 
-  function surAnnuler() {
+  function handleCancel() {
     definirPrevisualisation(null);
     router.push(`/societaires/${entree.societaire_id}`);
   }
@@ -64,8 +64,8 @@ export default function PagePrevisualisationScoring() {
         <ResultatScoringVue
           resultat={resultat}
           previsualisation
-          surConfirmer={surConfirmer}
-          surAnnuler={surAnnuler}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
           confirmationEnCours={confirmationEnCours}
         />
       </main>
