@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from solida.adapters.http import mappers
 from solida.adapters.http.schemas.fiche import FicheJustification
 from solida.adapters.http.schemas.scoring import EntreeScoring, ResultatScoring
-from solida.adapters.pdf.rendu_fiche import GenerateurFichePdfWeasyPrint
+from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.archiver_fiche import ArchiverFiche
 from solida.application.use_cases.generer_fiche import GenererFiche
@@ -17,7 +17,7 @@ from solida.domain.values.demande import ActualisationSituation, DemandeScoring
 from solida.infrastructure.auth import current_active_user, require_role
 from solida.infrastructure.dependances import (
     archiver_fiche,
-    generateur_fiche_pdf,
+    fiche_pdf_generator,
     generer_fiche,
     lire_decision,
     scorer_demande,
@@ -145,7 +145,7 @@ def fiche_pdf(
     decision_id: str,
     utilisateur: Utilisateur = Depends(current_active_user),
     cas_usage: GenererFiche = Depends(generer_fiche),
-    generateur: GenerateurFichePdfWeasyPrint = Depends(generateur_fiche_pdf),
+    generateur: WeasyPrintFichePdfGenerator = Depends(fiche_pdf_generator),
 ) -> Response:
     _valider_decision_id(decision_id)
     resultat = cas_usage.executer(decision_id)

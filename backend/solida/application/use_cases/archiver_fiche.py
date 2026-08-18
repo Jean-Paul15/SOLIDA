@@ -6,13 +6,13 @@ from solida.domain.erreurs import AccesRefuse
 from solida.domain.ports.archivage import FicheRepository
 from solida.domain.ports.audit import JournalAudit
 from solida.domain.ports.fiches_archivees import FicheArchiveeRepository
-from solida.domain.ports.generateur_fiche import GenerateurFichePdf
+from solida.domain.ports.generateur_fiche import FichePdfGenerator
 
 
 @dataclass(frozen=True)
 class ArchiverFiche:
     generer_fiche: GenererFiche
-    generateur_pdf: GenerateurFichePdf
+    fiche_pdf_generator: FichePdfGenerator
     fiche_repository: FicheRepository
     fiche_archivee_repository: FicheArchiveeRepository
     journal_audit: JournalAudit
@@ -31,7 +31,7 @@ class ArchiverFiche:
         if agent_role == "agent" and decision.agent_agence_id != agent_agence_id:
             raise AccesRefuse("Cette décision ne concerne pas votre agence.")
 
-        pdf = self.generateur_pdf.generer(decision, entete)
+        pdf = self.fiche_pdf_generator.generer(decision, entete)
         chemin_objet = f"fiches/{datetime.now(UTC):%Y/%m}/{decision_id}.pdf"
         self.fiche_repository.archiver(chemin_objet, pdf)
         fiche_id = self.fiche_archivee_repository.enregistrer(

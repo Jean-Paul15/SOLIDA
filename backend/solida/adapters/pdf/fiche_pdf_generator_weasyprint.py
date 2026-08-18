@@ -20,8 +20,8 @@ _ENVIRONNEMENT = jinja2.Environment(
 )
 
 
-class GenerateurFichePdfWeasyPrint:
-    """Implémente `GenerateurFichePdf` : rend le même contenu que la fiche JSON/HTML du
+class WeasyPrintFichePdfGenerator:
+    """Implémente `FichePdfGenerator` : rend le même contenu que la fiche JSON/HTML du
     frontend, mis en page pour l'impression via WeasyPrint (HTML/CSS -> PDF, pas de
     navigateur headless — conforme à la contrainte de légèreté du projet)."""
 

@@ -4,5 +4,5 @@ from solida.domain.values.decision import DecisionEnregistree
 from solida.domain.values.fiche import EnTeteFiche
 
 
-class GenerateurFichePdf(Protocol):
+class FichePdfGenerator(Protocol):
     def generer(self, decision: DecisionEnregistree, entete: EnTeteFiche) -> bytes: ...

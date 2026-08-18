@@ -10,7 +10,7 @@ from minio import Minio
 from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
 from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
 from solida.adapters.ml.modele_constant import ModeleConstant
-from solida.adapters.pdf.rendu_fiche import GenerateurFichePdfWeasyPrint
+from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
 from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
 from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
@@ -83,8 +83,8 @@ def _fiche_archivee_repository() -> SqlFicheArchiveeRepository:
 
 
 @lru_cache
-def _generateur_fiche_pdf() -> GenerateurFichePdfWeasyPrint:
-    return GenerateurFichePdfWeasyPrint()
+def _fiche_pdf_generator() -> WeasyPrintFichePdfGenerator:
+    return WeasyPrintFichePdfGenerator()
 
 
 def rechercher_societaire() -> RechercherSocietaire:
@@ -122,14 +122,14 @@ def generer_fiche() -> GenererFiche:
     return GenererFiche(decision_repository=_decision_repository(), lecteur=_lecteur())
 
 
-def generateur_fiche_pdf() -> GenerateurFichePdfWeasyPrint:
-    return _generateur_fiche_pdf()
+def fiche_pdf_generator() -> WeasyPrintFichePdfGenerator:
+    return _fiche_pdf_generator()
 
 
 def archiver_fiche() -> ArchiverFiche:
     return ArchiverFiche(
         generer_fiche=generer_fiche(),
-        generateur_pdf=_generateur_fiche_pdf(),
+        fiche_pdf_generator=_fiche_pdf_generator(),
         fiche_repository=_fiche_repository(),
         fiche_archivee_repository=_fiche_archivee_repository(),
         journal_audit=journal_audit(),
