@@ -4,6 +4,7 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from solida.adapters.http import mappers
+from solida.adapters.http.auth_dependencies import client_ip_address, current_active_user
 from solida.adapters.http.schemas.societaires import DossierSocietaire, ResultatRechercheSocietaire
 from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
@@ -11,7 +12,6 @@ from solida.application.use_cases.consulter_dossier import ConsulterDossier
 from solida.application.use_cases.lister_societaires_recents import ListerSocietairesRecents
 from solida.application.use_cases.rechercher_societaire import RechercherSocietaire
 from solida.domain.erreurs import AccesRefuse
-from solida.infrastructure.auth import client_ip_address, current_active_user
 from solida.infrastructure.dependances import (
     audit_log,
     consulter_dossier,

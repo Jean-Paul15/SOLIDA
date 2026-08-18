@@ -5,9 +5,9 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
+from solida.adapters.http.auth_dependencies import require_role
 from solida.domain.erreurs import AccesRefuse
 from solida.infrastructure.application_fastapi import app
-from solida.infrastructure.auth import require_role
 
 
 class _UtilisateurFactice:

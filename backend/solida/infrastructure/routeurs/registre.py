@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Query
 
 from solida.adapters.http import mappers
+from solida.adapters.http.auth_dependencies import current_active_user
 from solida.adapters.http.schemas.registre import PageRegistre
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.lister_decisions import ListerDecisions
-from solida.infrastructure.auth import current_active_user
 from solida.infrastructure.dependances import lister_decisions
 
 router = APIRouter(prefix="/api/v1/registre", tags=["registre"])

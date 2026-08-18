@@ -1,5 +1,5 @@
 import uuid
-from collections.abc import AsyncGenerator, Callable, Coroutine
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -15,7 +15,6 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from solida.adapters.persistence.modeles_sqlalchemy import AccessToken, Utilisateur
-from solida.domain.erreurs import AccesRefuse
 from solida.infrastructure.config import Configuration
 
 _COMMON_PASSWORDS_FILE = Path(__file__).with_name("mots_de_passe_courants.txt")
@@ -146,14 +145,6 @@ MAX_INACTIVITY_DURATION = timedelta(minutes=15)
 côté client seul se contourne (l'attaquant qui a volé la session simule l'activité)."""
 
 
-def client_ip_address(request: Request) -> str | None:
-    """`X-Real-IP` : posé par nginx sur toute requête proxifiée vers l'API (seul point
-    d'entrée public, voir `infra/nginx/nginx.conf`), donc jamais falsifiable par le client
-    lui-même. `request.client.host` ne sert qu'en développement local, quand l'API est
-    appelée directement sans passer par nginx."""
-    return request.headers.get("x-real-ip") or (request.client.host if request.client else None)
-
-
 _active_user_dependency = fastapi_users.current_user(active=True)
 
 
@@ -179,19 +170,3 @@ async def current_active_user(
 
     await token_db.update(token, {"derniere_activite_le": now})
     return utilisateur
-
-
-def require_role(*allowed_roles: str) -> Callable[..., Coroutine[None, None, Utilisateur]]:
-    """Dépendance FastAPI qui vérifie le rôle à l'endpoint.
-
-    Ne remplace pas la vérification d'agence dans le cas d'usage — les deux
-    contrôles sont nécessaires, celui-ci ne fait que refuser un rôle absent de
-    la liste avant même d'atteindre le cas d'usage.
-    """
-
-    async def dependency(utilisateur: Utilisateur = Depends(current_active_user)) -> Utilisateur:
-        if utilisateur.role not in allowed_roles:
-            raise AccesRefuse(f"Le rôle '{utilisateur.role}' n'a pas accès à cette action.")
-        return utilisateur
-
-    return dependency

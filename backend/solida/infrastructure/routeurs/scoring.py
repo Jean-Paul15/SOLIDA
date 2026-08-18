@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from solida.adapters.http import mappers
+from solida.adapters.http.auth_dependencies import current_active_user, require_role
 from solida.adapters.http.schemas.fiche import FicheJustification
 from solida.adapters.http.schemas.scoring import EntreeScoring, ResultatScoring
 from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
@@ -14,7 +15,6 @@ from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.domain.erreurs import AccesRefuse
 from solida.domain.values.decision import DecisionEnregistree
 from solida.domain.values.demande import ActualisationSituation, DemandeScoring
-from solida.infrastructure.auth import current_active_user, require_role
 from solida.infrastructure.dependances import (
     archiver_fiche,
     fiche_pdf_generator,

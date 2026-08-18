@@ -6,15 +6,14 @@ from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from solida.adapters.http.auth_dependencies import client_ip_address, current_active_user
 from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.modeles_sqlalchemy import AccessToken, Utilisateur
 from solida.domain.erreurs import AccesRefuse
 from solida.domain.rules.mot_de_passe import valider_mot_de_passe
 from solida.infrastructure.auth import (
     UserManager,
-    client_ip_address,
     cookie_transport,
-    current_active_user,
     get_session,
     get_strategy,
     get_user_manager,

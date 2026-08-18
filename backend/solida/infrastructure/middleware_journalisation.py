@@ -6,7 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from solida.infrastructure.auth import client_ip_address
+from solida.adapters.http.auth_dependencies import client_ip_address
 
 logger = logging.getLogger("solida.acces")
 

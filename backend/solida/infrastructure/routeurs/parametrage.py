@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends
 
 from solida.adapters.http import mappers
+from solida.adapters.http.auth_dependencies import require_role
 from solida.adapters.http.schemas.grille import ConfigurationGrille, NouvelleConfigurationGrille
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.gerer_grille import LireGrilleActive, ModifierGrille
@@ -11,7 +12,6 @@ from solida.domain.rules.progressif_plafond import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
 from solida.domain.values.grille import ConfigurationGrille as ConfigurationGrilleDomaine
 from solida.domain.values.montant import Montant
-from solida.infrastructure.auth import require_role
 from solida.infrastructure.dependances import lire_grille_active, modifier_grille
 
 router = APIRouter(prefix="/api/v1/parametrage", tags=["parametrage"])

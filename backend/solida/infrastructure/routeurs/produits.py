@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 
 from solida.adapters.http import mappers
+from solida.adapters.http.auth_dependencies import current_active_user
 from solida.adapters.http.schemas.produits import ProduitCredit
 from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
 from solida.application.use_cases.lister_produits import ListerProduits
-from solida.infrastructure.auth import current_active_user
 from solida.infrastructure.dependances import lister_produits
 
 router = APIRouter(prefix="/api/v1/produits", tags=["produits"])
