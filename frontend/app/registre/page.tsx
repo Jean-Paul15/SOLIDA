@@ -11,7 +11,7 @@ export default async function PageRegistre() {
   const session = await readSession();
   enforcePasswordUpToDate(session);
 
-  const reponse = await fetchBackend("/api/v1/registre?limite=100");
+  const reponse = await fetchBackend("/api/v1/registre?limite=50");
   redirectIfUnauthenticated(reponse);
   const { elements }: { elements: DecisionRegistreApi[]; total: number } = reponse.ok
     ? await reponse.json()
