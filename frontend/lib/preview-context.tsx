@@ -1,11 +1,11 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
-import type { EntreeScoring, ResultatScoring } from "@/lib/contracts";
+import type { ScoringInput, ScoringResult } from "@/lib/contracts";
 
 interface Preview {
-  entree: EntreeScoring;
-  resultat: ResultatScoring;
+  entree: ScoringInput;
+  resultat: ScoringResult;
   societaireNom: string;
 }
 

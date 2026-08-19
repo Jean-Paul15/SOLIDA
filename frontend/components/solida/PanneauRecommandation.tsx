@@ -2,7 +2,7 @@ import { User, Users } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NumberTicker } from "@/components/solida/NumberTicker";
-import type { ResultatScoring } from "@/lib/contracts";
+import type { ScoringResult } from "@/lib/contracts";
 import { formaterMontant } from "@/lib/format";
 import { COULEUR_TRANCHE, LIBELLE_TRANCHE } from "@/lib/libelles";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/lib/jauge-score";
 
 interface PanneauRecommandationProps {
-  resultat: ResultatScoring;
+  resultat: ScoringResult;
   zones: Zones | null;
 }
 

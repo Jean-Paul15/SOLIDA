@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { EnTete } from "@/components/solida/EnTete";
 import { ResultatScoringVue } from "@/components/solida/ResultatScoringVue";
 import { fetchBackend } from "@/lib/backend";
-import type { DossierSocietaire, ResultatScoring } from "@/lib/contracts";
+import type { DossierSocietaire, ScoringResult } from "@/lib/contracts";
 import {
   enforcePasswordUpToDate,
   readSession,
@@ -22,7 +22,7 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
   redirectIfUnauthenticated(reponse);
   redirectIfAccessDenied(reponse);
   if (!reponse.ok) notFound();
-  const resultat: ResultatScoring = await reponse.json();
+  const resultat: ScoringResult = await reponse.json();
 
   const reponseDossier = await fetchBackend(
     `/api/v1/societaires/${resultat.societaire_id}/dossier`

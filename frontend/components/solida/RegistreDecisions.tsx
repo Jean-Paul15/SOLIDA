@@ -1,6 +1,6 @@
 "use client";
 
-import type { ResultatScoring } from "@/lib/contracts";
+import type { ScoringResult } from "@/lib/contracts";
 import { FiltresRegistre } from "./FiltresRegistre";
 import { TableauDecisions } from "./TableauDecisions";
 import { useFiltresRegistre } from "./useFiltresRegistre";
@@ -10,7 +10,7 @@ export interface DecisionRegistreVue {
   societaireId: string;
   societaireNom: string;
   agence: string;
-  resultat: ResultatScoring;
+  resultat: ScoringResult;
   horodatage: string;
   agentNom: string;
   /** Toujours `undefined` : la finalisation d'une décision (montant réellement accordé)

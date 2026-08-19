@@ -2,9 +2,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type {
   ActiviteEconomique,
-  EntreeScoring,
   ObjetCredit,
   ProduitCreditApi,
+  ScoringInput,
 } from "@/lib/contracts";
 import {
   calculerEcheanceMensuelle,
@@ -92,7 +92,7 @@ export function useNouvelleDemande({
   async function calculerLeScore() {
     setEnCours(true);
     setErreur(null);
-    const entree: EntreeScoring = {
+    const entree: ScoringInput = {
       societaire_id: societaireId,
       produit_id: produitId,
       montant_demande: montant,

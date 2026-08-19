@@ -35,7 +35,7 @@ export interface ActualisationSituation {
   nb_personnes_a_charge?: number;
 }
 
-export interface EntreeScoring {
+export interface ScoringInput {
   societaire_id: string;
   produit_id: string;
   montant_demande: number;
@@ -60,7 +60,7 @@ export interface PalierProgression {
   plafond_accessible: number;
 }
 
-export interface ResultatScoring {
+export interface ScoringResult {
   decision_id: string;
   societaire_id: string;
   score: number;
@@ -82,8 +82,8 @@ export interface ResultatScoring {
 
 export interface FicheJustification {
   fiche_id: string;
-  resultat: ResultatScoring;
-  demande: EntreeScoring;
+  resultat: ScoringResult;
+  demande: ScoringInput;
   societaire_nom: string;
   numero_membre: string;
   agence: string;
@@ -95,7 +95,7 @@ export interface FicheJustification {
   mention_legale: string;
 }
 
-export interface ResultatRechercheSocietaire {
+export interface SocietaireSearchResult {
   societaire_id: string;
   nom_complet: string;
   numero_membre: string;
@@ -201,8 +201,8 @@ export interface DecisionRegistreApi {
   societaire_id: string;
   societaire_nom: string;
   agence: string;
-  demande: EntreeScoring;
-  resultat: ResultatScoring;
+  demande: ScoringInput;
+  resultat: ScoringResult;
   horodatage: string;
   agent_nom: string;
 }

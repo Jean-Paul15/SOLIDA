@@ -4,11 +4,11 @@ import { useMemo } from "react";
 import { PanneauFacteurs } from "@/components/solida/PanneauFacteurs";
 import { PanneauRecommandation } from "@/components/solida/PanneauRecommandation";
 import { useConfigurationGrille } from "@/components/solida/useConfigurationGrille";
-import type { ResultatScoring } from "@/lib/contracts";
+import type { ScoringResult } from "@/lib/contracts";
 import { bornesZones } from "@/lib/jauge-score";
 
 interface ResultatScoringVueProps {
-  resultat: ResultatScoring;
+  resultat: ScoringResult;
   /** Aperçu non encore enregistré : bascule les actions vers confirmer/annuler plutôt
    * que d'afficher les actions d'une décision déjà persistée (fiche, "enregistrée le"). */
   previsualisation?: boolean;

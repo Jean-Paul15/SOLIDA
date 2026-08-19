@@ -2,10 +2,10 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { GraphiqueContributions } from "@/components/solida/GraphiqueContributions";
-import type { ResultatScoring } from "@/lib/contracts";
+import type { ScoringResult } from "@/lib/contracts";
 
 interface PanneauFacteursProps {
-  resultat: ResultatScoring;
+  resultat: ScoringResult;
   previsualisation: boolean;
   onConfirm?: () => void;
   onCancel?: () => void;

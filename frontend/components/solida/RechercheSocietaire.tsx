@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ResultatRechercheSocietaire } from "@/lib/contracts";
+import type { SocietaireSearchResult } from "@/lib/contracts";
 
 type RequestState = "idle" | "loading" | "success" | "error";
 
@@ -12,9 +12,9 @@ export function RechercheSocietaire() {
   const router = useRouter();
   const [terme, setTerme] = useState("");
   const [requestState, setRequestState] = useState<RequestState>("idle");
-  const [resultats, setResultats] = useState<ResultatRechercheSocietaire[]>([]);
+  const [resultats, setResultats] = useState<SocietaireSearchResult[]>([]);
   const [total, setTotal] = useState(0);
-  const [recents, setRecents] = useState<ResultatRechercheSocietaire[]>([]);
+  const [recents, setRecents] = useState<SocietaireSearchResult[]>([]);
 
   useEffect(() => {
     fetch("/api/v1/societaires/recents")

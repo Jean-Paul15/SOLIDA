@@ -1,7 +1,7 @@
-import type { EntreeScoring, ResultatScoring } from "@/lib/contracts";
+import type { ScoringInput, ScoringResult } from "@/lib/contracts";
 import { throwIfError } from "@/lib/services/error-service";
 
-async function post(path: string, input: EntreeScoring): Promise<ResultatScoring> {
+async function post(path: string, input: ScoringInput): Promise<ScoringResult> {
   const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -12,11 +12,11 @@ async function post(path: string, input: EntreeScoring): Promise<ResultatScoring
 }
 
 /** Calcule le score sans l'enregistrer : l'agent doit encore confirmer explicitement. */
-export function previewScore(input: EntreeScoring): Promise<ResultatScoring> {
+export function previewScore(input: ScoringInput): Promise<ScoringResult> {
   return post("/api/v1/scoring/previsualiser", input);
 }
 
 /** Persiste la décision pour de bon, à n'appeler qu'après validation explicite de l'agent. */
-export function confirmDecision(input: EntreeScoring): Promise<ResultatScoring> {
+export function confirmDecision(input: ScoringInput): Promise<ScoringResult> {
   return post("/api/v1/scoring/confirmer", input);
 }
