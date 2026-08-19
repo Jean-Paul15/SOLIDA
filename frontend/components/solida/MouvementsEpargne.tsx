@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { formaterMontant } from "@/lib/format";
 import type { SyntheseEpargne } from "@/lib/contracts";
+import { trajectoireEpargne } from "@/lib/trajectoire-epargne";
 
 const FLECHE_TENDANCE = {
   hausse: "↗ en hausse",
@@ -26,48 +27,14 @@ const FLECHE_TENDANCE = {
 // sur un échantillon aléatoire décorrélé).
 const HORIZONS = [3, 6, 9, 12] as const;
 
-function debutMois(horodatage: number): Date {
-  const d = new Date(horodatage);
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
 export function MouvementsEpargne({ epargne }: { epargne: SyntheseEpargne }) {
   const [maintenant] = useState(() => Date.now());
   const [horizonMois, setHorizonMois] = useState<number>(12);
 
-  const donnees = useMemo(() => {
-    const moisCourant = debutMois(maintenant);
-    const mois = Array.from({ length: horizonMois }, (_, i) => {
-      const d = new Date(
-        moisCourant.getFullYear(),
-        moisCourant.getMonth() - (horizonMois - 1 - i),
-        1
-      );
-      const finMois = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-      const mouvementsDuMois = epargne.mouvements_recents.filter((m) => {
-        const t = new Date(m.date_operation).getTime();
-        return t >= d.getTime() && t < finMois;
-      });
-      const depots = mouvementsDuMois
-        .filter((m) => m.sens === "depot")
-        .reduce((s, m) => s + m.montant, 0);
-      const retraits = mouvementsDuMois
-        .filter((m) => m.sens === "retrait")
-        .reduce((s, m) => s + m.montant, 0);
-      return { horodatage: d.getTime(), net: depots - retraits, depots, retraits };
-    });
-
-    // Ancre le dernier mois sur le solde moyen (6 mois) et reconstruit les mois précédents en
-    // retirant le mouvement net du mois suivant : CORE-SIM n'expose pas de solde mensuel absolu
-    // (voir consulter_dossier.py), seuls les mouvements réels et cette ancre sont mesurés.
-    const soldesFinDeMois: number[] = new Array(mois.length);
-    let solde = epargne.solde_moyen_6m;
-    for (let i = mois.length - 1; i >= 0; i--) {
-      soldesFinDeMois[i] = solde;
-      solde -= mois[i].net;
-    }
-    return mois.map((m, i) => ({ ...m, solde: soldesFinDeMois[i] }));
-  }, [epargne.mouvements_recents, epargne.solde_moyen_6m, horizonMois, maintenant]);
+  const donnees = useMemo(
+    () => trajectoireEpargne(epargne, horizonMois, maintenant),
+    [epargne, horizonMois, maintenant]
+  );
 
   const nbMoisAvecDepot = donnees.filter((d) => d.depots > 0).length;
   const moisRemplis = donnees.map((d) => d.depots > 0);
