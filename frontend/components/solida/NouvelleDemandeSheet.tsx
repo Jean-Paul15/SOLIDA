@@ -1,19 +1,7 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -23,34 +11,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type {
-  ActiviteEconomique,
-  EntreeScoring,
-  ObjetCredit,
-  ProduitCreditApi,
-} from "@/lib/contracts";
-import {
-  calculerEcheanceMensuelle,
-  calculerTauxEndettement,
-  TAUX_MENSUEL_DEMONSTRATION,
-} from "@/lib/credit";
-import { formaterMontant } from "@/lib/format";
-import { LIBELLE_OBJET_CREDIT } from "@/lib/libelles";
-import { usePreview } from "@/lib/preview-context";
-import { trouverProduit } from "@/lib/produits";
-import { ApiError } from "@/lib/services/error-service";
-import { previewScore } from "@/lib/services/scoring";
-
-// Catalogue de durees "standard" (aligne sur simulateur/config.yaml, duree_mois_choix) : filtre
-// ensuite aux bornes reelles du produit selectionne plutot qu'affiche une liste universelle qui
-// laisserait choisir une duree hors du produit (meme incoherence que l'ancrage de la courbe
-// d'epargne, voir MouvementsEpargne.tsx).
-const DUREES_STANDARD = [3, 6, 9, 12, 18, 24];
-
-const OBJETS = Object.entries(LIBELLE_OBJET_CREDIT).map(([valeur, libelle]) => ({
-  valeur: valeur as ObjetCredit,
-  libelle,
-}));
+import { ChampsActualisation } from "@/components/solida/ChampsActualisation";
+import { ChampsPret } from "@/components/solida/ChampsPret";
+import { ResumePret } from "@/components/solida/ResumePret";
+import { useNouvelleDemande } from "@/components/solida/useNouvelleDemande";
+import type { ActiviteEconomique, ProduitCreditApi } from "@/lib/contracts";
 
 interface NouvelleDemandeSheetProps {
   societaireId: string;
@@ -65,70 +30,34 @@ export function NouvelleDemandeSheet({
   activite,
   produits,
 }: NouvelleDemandeSheetProps) {
-  const router = useRouter();
-  const { definirPrevisualisation } = usePreview();
-  const [sheetOuvert, setSheetOuvert] = useState(false);
-  const [produitId, setProduitId] = useState(produits[0]?.produit_id ?? "");
-  const [montant, setMontant] = useState(500000);
-  const [duree, setDuree] = useState(() => Math.min(12, produits[0]?.duree_max_mois ?? 12));
-  const [dureePersonnalisee, setDureePersonnalisee] = useState(false);
-  const [objet, setObjet] = useState<ObjetCredit>("fonds_roulement");
-  const [actualisationOuverte, setActualisationOuverte] = useState(false);
-  const [revenu, setRevenu] = useState(activite.revenu_mensuel_declare ?? 0);
-  const [charges, setCharges] = useState(activite.charges_mensuelles ?? 0);
-  const [enCours, setEnCours] = useState(false);
-  const [erreur, setErreur] = useState<string | null>(null);
-
-  const produit = trouverProduit(produits, produitId);
-  const dureesValides = produit
-    ? DUREES_STANDARD.filter((d) => d >= produit.duree_min_mois && d <= produit.duree_max_mois)
-    : DUREES_STANDARD;
-
-  function choisirProduit(id: string): void {
-    setProduitId(id);
-    const nouveauProduit = trouverProduit(produits, id);
-    if (
-      nouveauProduit &&
-      (duree < nouveauProduit.duree_min_mois || duree > nouveauProduit.duree_max_mois)
-    ) {
-      setDureePersonnalisee(false);
-      setDuree(nouveauProduit.duree_max_mois);
-    }
-  }
-
-  const echeance = useMemo(
-    () => calculerEcheanceMensuelle(montant, duree, TAUX_MENSUEL_DEMONSTRATION),
-    [montant, duree]
-  );
-  const tauxEndettement = useMemo(
-    () => calculerTauxEndettement(charges, revenu, echeance),
-    [charges, revenu, echeance]
-  );
-
-  async function calculerLeScore() {
-    setEnCours(true);
-    setErreur(null);
-    const entree: EntreeScoring = {
-      societaire_id: societaireId,
-      produit_id: produitId,
-      montant_demande: montant,
-      duree_demandee_mois: duree,
-      objet_credit: objet,
-      actualisation: actualisationOuverte
-        ? { revenu_mensuel_declare: revenu, charges_mensuelles: charges }
-        : undefined,
-    };
-    try {
-      const resultat = await previewScore(entree);
-      definirPrevisualisation({ entree, resultat, societaireNom: nomComplet });
-      setSheetOuvert(false);
-      router.push("/scoring/previsualisation");
-    } catch (e) {
-      setErreur(e instanceof ApiError ? e.message : "Le calcul du score a échoué.");
-    } finally {
-      setEnCours(false);
-    }
-  }
+  const {
+    sheetOuvert,
+    setSheetOuvert,
+    produit,
+    produitId,
+    choisirProduit,
+    dureesValides,
+    montant,
+    setMontant,
+    duree,
+    setDuree,
+    dureePersonnalisee,
+    choisirDuree,
+    objet,
+    setObjet,
+    actualisationOuverte,
+    setActualisationOuverte,
+    revenu,
+    setRevenu,
+    charges,
+    setCharges,
+    echeance,
+    tauxEndettement,
+    enCours,
+    erreur,
+    annuler,
+    calculerLeScore,
+  } = useNouvelleDemande({ societaireId, nomComplet, activite, produits });
 
   return (
     <Sheet open={sheetOuvert} onOpenChange={setSheetOuvert}>
@@ -144,157 +73,32 @@ export function NouvelleDemandeSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4">
-          <div className="flex flex-col gap-1.5">
-            <Label>Produit de crédit</Label>
-            <Select value={produitId} onValueChange={choisirProduit}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {produits.map((p) => (
-                  <SelectItem key={p.produit_id} value={p.produit_id}>
-                    {p.libelle}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ChampsPret
+            produits={produits}
+            produit={produit}
+            produitId={produitId}
+            onChangeProduit={choisirProduit}
+            montant={montant}
+            onChangeMontant={setMontant}
+            duree={duree}
+            onChangeDuree={setDuree}
+            dureePersonnalisee={dureePersonnalisee}
+            dureesValides={dureesValides}
+            onChoisirDuree={choisirDuree}
+          />
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="montant">Montant sollicité</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="montant"
-                type="number"
-                value={montant}
-                onChange={(e) => setMontant(Number(e.target.value))}
-                min={0}
-                max={produit?.montant_max}
-              />
-              <span className="text-sm text-neutre-500">FCFA</span>
-            </div>
-            {produit && (
-              <span className="text-xs text-neutre-500">
-                Plafond du produit : {formaterMontant(produit.montant_max)}
-              </span>
-            )}
-          </div>
+          <ChampsActualisation
+            objet={objet}
+            onChangeObjet={setObjet}
+            actualisationOuverte={actualisationOuverte}
+            onToggleActualisation={() => setActualisationOuverte((v) => !v)}
+            revenu={revenu}
+            onChangeRevenu={setRevenu}
+            charges={charges}
+            onChangeCharges={setCharges}
+          />
 
-          <div className="flex flex-col gap-1.5">
-            <Label>Durée</Label>
-            <Select
-              value={dureePersonnalisee ? "autre" : String(duree)}
-              onValueChange={(v) => {
-                if (v === "autre") {
-                  setDureePersonnalisee(true);
-                } else {
-                  setDureePersonnalisee(false);
-                  setDuree(Number(v));
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {dureesValides.map((d) => (
-                  <SelectItem key={d} value={String(d)}>
-                    {d} mois
-                  </SelectItem>
-                ))}
-                <SelectItem value="autre">Autre (préciser)</SelectItem>
-              </SelectContent>
-            </Select>
-            {produit && (
-              <span className="text-xs text-neutre-500">
-                Durée du produit : {produit.duree_min_mois}–{produit.duree_max_mois} mois
-              </span>
-            )}
-            {dureePersonnalisee && (
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={produit?.duree_min_mois ?? 1}
-                  max={produit?.duree_max_mois ?? 60}
-                  value={duree}
-                  onChange={(e) => setDuree(Number(e.target.value))}
-                  autoFocus
-                />
-                <span className="text-sm text-neutre-500">mois</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label>Objet du crédit</Label>
-            <Select value={objet} onValueChange={(v) => setObjet(v as ObjetCredit)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {OBJETS.map((o) => (
-                  <SelectItem key={o.valeur} value={o.valeur}>
-                    {o.libelle}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setActualisationOuverte((v) => !v)}
-            className="flex cursor-pointer items-center gap-1 text-left text-sm text-neutre-700"
-          >
-            <ChevronRight
-              className={
-                actualisationOuverte
-                  ? "size-4 rotate-90 transition-transform"
-                  : "size-4 transition-transform"
-              }
-            />
-            Actualiser la situation économique
-          </button>
-
-          {actualisationOuverte && (
-            <div className="flex flex-col gap-3 border-l border-neutre-200 pl-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="revenu">Revenu mensuel</Label>
-                <Input
-                  id="revenu"
-                  type="number"
-                  value={revenu}
-                  onChange={(e) => setRevenu(Number(e.target.value))}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="charges">Charges mensuelles</Label>
-                <Input
-                  id="charges"
-                  type="number"
-                  value={charges}
-                  onChange={(e) => setCharges(Number(e.target.value))}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1 border-t border-neutre-200 pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-neutre-500">Échéance mensuelle estimée</span>
-              <span className="font-mono text-neutre-950">{formaterMontant(echeance)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-neutre-500">Taux d&rsquo;endettement résultant</span>
-              <span
-                className={
-                  tauxEndettement > 0.7 ? "font-mono text-alerte" : "font-mono text-neutre-950"
-                }
-              >
-                {tauxEndettement.toFixed(2)}
-              </span>
-            </div>
-          </div>
+          <ResumePret echeance={echeance} tauxEndettement={tauxEndettement} />
         </div>
 
         {erreur && (
@@ -306,14 +110,7 @@ export function NouvelleDemandeSheet({
         )}
 
         <SheetFooter className="flex-row justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setErreur(null);
-              setSheetOuvert(false);
-            }}
-            disabled={enCours}
-          >
+          <Button variant="outline" onClick={annuler} disabled={enCours}>
             Annuler
           </Button>
           <Button onClick={calculerLeScore} disabled={enCours || montant <= 0}>
