@@ -6,13 +6,12 @@ import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ResultatRechercheSocietaire } from "@/lib/contracts";
 
-type Etat = "repos" | "chargement" | "resultats" | "vide" | "erreur";
-type StatutRequete = "idle" | "erreur" | "vide" | "resultats";
+type RequestState = "idle" | "loading" | "success" | "error";
 
 export function RechercheSocietaire() {
   const router = useRouter();
   const [terme, setTerme] = useState("");
-  const [statutRequete, setStatutRequete] = useState<StatutRequete>("idle");
+  const [requestState, setRequestState] = useState<RequestState>("idle");
   const [resultats, setResultats] = useState<ResultatRechercheSocietaire[]>([]);
   const [total, setTotal] = useState(0);
   const [recents, setRecents] = useState<ResultatRechercheSocietaire[]>([]);
@@ -40,9 +39,9 @@ export function RechercheSocietaire() {
         if (annule) return;
         setResultats(donnees.elements);
         setTotal(donnees.total);
-        setStatutRequete(donnees.elements.length === 0 ? "vide" : "resultats");
+        setRequestState("success");
       } catch {
-        if (!annule) setStatutRequete("erreur");
+        if (!annule) setRequestState("error");
       }
     }, 250);
 
@@ -52,8 +51,9 @@ export function RechercheSocietaire() {
     };
   }, [terme]);
 
-  const etat: Etat =
-    terme.trim().length < 2 ? "repos" : statutRequete === "idle" ? "chargement" : statutRequete;
+  const enRepos = terme.trim().length < 2;
+  const chargement = !enRepos && requestState === "idle";
+  const vide = requestState === "success" && resultats.length === 0;
 
   return (
     <div className="mx-auto mt-24 flex w-full max-w-[560px] flex-col items-center gap-8">
@@ -71,9 +71,9 @@ export function RechercheSocietaire() {
             if (e.key === "Escape") setTerme("");
           }}
         />
-        {etat !== "repos" && (
+        {!enRepos && (
           <CommandList>
-            {etat === "chargement" && (
+            {chargement && (
               <div className="flex flex-col gap-2 p-2">
                 <Skeleton className="h-[52px] w-full" />
                 <Skeleton className="h-[52px] w-full" />
@@ -81,12 +81,12 @@ export function RechercheSocietaire() {
               </div>
             )}
 
-            {etat === "erreur" && (
+            {requestState === "error" && (
               <div className="flex flex-col items-center gap-2 py-6 text-sm text-neutre-700">
                 <p>La recherche est momentanément indisponible.</p>
                 <button
                   type="button"
-                  onClick={() => setStatutRequete("idle")}
+                  onClick={() => setRequestState("idle")}
                   className="cursor-pointer text-solida-teal-800 underline"
                 >
                   Réessayer
@@ -94,14 +94,15 @@ export function RechercheSocietaire() {
               </div>
             )}
 
-            {etat === "vide" && (
+            {vide && (
               <p className="py-6 text-center text-sm text-neutre-500">
                 Aucun sociétaire ne correspond à « {terme} ». Vérifiez l&rsquo;orthographe ou
                 essayez le numéro de membre.
               </p>
             )}
 
-            {etat === "resultats" &&
+            {requestState === "success" &&
+              !vide &&
               resultats.map((r) => (
                 <CommandItem
                   key={r.societaire_id}
@@ -121,7 +122,7 @@ export function RechercheSocietaire() {
                 </CommandItem>
               ))}
 
-            {etat === "resultats" && total > resultats.length && (
+            {requestState === "success" && total > resultats.length && (
               <p className="py-2 text-center text-xs text-neutre-500">
                 {total - resultats.length} autres résultats. Précisez votre recherche.
               </p>
@@ -130,7 +131,7 @@ export function RechercheSocietaire() {
         )}
       </Command>
 
-      {etat === "repos" && recents.length > 0 && (
+      {enRepos && recents.length > 0 && (
         <div className="flex w-full flex-col gap-2">
           <span className="text-xs font-medium text-neutre-500">Consultés récemment</span>
           <div className="flex flex-col divide-y divide-neutre-200 rounded-lg border border-neutre-200">
