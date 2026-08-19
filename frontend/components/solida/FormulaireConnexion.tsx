@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { ReponseConnexionApi } from "@/lib/contracts";
 import { safeRelativePath } from "@/lib/redirect";
 
 export function FormulaireConnexion() {
@@ -54,8 +55,7 @@ export function FormulaireConnexion() {
         return;
       }
 
-      const { doit_changer_mot_de_passe }: { doit_changer_mot_de_passe: boolean } =
-        await reponse.json();
+      const { doit_changer_mot_de_passe }: ReponseConnexionApi = await reponse.json();
       router.push(
         doit_changer_mot_de_passe
           ? "/changer-mot-de-passe"

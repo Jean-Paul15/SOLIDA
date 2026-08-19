@@ -252,3 +252,10 @@ export interface ConfigurationGrilleApi {
   date_activation: string;
   active: boolean;
 }
+
+export interface ReponseConnexionApi {
+  nom: string;
+  role: string;
+  agence: string | null;
+  doit_changer_mot_de_passe: boolean;
+}
