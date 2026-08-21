@@ -2,3 +2,4 @@
 # checkout Windows reconvertit les fichiers Python en CRLF et fait echouer
 # `ruff format --check` a chaque nouveau clone/checkout independamment du code.
 *.py text eol=lf
+graphify-out/graph.json merge=graphify
