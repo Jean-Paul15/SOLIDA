@@ -49,7 +49,7 @@ export function useNewRequest({
   const [charges, setCharges] = useState(activite.charges_mensuelles ?? 0);
   const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const gererErreur = useApiErrorToast();
+  const handleError = useApiErrorToast();
 
   const produit = findProduit(produits, produitId);
   const dureesValides = produit
@@ -111,7 +111,7 @@ export function useNewRequest({
       router.push("/scoring/preview");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Le calcul du score a échoué.");
-      gererErreur(e, "Le calcul du score a échoué.");
+      handleError(e, "Le calcul du score a échoué.");
     } finally {
       setInProgress(false);
     }

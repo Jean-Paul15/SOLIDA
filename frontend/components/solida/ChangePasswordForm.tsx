@@ -55,7 +55,7 @@ export function ChangePasswordForm() {
   const router = useRouter();
   const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const gererErreur = useApiErrorToast();
+  const handleError = useApiErrorToast();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,7 +78,7 @@ export function ChangePasswordForm() {
       router.push("/");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Le changement a échoué.");
-      gererErreur(e, "Le changement a échoué.");
+      handleError(e, "Le changement a échoué.");
     } finally {
       setInProgress(false);
     }

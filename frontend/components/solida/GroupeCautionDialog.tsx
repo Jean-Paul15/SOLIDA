@@ -39,12 +39,12 @@ interface GroupeCautionDialogProps {
 
 export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) {
   const router = useRouter();
-  const gererErreur = useApiErrorToast();
+  const handleError = useApiErrorToast();
   const [groupe, setGroupe] = useState<SyntheseGroupe | null>(null);
   const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function charger() {
+  function load() {
     setInProgress(true);
     setError(null);
     fetchGroup(societaireId)
@@ -53,8 +53,8 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
         setError(
           e instanceof ApiError ? e.message : "Le groupe de caution n'a pas pu être chargé."
         );
-        if (e instanceof ApiError && e.kind === "session_expiree") {
-          gererErreur(e, "");
+        if (e instanceof ApiError && e.kind === "session_expired") {
+          handleError(e, "");
         }
       })
       .finally(() => setInProgress(false));
@@ -62,7 +62,7 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
 
   function handleOpenChange(open: boolean) {
     if (!open || groupe || inProgress) return;
-    charger();
+    load();
   }
 
   return (
@@ -85,7 +85,7 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
             <p>{error}</p>
             <button
               type="button"
-              onClick={charger}
+              onClick={load}
               className="cursor-pointer text-solida-teal-800 underline"
             >
               Réessayer

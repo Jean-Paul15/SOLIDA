@@ -18,7 +18,7 @@ export function useSavePolicy(
 ) {
   const [version, setVersion] = useState(configurationInitiale.version_grille);
   const [enregistrementEnCours, setEnregistrementEnCours] = useState(false);
-  const gererErreur = useApiErrorToast();
+  const handleError = useApiErrorToast();
 
   async function enregistrer(parametres: ParametresPolitique) {
     if (!autoriseAModifier) return;
@@ -59,7 +59,7 @@ export function useSavePolicy(
       setVersion(nouvelleVersion);
       toast.success(`Politique de crédit ${nouvelleVersion} enregistrée`);
     } catch (e) {
-      gererErreur(e, "L'enregistrement a échoué.");
+      handleError(e, "L'enregistrement a échoué.");
     } finally {
       setEnregistrementEnCours(false);
     }

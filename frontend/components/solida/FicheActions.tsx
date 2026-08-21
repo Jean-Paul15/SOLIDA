@@ -15,7 +15,7 @@ interface FicheActionsProps {
 export function FicheActions({ decisionId }: FicheActionsProps) {
   const [archivingInProgress, setArchivingInProgress] = useState(false);
   const [archived, setArchived] = useState(false);
-  const gererErreur = useApiErrorToast();
+  const handleError = useApiErrorToast();
 
   async function handleArchive() {
     setArchivingInProgress(true);
@@ -24,7 +24,7 @@ export function FicheActions({ decisionId }: FicheActionsProps) {
       toast.success("Fiche archivée.");
       setArchived(true);
     } catch (e) {
-      gererErreur(e, "L'archivage a échoué.");
+      handleError(e, "L'archivage a échoué.");
     } finally {
       setArchivingInProgress(false);
     }

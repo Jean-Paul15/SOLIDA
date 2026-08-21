@@ -15,7 +15,7 @@ export default function PagePrevisualisationScoring() {
   const router = useRouter();
   const { preview, setPreview } = usePreview();
   const [confirmationInProgress, setConfirmationInProgress] = useState(false);
-  const gererErreur = useApiErrorToast();
+  const handleError = useApiErrorToast();
 
   if (!preview) {
     return (
@@ -41,7 +41,7 @@ export default function PagePrevisualisationScoring() {
       setPreview(null);
       router.push(`/scoring/${enregistre.decision_id}`);
     } catch (e) {
-      gererErreur(e, "L'enregistrement a échoué.");
+      handleError(e, "L'enregistrement a échoué.");
       setConfirmationInProgress(false);
     }
   }

@@ -11,15 +11,15 @@ type RequestState = "idle" | "loading" | "success" | "error";
 
 export function SocietaireSearch() {
   const router = useRouter();
-  const gererErreur = useApiErrorToast();
-  const [terme, setTerme] = useState("");
+  const handleError = useApiErrorToast();
+  const [query, setQuery] = useState("");
   const [requestState, setRequestState] = useState<RequestState>("idle");
-  const [messageErreur, setMessageErreur] = useState<string | null>(null);
-  const [resultats, setResultats] = useState<SocietaireSearchResult[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [results, setResults] = useState<SocietaireSearchResult[]>([]);
   const [total, setTotal] = useState(0);
-  const [recents, setRecents] = useState<SocietaireSearchResult[]>([]);
+  const [recent, setRecent] = useState<SocietaireSearchResult[]>([]);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
-  const [tentative, setTentative] = useState(0);
+  const [attempt, setAttempt] = useState(0);
 
   function navigateTo(societaireId: string): void {
     setNavigatingId(societaireId);
@@ -29,54 +29,54 @@ export function SocietaireSearch() {
   useEffect(() => {
     apiFetch("/api/v1/societaires/recent")
       .then((r) => r.json())
-      .then((donnees) => setRecents(donnees.elements))
+      .then((data) => setRecent(data.elements))
       .catch((e: unknown) => {
-        setRecents([]);
-        if (e instanceof ApiError && e.kind === "session_expiree") {
-          gererErreur(e, "");
+        setRecent([]);
+        if (e instanceof ApiError && e.kind === "session_expired") {
+          handleError(e, "");
         }
       });
-  }, [gererErreur]);
+  }, [handleError]);
 
   useEffect(() => {
-    if (terme.trim().length < 2) {
+    if (query.trim().length < 2) {
       return;
     }
 
-    let annule = false;
-    const delai = setTimeout(async () => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
       try {
-        const reponse = await apiFetch(
-          `/api/v1/societaires/search?terme=${encodeURIComponent(terme)}&limite=8`
+        const response = await apiFetch(
+          `/api/v1/societaires/search?terme=${encodeURIComponent(query)}&limite=8`
         );
-        const donnees = await reponse.json();
-        if (annule) return;
-        setResultats(donnees.elements);
-        setTotal(donnees.total);
+        const data = await response.json();
+        if (cancelled) return;
+        setResults(data.elements);
+        setTotal(data.total);
         setRequestState("success");
       } catch (e) {
-        if (annule) return;
+        if (cancelled) return;
         setRequestState("error");
-        setMessageErreur(
+        setErrorMessage(
           e instanceof ApiError ? e.message : "La recherche est momentanément indisponible."
         );
-        if (e instanceof ApiError && e.kind === "session_expiree") {
-          gererErreur(e, "");
+        if (e instanceof ApiError && e.kind === "session_expired") {
+          handleError(e, "");
         }
       }
     }, 250);
 
     return () => {
-      annule = true;
-      clearTimeout(delai);
+      cancelled = true;
+      clearTimeout(timer);
     };
-    // `tentative` ne sert qu'à forcer une nouvelle exécution depuis le bouton "Réessayer" :
-    // sans elle, remettre requestState à "idle" ne relance rien puisque `terme` n'a pas changé.
-  }, [terme, gererErreur, tentative]);
+    // `attempt` ne sert qu'à forcer une nouvelle exécution depuis le bouton "Réessayer" :
+    // sans elle, remettre requestState à "idle" ne relance rien puisque `query` n'a pas changé.
+  }, [query, handleError, attempt]);
 
-  const enRepos = terme.trim().length < 2;
-  const chargement = !enRepos && requestState === "idle";
-  const vide = requestState === "success" && resultats.length === 0;
+  const queryTooShort = query.trim().length < 2;
+  const isLoading = !queryTooShort && requestState === "idle";
+  const isEmpty = requestState === "success" && results.length === 0;
 
   return (
     <div className="mx-auto mt-24 flex w-full max-w-[560px] flex-col items-center gap-8">
@@ -86,17 +86,17 @@ export function SocietaireSearch() {
 
       <Command shouldFilter={false} className="w-full border border-neutre-200 shadow-1">
         <CommandInput
-          value={terme}
-          onValueChange={setTerme}
+          value={query}
+          onValueChange={setQuery}
           wrapperClassName="h-11!"
           placeholder="Nom, numéro de membre ou numéro de compte"
           onKeyDown={(e) => {
-            if (e.key === "Escape") setTerme("");
+            if (e.key === "Escape") setQuery("");
           }}
         />
-        {!enRepos && (
+        {!queryTooShort && (
           <CommandList>
-            {chargement && (
+            {isLoading && (
               <div className="flex flex-col gap-2 p-2">
                 <Skeleton className="h-[52px] w-full" />
                 <Skeleton className="h-[52px] w-full" />
@@ -106,12 +106,12 @@ export function SocietaireSearch() {
 
             {requestState === "error" && (
               <div className="flex flex-col items-center gap-2 py-6 text-sm text-neutre-700">
-                <p>{messageErreur ?? "La recherche est momentanément indisponible."}</p>
+                <p>{errorMessage ?? "La recherche est momentanément indisponible."}</p>
                 <button
                   type="button"
                   onClick={() => {
                     setRequestState("idle");
-                    setTentative((t) => t + 1);
+                    setAttempt((t) => t + 1);
                   }}
                   className="cursor-pointer text-solida-teal-800 underline"
                 >
@@ -120,16 +120,16 @@ export function SocietaireSearch() {
               </div>
             )}
 
-            {vide && (
+            {isEmpty && (
               <p className="py-6 text-center text-sm text-neutre-500">
-                Aucun sociétaire ne correspond à « {terme} ». Vérifiez l&rsquo;orthographe ou
+                Aucun sociétaire ne correspond à « {query} ». Vérifiez l&rsquo;orthographe ou
                 essayez le numéro de membre.
               </p>
             )}
 
             {requestState === "success" &&
-              !vide &&
-              resultats.map((r) => (
+              !isEmpty &&
+              results.map((r) => (
                 <CommandItem
                   key={r.societaire_id}
                   value={r.societaire_id}
@@ -150,20 +150,20 @@ export function SocietaireSearch() {
                 </CommandItem>
               ))}
 
-            {requestState === "success" && total > resultats.length && (
+            {requestState === "success" && total > results.length && (
               <p className="py-2 text-center text-xs text-neutre-500">
-                {total - resultats.length} autres résultats. Précisez votre recherche.
+                {total - results.length} autres résultats. Précisez votre recherche.
               </p>
             )}
           </CommandList>
         )}
       </Command>
 
-      {enRepos && recents.length > 0 && (
+      {queryTooShort && recent.length > 0 && (
         <div className="flex w-full flex-col gap-2">
           <span className="text-xs font-medium text-neutre-500">Consultés récemment</span>
           <div className="flex flex-col divide-y divide-neutre-200 rounded-lg border border-neutre-200">
-            {recents.map((r) => (
+            {recent.map((r) => (
               <button
                 key={r.societaire_id}
                 type="button"

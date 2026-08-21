@@ -3,13 +3,13 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 export type ApiErrorKind =
-  | "session_expiree"
-  | "acces_refuse"
-  | "metier"
+  | "session_expired"
+  | "access_denied"
+  | "domain"
   | "validation"
-  | "limite_atteinte"
-  | "serveur"
-  | "reseau";
+  | "rate_limited"
+  | "server"
+  | "network";
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
@@ -32,16 +32,16 @@ export class ApiError extends Error {
   }
 }
 
-const MESSAGE_PAR_DEFAUT: Record<Exclude<ApiErrorKind, "metier">, string> = {
-  session_expiree: "Votre session a expiré. Reconnectez-vous.",
-  acces_refuse: "Vous n'avez pas les droits nécessaires pour cette action.",
+const DEFAULT_MESSAGE: Record<Exclude<ApiErrorKind, "domain">, string> = {
+  session_expired: "Votre session a expiré. Reconnectez-vous.",
+  access_denied: "Vous n'avez pas les droits nécessaires pour cette action.",
   validation: "La requête envoyée est invalide. Réessayez ou signalez le problème si ça persiste.",
-  limite_atteinte: "Trop de tentatives. Réessayez plus tard.",
-  serveur: "Une erreur technique est survenue côté serveur. Réessayez dans un instant.",
-  reseau: "Connexion au serveur impossible. Vérifiez votre réseau et réessayez.",
+  rate_limited: "Trop de tentatives. Réessayez plus tard.",
+  server: "Une erreur technique est survenue côté serveur. Réessayez dans un instant.",
+  network: "Connexion au serveur impossible. Vérifiez votre réseau et réessayez.",
 };
 
-interface OptionsErreur {
+interface ApiErrorOptions {
   /** Route d'authentification (login) : un 401 y signifie "identifiants invalides", pas "session expirée". */
   authRoute?: boolean;
 }
@@ -52,48 +52,45 @@ interface OptionsErreur {
  * reste (401 d'authentification, 422 de validation Pydantic natif, 429, 5xx non
  * intercepté) — voir application_fastapi.py pour le handler `{code,message}`.
  */
-export async function throwIfError(response: Response, options: OptionsErreur = {}): Promise<void> {
+export async function throwIfError(
+  response: Response,
+  options: ApiErrorOptions = {}
+): Promise<void> {
   if (response.ok) return;
   const body = await response.json().catch(() => null);
 
   if (typeof body?.code === "string" && typeof body?.message === "string") {
-    throw new ApiError("metier", body.code, response.status, body.message, body.details);
+    throw new ApiError("domain", body.code, response.status, body.message, body.details);
   }
 
   if (response.status === 401 && !options.authRoute) {
-    throw new ApiError(
-      "session_expiree",
-      "session_expiree",
-      401,
-      MESSAGE_PAR_DEFAUT.session_expiree
-    );
+    throw new ApiError("session_expired", "session_expired", 401, DEFAULT_MESSAGE.session_expired);
   }
 
   if (response.status === 403) {
-    throw new ApiError("acces_refuse", "acces_refuse", 403, MESSAGE_PAR_DEFAUT.acces_refuse);
+    throw new ApiError("access_denied", "access_denied", 403, DEFAULT_MESSAGE.access_denied);
   }
 
   if (response.status === 429) {
-    const message =
-      typeof body?.detail === "string" ? body.detail : MESSAGE_PAR_DEFAUT.limite_atteinte;
-    throw new ApiError("limite_atteinte", "limite_atteinte", 429, message);
+    const message = typeof body?.detail === "string" ? body.detail : DEFAULT_MESSAGE.rate_limited;
+    throw new ApiError("rate_limited", "rate_limited", 429, message);
   }
 
   if (Array.isArray(body?.detail)) {
     throw new ApiError(
       "validation",
-      "validation_invalide",
+      "validation_failed",
       response.status,
-      MESSAGE_PAR_DEFAUT.validation,
+      DEFAULT_MESSAGE.validation,
       body.detail
     );
   }
 
   if (typeof body?.detail === "string") {
-    throw new ApiError("serveur", "erreur_serveur", response.status, body.detail);
+    throw new ApiError("server", "server_error", response.status, body.detail);
   }
 
-  throw new ApiError("serveur", "erreur_serveur", response.status, MESSAGE_PAR_DEFAUT.serveur);
+  throw new ApiError("server", "server_error", response.status, DEFAULT_MESSAGE.server);
 }
 
 /**
@@ -105,13 +102,13 @@ export async function throwIfError(response: Response, options: OptionsErreur = 
 export async function apiFetch(
   input: string,
   init?: RequestInit,
-  options?: OptionsErreur
+  options?: ApiErrorOptions
 ): Promise<Response> {
   let response: Response;
   try {
     response = await fetch(input, init);
   } catch {
-    throw new ApiError("reseau", "connexion_impossible", 0, MESSAGE_PAR_DEFAUT.reseau);
+    throw new ApiError("network", "network_error", 0, DEFAULT_MESSAGE.network);
   }
   await throwIfError(response, options);
   return response;
@@ -130,14 +127,14 @@ export function useApiErrorToast() {
   // donc aussi, ce qui permet de l'utiliser sans avertissement dans un tableau de
   // dépendances d'effet (ex. SocietaireSearch, chargement en arrière-plan).
   return useCallback(
-    (error: unknown, repli: string): void => {
-      if (error instanceof ApiError && error.kind === "session_expiree") {
+    (error: unknown, fallback: string): void => {
+      if (error instanceof ApiError && error.kind === "session_expired") {
         toast.error("Votre session a expiré. Vous allez être redirigé vers la connexion.");
-        const chemin = encodeURIComponent(window.location.pathname);
-        router.push(`/connexion?redirect=${chemin}`);
+        const path = encodeURIComponent(window.location.pathname);
+        router.push(`/connexion?redirect=${path}`);
         return;
       }
-      toast.error(error instanceof ApiError ? error.message : repli);
+      toast.error(error instanceof ApiError ? error.message : fallback);
     },
     [router]
   );
