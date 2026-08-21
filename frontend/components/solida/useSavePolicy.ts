@@ -22,8 +22,12 @@ export function useSavePolicy(
   async function enregistrer(parametres: ParametresPolitique) {
     if (!autoriseAModifier) return;
     setEnregistrementEnCours(true);
-    const [major, minor] = version.replace(/^v/, "").split(".").map(Number);
-    const nouvelleVersion = `v${major}.${(minor ?? 0) + 1}`;
+    // Format attendu vMAJOR.MINOR ; une valeur héritée d'un autre format (ex. donnée de
+    // test) ne doit jamais produire un "vNaN.x" affiché à l'agent — on repart proprement.
+    const correspondance = /^v(\d+)\.(\d+)$/.exec(version);
+    const nouvelleVersion = correspondance
+      ? `v${correspondance[1]}.${Number(correspondance[2]) + 1}`
+      : "v1.0";
     const {
       pdo,
       score_reference: scoreReference,

@@ -19,7 +19,7 @@ export default async function PageGrille() {
 
   const [reponseGrille, reponseRegistre, reponseProduits] = await Promise.all([
     fetchBackend("/api/v1/parametrage/grille"),
-    fetchBackend("/api/v1/registre?limite=100"),
+    fetchBackend("/api/v1/registre?limite=50"),
     fetchBackend("/api/v1/produits"),
   ]);
   redirectIfUnauthenticated(reponseGrille);
