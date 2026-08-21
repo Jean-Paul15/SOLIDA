@@ -2,15 +2,15 @@ from pydantic import BaseModel
 
 from solida.adapters.http.schemas.scoring import (
     ContributionVariable,
-    EntreeScoring,
-    ResultatScoring,
+    ScoringInput,
+    ScoringResult,
 )
 
 
 class FicheJustification(BaseModel):
     fiche_id: str
-    resultat: ResultatScoring
-    demande: EntreeScoring
+    resultat: ScoringResult
+    demande: ScoringInput
     societaire_nom: str
     numero_membre: str
     agence: str

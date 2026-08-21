@@ -11,10 +11,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ChampsActualisation } from "@/components/solida/ChampsActualisation";
-import { ChampsPret } from "@/components/solida/ChampsPret";
-import { ResumePret } from "@/components/solida/ResumePret";
-import { useNouvelleDemande } from "@/components/solida/useNouvelleDemande";
+import { RefreshFields } from "@/components/solida/RefreshFields";
+import { LoanFields } from "@/components/solida/LoanFields";
+import { LoanSummary } from "@/components/solida/LoanSummary";
+import { useNewRequest } from "@/components/solida/useNewRequest";
 import type { ActiviteEconomique, ProduitCreditApi } from "@/lib/contracts";
 
 interface NouvelleDemandeSheetProps {
@@ -31,8 +31,8 @@ export function NouvelleDemandeSheet({
   produits,
 }: NouvelleDemandeSheetProps) {
   const {
-    sheetOuvert,
-    setSheetOuvert,
+    sheetOpen,
+    setSheetOpen,
     produit,
     produitId,
     choisirProduit,
@@ -41,26 +41,26 @@ export function NouvelleDemandeSheet({
     setMontant,
     duree,
     setDuree,
-    dureePersonnalisee,
+    customDuration,
     choisirDuree,
     objet,
     setObjet,
-    actualisationOuverte,
-    setActualisationOuverte,
+    refreshOpen,
+    setRefreshOpen,
     revenu,
     setRevenu,
     charges,
     setCharges,
     echeance,
     tauxEndettement,
-    enCours,
-    erreur,
+    inProgress,
+    error,
     annuler,
     calculerLeScore,
-  } = useNouvelleDemande({ societaireId, nomComplet, activite, produits });
+  } = useNewRequest({ societaireId, nomComplet, activite, produits });
 
   return (
-    <Sheet open={sheetOuvert} onOpenChange={setSheetOuvert}>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
       <SheetTrigger asChild>
         <Button>Nouvelle demande</Button>
       </SheetTrigger>
@@ -73,7 +73,7 @@ export function NouvelleDemandeSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4">
-          <ChampsPret
+          <LoanFields
             produits={produits}
             produit={produit}
             produitId={produitId}
@@ -82,39 +82,39 @@ export function NouvelleDemandeSheet({
             onChangeMontant={setMontant}
             duree={duree}
             onChangeDuree={setDuree}
-            dureePersonnalisee={dureePersonnalisee}
+            customDuration={customDuration}
             dureesValides={dureesValides}
             onChoisirDuree={choisirDuree}
           />
 
-          <ChampsActualisation
+          <RefreshFields
             objet={objet}
             onChangeObjet={setObjet}
-            actualisationOuverte={actualisationOuverte}
-            onToggleActualisation={() => setActualisationOuverte((v) => !v)}
+            refreshOpen={refreshOpen}
+            onToggleActualisation={() => setRefreshOpen((v) => !v)}
             revenu={revenu}
             onChangeRevenu={setRevenu}
             charges={charges}
             onChangeCharges={setCharges}
           />
 
-          <ResumePret echeance={echeance} tauxEndettement={tauxEndettement} />
+          <LoanSummary echeance={echeance} tauxEndettement={tauxEndettement} />
         </div>
 
-        {erreur && (
+        {error && (
           <div className="px-4">
             <Alert variant="destructive">
-              <AlertDescription>{erreur}</AlertDescription>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           </div>
         )}
 
         <SheetFooter className="flex-row justify-end gap-2">
-          <Button variant="outline" onClick={annuler} disabled={enCours}>
+          <Button variant="outline" onClick={annuler} disabled={inProgress}>
             Annuler
           </Button>
-          <Button onClick={calculerLeScore} disabled={enCours || montant <= 0}>
-            {enCours ? "Calcul…" : "Calculer le score"}
+          <Button onClick={calculerLeScore} disabled={inProgress || montant <= 0}>
+            {inProgress ? "Calcul…" : "Calculer le score"}
           </Button>
         </SheetFooter>
       </SheetContent>

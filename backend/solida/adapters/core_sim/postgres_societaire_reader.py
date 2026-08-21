@@ -1,7 +1,7 @@
 from sqlalchemy import Engine, text
 
 from solida.domain.entities.societaire import Societaire
-from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
+from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 STATUT_SOCIETAIRE_PAR_DEFAUT = "actif"
 """Le générateur ne modélise ni churn ni radiation : voir docs/backend/02-adapters-core-sim.md."""
@@ -13,7 +13,7 @@ class PostgresSocietaireReader:
 
     def rechercher_societaires(
         self, terme: str, limite: int, agence_id: str | None = None
-    ) -> list[ResultatRechercheSocietaire]:
+    ) -> list[SocietaireSearchResult]:
         requete = text("""
             SELECT s.societaire_id, s.nom_complet, s.numero_membre, s.caisse_id, s.zone,
                    EXISTS (
@@ -31,7 +31,7 @@ class PostgresSocietaireReader:
                 requete, {"terme": terme, "limite": limite, "agence_id": agence_id}
             )
             return [
-                ResultatRechercheSocietaire(
+                SocietaireSearchResult(
                     societaire_id=ligne.societaire_id,
                     nom_complet=ligne.nom_complet,
                     numero_membre=ligne.numero_membre,

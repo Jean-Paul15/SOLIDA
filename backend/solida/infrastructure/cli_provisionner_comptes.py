@@ -27,7 +27,7 @@ from datetime import UTC, datetime
 import sqlalchemy as sa
 from fastapi_users.password import PasswordHelper
 
-from solida.adapters.persistence.modeles_sqlalchemy import ROLES_VALIDES
+from solida.adapters.persistence.orm_models import ROLES_VALIDES
 from solida.infrastructure.database import solida_engine
 from solida.infrastructure.fixtures.comptes_demo import COMPTES_DEMO, MOT_DE_PASSE_DEMO
 
@@ -36,7 +36,7 @@ def _generate_password() -> str:
     return secrets.token_urlsafe(12)
 
 
-def creer_compte(
+def create_account(
     identifiant: str,
     nom_complet: str,
     role: str,
@@ -50,7 +50,7 @@ def creer_compte(
     seule une création initiale ou un déblocage explicite en fixe un nouveau. Renvoie
     le mot de passe en clair (généré si non fourni) pour communication hors-bande.
     `doit_changer_mot_de_passe=False` réservé aux comptes de démonstration (voir
-    `provisionner_demo`) : pour un vrai compte, le changement forcé reste la règle."""
+    `provision_demo`) : pour un vrai compte, le changement forcé reste la règle."""
     if role not in ROLES_VALIDES:
         raise SystemExit(f"Rôle invalide : {role!r}. Attendu : {ROLES_VALIDES}.")
 
@@ -87,11 +87,11 @@ def creer_compte(
     return mot_de_passe_final
 
 
-def provisionner_demo() -> None:
+def provision_demo() -> None:
     # Comptes de test, jamais de vrais comptes : le changement de mot de passe forcé
     # ne servirait qu'à ralentir la démonstration, contrairement à un compte réel.
     for compte in COMPTES_DEMO:
-        creer_compte(
+        create_account(
             identifiant=compte["identifiant"] or "",
             nom_complet=compte["nom_complet"] or "",
             role=compte["role"] or "",
@@ -103,7 +103,7 @@ def provisionner_demo() -> None:
     print(f"{len(COMPTES_DEMO)} comptes de démonstration provisionnés (mot de passe partagé).")
 
 
-def bloquer_compte(identifiant: str) -> None:
+def lock_account(identifiant: str) -> None:
     with solida_engine().begin() as connexion:
         ligne = connexion.execute(
             sa.text("""
@@ -120,7 +120,7 @@ def bloquer_compte(identifiant: str) -> None:
     print(f"Compte '{identifiant}' désactivé et ses sessions révoquées.")
 
 
-def lister_comptes_bloques() -> list[dict[str, object]]:
+def list_locked_accounts() -> list[dict[str, object]]:
     """Lecture seule : comptes désactivés (`is_active = false`), les plus récents d'abord.
     Un administrateur y décide ensuite, au cas par cas, d'un `debloquer` — cette fonction ne
     débloque jamais rien elle-même."""
@@ -136,7 +136,7 @@ def lister_comptes_bloques() -> list[dict[str, object]]:
         return [dict(ligne._mapping) for ligne in lignes]
 
 
-def debloquer_compte(identifiant: str) -> None:
+def unlock_account(identifiant: str) -> None:
     with solida_engine().begin() as connexion:
         ligne = connexion.execute(
             sa.text("""
@@ -180,9 +180,9 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     arguments = _build_parser().parse_args()
     if arguments.commande == "demo":
-        provisionner_demo()
+        provision_demo()
     elif arguments.commande == "creer":
-        mot_de_passe = creer_compte(
+        mot_de_passe = create_account(
             identifiant=arguments.identifiant,
             nom_complet=arguments.nom_complet,
             role=arguments.role,
@@ -192,11 +192,11 @@ def main() -> None:
         print(f"Compte '{arguments.identifiant}' créé. Mot de passe initial : {mot_de_passe}")
         print("À changer obligatoirement à la première connexion.")
     elif arguments.commande == "bloquer":
-        bloquer_compte(arguments.identifiant)
+        lock_account(arguments.identifiant)
     elif arguments.commande == "debloquer":
-        debloquer_compte(arguments.identifiant)
+        unlock_account(arguments.identifiant)
     elif arguments.commande == "lister-bloques":
-        comptes = lister_comptes_bloques()
+        comptes = list_locked_accounts()
         if not comptes:
             print("Aucun compte désactivé.")
         for compte in comptes:

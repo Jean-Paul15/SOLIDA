@@ -47,12 +47,12 @@ TYPES_LECTURE = ("recherche_societaires", "consultation_dossier")
 
 
 @dataclass(frozen=True)
-class ActeurEnAlerte:
+class AlertedActor:
     acteur_id: str
     nombre_lectures: int
 
 
-def detecter(depuis: datetime | None = None) -> list[ActeurEnAlerte]:
+def detect(depuis: datetime | None = None) -> list[AlertedActor]:
     """Renvoie les acteurs ayant dépassé `SEUIL_LECTURES` lectures depuis `depuis`
     (par défaut : début de `FENETRE` avant maintenant), sans rien écrire."""
     seuil_temporel = depuis or (datetime.now(UTC) - FENETRE)
@@ -70,14 +70,14 @@ def detecter(depuis: datetime | None = None) -> list[ActeurEnAlerte]:
             {"types": list(TYPES_LECTURE), "depuis": seuil_temporel, "seuil": SEUIL_LECTURES},
         )
         return [
-            ActeurEnAlerte(acteur_id=ligne.acteur_id, nombre_lectures=ligne.nb) for ligne in lignes
+            AlertedActor(acteur_id=ligne.acteur_id, nombre_lectures=ligne.nb) for ligne in lignes
         ]
 
 
-def alerter(essai_a_blanc: bool = False) -> list[ActeurEnAlerte]:
+def alert(essai_a_blanc: bool = False) -> list[AlertedActor]:
     """Détecte puis, sauf essai à blanc, journalise une entrée `alerte_volume_lecture` par
     acteur en dépassement. Ne touche jamais à `utilisateur` : aucun blocage automatique."""
-    depasses = detecter()
+    depasses = detect()
     if essai_a_blanc or not depasses:
         return depasses
 
@@ -96,7 +96,7 @@ def alerter(essai_a_blanc: bool = False) -> list[ActeurEnAlerte]:
     return depasses
 
 
-def _principal() -> None:
+def _main() -> None:
     analyseur = argparse.ArgumentParser(description=__doc__)
     analyseur.add_argument(
         "--essai-a-blanc",
@@ -105,7 +105,7 @@ def _principal() -> None:
     )
     arguments = analyseur.parse_args()
     logging.basicConfig(level=logging.INFO)
-    depasses = alerter(arguments.essai_a_blanc)
+    depasses = alert(arguments.essai_a_blanc)
     if not depasses:
         logger.info("Aucun acteur au-dessus du seuil (%d lectures/%s).", SEUIL_LECTURES, FENETRE)
         return
@@ -121,4 +121,4 @@ def _principal() -> None:
 
 
 if __name__ == "__main__":
-    _principal()
+    _main()

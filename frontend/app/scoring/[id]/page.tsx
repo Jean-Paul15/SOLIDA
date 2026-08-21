@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EnTete } from "@/components/solida/EnTete";
-import { ResultatScoringVue } from "@/components/solida/ResultatScoringVue";
+import { Header } from "@/components/solida/Header";
+import { ScoringResultView } from "@/components/solida/ScoringResultView";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ScoringResult } from "@/lib/contracts";
 import {
@@ -22,11 +22,9 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
   redirectIfUnauthenticated(reponse);
   redirectIfAccessDenied(reponse);
   if (!reponse.ok) notFound();
-  const resultat: ScoringResult = await reponse.json();
+  const result: ScoringResult = await reponse.json();
 
-  const reponseDossier = await fetchBackend(
-    `/api/v1/societaires/${resultat.societaire_id}/dossier`
-  );
+  const reponseDossier = await fetchBackend(`/api/v1/societaires/${result.societaire_id}/dossier`);
   redirectIfUnauthenticated(reponseDossier);
   redirectIfAccessDenied(reponseDossier);
   if (!reponseDossier.ok) notFound();
@@ -37,10 +35,10 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
+      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
       <div className="mx-auto w-full max-w-[1440px] px-6 pt-4">
         <Link
-          href={`/societaires/${resultat.societaire_id}`}
+          href={`/societaires/${result.societaire_id}`}
           className="flex items-center gap-1.5 text-sm text-neutre-500 hover:text-neutre-950"
         >
           <ArrowLeft className="size-4" />
@@ -48,7 +46,7 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
         </Link>
       </div>
       <main className="flex flex-1 flex-col">
-        <ResultatScoringVue resultat={resultat} />
+        <ScoringResultView result={result} />
       </main>
     </div>
   );

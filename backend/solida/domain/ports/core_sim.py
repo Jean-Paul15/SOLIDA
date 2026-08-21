@@ -8,7 +8,7 @@ from solida.domain.entities.groupe import GroupeCaution
 from solida.domain.entities.mouvement_epargne import MouvementEpargne
 from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
-from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
+from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 
 class LecteurCoreSim(Protocol):
@@ -21,7 +21,7 @@ class LecteurCoreSim(Protocol):
 
     def rechercher_societaires(
         self, terme: str, limite: int, agence_id: str | None = None
-    ) -> list[ResultatRechercheSocietaire]:
+    ) -> list[SocietaireSearchResult]:
         """`agence_id` restreint la recherche à une agence : cloisonnement du rôle
         `agent`, appliqué dans la requête plutôt qu'en filtrant après coup pour ne
         pas perdre de résultats valides à cause de la limite.

@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // La seule présence du cookie ne prouve rien (un cookie forgé de même nom suffirait) : sa
   // validité doit être vérifiée auprès du backend avant de laisser passer une page protégée.
-  const verification = await fetch(`${BACKEND_INTERNAL_URL}/api/v1/auth/moi`, {
+  const verification = await fetch(`${BACKEND_INTERNAL_URL}/api/v1/auth/me`, {
     headers: { cookie: `${SESSION_COOKIE}=${token.value}` },
   }).catch(() => null);
 

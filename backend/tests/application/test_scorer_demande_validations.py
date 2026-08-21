@@ -14,7 +14,7 @@ from solida.application.use_cases.scorer_demande_validations import (
 )
 from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
-from solida.domain.erreurs import (
+from solida.domain.errors import (
     AccesRefuse,
     DureeDemandeeInvalide,
     MontantDemandeInvalide,

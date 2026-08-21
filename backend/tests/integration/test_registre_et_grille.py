@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
 def _connecte(identifiant: str) -> TestClient:
     client = TestClient(app)
     client.post(
-        "/api/v1/auth/connexion", json={"identifiant": identifiant, "mot_de_passe": "solida-demo"}
+        "/api/v1/auth/login", json={"identifiant": identifiant, "mot_de_passe": "solida-demo"}
     )
     return client
 

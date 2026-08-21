@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 import sqlalchemy as sa
 
-from solida.batch.jobs.purger_journal_audit import RETENTION, purger
+from solida.batch.jobs.purger_journal_audit import RETENTION, purge
 from solida.infrastructure.database import purge_audit_engine, solida_engine
 
 pytestmark = pytest.mark.skipif(
@@ -54,7 +54,7 @@ def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -
             ).scalar_one()
         assert avant == 2
 
-        nb_supprimes = purger()
+        nb_supprimes = purge()
 
         with solida_engine().connect() as connexion:
             restantes = connexion.execute(
@@ -70,7 +70,7 @@ def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -
 def test_essai_a_blanc_ne_supprime_rien() -> None:
     _inserer(datetime.now(UTC) - RETENTION - timedelta(days=1))
     try:
-        nb_concernees = purger(essai_a_blanc=True)
+        nb_concernees = purge(essai_a_blanc=True)
         assert nb_concernees >= 1
 
         with solida_engine().connect() as connexion:

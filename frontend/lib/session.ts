@@ -4,19 +4,19 @@ import { fetchBackend } from "@/lib/backend";
 export const SESSION_COOKIE = "solida_session";
 
 export interface Session {
-  nom: string;
+  name: string;
   role: string;
   agence: string | null;
-  doit_changer_mot_de_passe: boolean;
+  must_change_password: boolean;
 }
 
 /**
- * Relit la session depuis le backend (`GET /api/v1/auth/moi`) plutôt que de décoder le
+ * Relit la session depuis le backend (`GET /api/v1/auth/me`) plutôt que de décoder le
  * cookie côté frontend : le cookie est un jeton opaque géré par FastAPI-Users, le frontend
  * n'a aucun moyen de le lire ni de lui faire confiance directement.
  */
 export async function readSession(): Promise<Session | null> {
-  const response = await fetchBackend("/api/v1/auth/moi");
+  const response = await fetchBackend("/api/v1/auth/me");
   if (!response.ok) return null;
   return response.json();
 }
@@ -27,7 +27,7 @@ export async function readSession(): Promise<Session | null> {
  * accessible.
  */
 export function enforcePasswordUpToDate(session: Session | null): void {
-  if (session?.doit_changer_mot_de_passe) {
+  if (session?.must_change_password) {
     redirect("/changer-mot-de-passe");
   }
 }

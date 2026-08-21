@@ -16,7 +16,7 @@ pytestmark = pytest.mark.skipif(
 def client_agent() -> TestClient:
     client = TestClient(app)
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "agent.be", "mot_de_passe": "solida-demo"},
     )
     return client
@@ -26,7 +26,7 @@ def client_agent() -> TestClient:
 def client_auditeur() -> TestClient:
     client = TestClient(app)
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "auditeur.interne", "mot_de_passe": "solida-demo"},
     )
     return client
@@ -36,7 +36,7 @@ def client_auditeur() -> TestClient:
 def client_superviseur() -> TestClient:
     client = TestClient(app)
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "superviseur.reseau", "mot_de_passe": "solida-demo"},
     )
     return client
@@ -110,7 +110,7 @@ def test_previsualiser_ne_persiste_rien(
         avant = connexion.execute(text("SELECT count(*) FROM decision_scoring")).scalar_one()
 
     reponse = client_agent.post(
-        "/api/v1/scoring/previsualiser", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/preview", json=_demande(societaire_agence_agent)
     )
     assert reponse.status_code == 200
     resultat = reponse.json()
@@ -133,7 +133,7 @@ def test_confirmer_puis_relire_la_decision(
     client_agent: TestClient, societaire_agence_agent: str
 ) -> None:
     reponse_scoring = client_agent.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/confirm", json=_demande(societaire_agence_agent)
     )
     assert reponse_scoring.status_code == 201
     resultat = reponse_scoring.json()
@@ -158,16 +158,16 @@ def test_confirmations_dupliquees_renvoient_la_meme_decision(
     demande = _demande(societaire_agence_agent)
     demande["objet_credit"] = "urgence_sante"  # objet distinct des autres tests de ce module
 
-    premiere = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    premiere = client_agent.post("/api/v1/scoring/confirm", json=demande)
     assert premiere.status_code == 201
-    deuxieme = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    deuxieme = client_agent.post("/api/v1/scoring/confirm", json=demande)
     assert deuxieme.status_code == 201
 
     assert premiere.json()["decision_id"] == deuxieme.json()["decision_id"]
 
 
 def test_confirmer_un_societaire_introuvable_renvoie_404(client_agent: TestClient) -> None:
-    reponse = client_agent.post("/api/v1/scoring/confirmer", json=_demande("SOC-INEXISTANT"))
+    reponse = client_agent.post("/api/v1/scoring/confirm", json=_demande("SOC-INEXISTANT"))
     assert reponse.status_code == 404
 
 
@@ -180,7 +180,7 @@ def test_montant_au_dela_du_plafond_produit_est_rejete(
 
     demande = _demande(societaire_agence_agent)
     demande["montant_demande"] = 999_000_000
-    reponse = client_agent.post("/api/v1/scoring/previsualiser", json=demande)
+    reponse = client_agent.post("/api/v1/scoring/preview", json=demande)
     assert reponse.status_code == 422
     assert reponse.json()["code"] == "montant_invalide"
 
@@ -194,7 +194,7 @@ def test_produit_inconnu_renvoie_404(
 ) -> None:
     demande = _demande(societaire_agence_agent)
     demande["produit_id"] = "prod-inexistant"
-    reponse = client_agent.post("/api/v1/scoring/previsualiser", json=demande)
+    reponse = client_agent.post("/api/v1/scoring/preview", json=demande)
     assert reponse.status_code == 404
     assert reponse.json()["code"] == "introuvable"
 
@@ -203,7 +203,7 @@ def test_auditeur_ne_peut_pas_scorer(
     client_auditeur: TestClient, societaire_agence_agent: str
 ) -> None:
     reponse = client_auditeur.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/confirm", json=_demande(societaire_agence_agent)
     )
     assert reponse.status_code == 403
 
@@ -211,7 +211,7 @@ def test_auditeur_ne_peut_pas_scorer(
 def test_agent_ne_peut_pas_scorer_hors_de_son_agence(
     client_agent: TestClient, societaire_autre_agence: str
 ) -> None:
-    reponse = client_agent.post("/api/v1/scoring/confirmer", json=_demande(societaire_autre_agence))
+    reponse = client_agent.post("/api/v1/scoring/confirm", json=_demande(societaire_autre_agence))
     assert reponse.status_code == 403
 
 
@@ -221,7 +221,7 @@ def test_superviseur_ne_peut_pas_previsualiser(
     # Le superviseur parametre la grille (POST /parametrage/grille) mais ne doit pas pouvoir
     # aussi octroyer un credit lui-meme — separation des devoirs.
     reponse = client_superviseur.post(
-        "/api/v1/scoring/previsualiser", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/preview", json=_demande(societaire_agence_agent)
     )
     assert reponse.status_code == 403
 
@@ -230,7 +230,7 @@ def test_superviseur_ne_peut_pas_confirmer(
     client_superviseur: TestClient, societaire_agence_agent: str
 ) -> None:
     reponse = client_superviseur.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/confirm", json=_demande(societaire_agence_agent)
     )
     assert reponse.status_code == 403
 
@@ -250,7 +250,7 @@ def test_sur_endettement_bloque_la_previsualisation(
     client_agent: TestClient, societaire_avec_credit_en_cours: str
 ) -> None:
     reponse = client_agent.post(
-        "/api/v1/scoring/previsualiser", json=_demande(societaire_avec_credit_en_cours)
+        "/api/v1/scoring/preview", json=_demande(societaire_avec_credit_en_cours)
     )
     assert reponse.status_code == 422
     assert reponse.json()["code"] == "sur_endettement"
@@ -260,7 +260,7 @@ def test_sur_endettement_bloque_la_confirmation(
     client_agent: TestClient, societaire_avec_credit_en_cours: str
 ) -> None:
     reponse = client_agent.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_avec_credit_en_cours)
+        "/api/v1/scoring/confirm", json=_demande(societaire_avec_credit_en_cours)
     )
     assert reponse.status_code == 422
     assert reponse.json()["code"] == "sur_endettement"
@@ -273,7 +273,7 @@ def test_duree_demandee_excessive_est_rejetee(
     # d'atteindre la validation metier du catalogue produit.
     demande = _demande(societaire_agence_agent)
     demande["duree_demandee_mois"] = 99_999_999_999
-    reponse = client_agent.post("/api/v1/scoring/previsualiser", json=demande)
+    reponse = client_agent.post("/api/v1/scoring/preview", json=demande)
     assert reponse.status_code == 422
 
 
@@ -286,13 +286,13 @@ def test_deuxieme_octroi_pour_le_meme_societaire_est_bloque(
     # deduplication de doublon exact deja en place.
     demande = _demande(societaire_agence_agent)
     demande["objet_credit"] = "equipement"
-    premiere = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    premiere = client_agent.post("/api/v1/scoring/confirm", json=demande)
     assert premiere.status_code == 201
     if premiere.json()["tranche"] not in {"accord", "accord_sous_condition"}:
         pytest.skip("Le scoring de ce societaire ne produit pas un accord dans ce jeu de donnees")
 
     demande["objet_credit"] = "habitat"
-    deuxieme = client_agent.post("/api/v1/scoring/confirmer", json=demande)
+    deuxieme = client_agent.post("/api/v1/scoring/confirm", json=demande)
     assert deuxieme.status_code == 422
     assert deuxieme.json()["code"] == "sur_endettement"
 
@@ -308,7 +308,7 @@ def test_telecharger_la_fiche_en_pdf(
     client_agent: TestClient, societaire_agence_agent: str
 ) -> None:
     reponse_scoring = client_agent.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/confirm", json=_demande(societaire_agence_agent)
     )
     decision_id = reponse_scoring.json()["decision_id"]
 
@@ -321,11 +321,11 @@ def test_telecharger_la_fiche_en_pdf(
 @pytestmark_archivage
 def test_archiver_une_fiche(client_agent: TestClient, societaire_agence_agent: str) -> None:
     reponse_scoring = client_agent.post(
-        "/api/v1/scoring/confirmer", json=_demande(societaire_agence_agent)
+        "/api/v1/scoring/confirm", json=_demande(societaire_agence_agent)
     )
     decision_id = reponse_scoring.json()["decision_id"]
 
-    reponse_archivage = client_agent.post(f"/api/v1/scoring/{decision_id}/archiver")
+    reponse_archivage = client_agent.post(f"/api/v1/scoring/{decision_id}/archive")
     assert reponse_archivage.status_code == 200
     assert reponse_archivage.json()["fiche_id"]
 

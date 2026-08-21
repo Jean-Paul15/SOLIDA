@@ -1,40 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { peutAccederPolitiqueCredit, peutModifierGrille, peutScorer } from "./roles";
+import { canAccessCreditPolicy, canEditGrille, canScore } from "./roles";
 
-describe("peutScorer", () => {
+describe("canScore", () => {
   it("autorise uniquement l'agent", () => {
-    expect(peutScorer("agent")).toBe(true);
+    expect(canScore("agent")).toBe(true);
   });
 
   it("refuse superviseur, auditeur, administrateur et rôle absent", () => {
     // Séparation des devoirs : celui qui paramètre la grille de scoring ne doit pas
     // pouvoir aussi octroyer lui-même un crédit avec ces mêmes règles.
-    expect(peutScorer("superviseur")).toBe(false);
-    expect(peutScorer("auditeur")).toBe(false);
-    expect(peutScorer("administrateur")).toBe(false);
-    expect(peutScorer(undefined)).toBe(false);
+    expect(canScore("superviseur")).toBe(false);
+    expect(canScore("auditeur")).toBe(false);
+    expect(canScore("administrateur")).toBe(false);
+    expect(canScore(undefined)).toBe(false);
   });
 });
 
-describe("peutModifierGrille", () => {
+describe("canEditGrille", () => {
   it("autorise uniquement le superviseur", () => {
-    expect(peutModifierGrille("superviseur")).toBe(true);
-    expect(peutModifierGrille("agent")).toBe(false);
-    expect(peutModifierGrille("auditeur")).toBe(false);
-    expect(peutModifierGrille("administrateur")).toBe(false);
-    expect(peutModifierGrille(undefined)).toBe(false);
+    expect(canEditGrille("superviseur")).toBe(true);
+    expect(canEditGrille("agent")).toBe(false);
+    expect(canEditGrille("auditeur")).toBe(false);
+    expect(canEditGrille("administrateur")).toBe(false);
+    expect(canEditGrille(undefined)).toBe(false);
   });
 });
 
-describe("peutAccederPolitiqueCredit", () => {
+describe("canAccessCreditPolicy", () => {
   it("autorise superviseur, auditeur et administrateur", () => {
-    expect(peutAccederPolitiqueCredit("superviseur")).toBe(true);
-    expect(peutAccederPolitiqueCredit("auditeur")).toBe(true);
-    expect(peutAccederPolitiqueCredit("administrateur")).toBe(true);
+    expect(canAccessCreditPolicy("superviseur")).toBe(true);
+    expect(canAccessCreditPolicy("auditeur")).toBe(true);
+    expect(canAccessCreditPolicy("administrateur")).toBe(true);
   });
 
   it("refuse l'agent et l'absence de rôle", () => {
-    expect(peutAccederPolitiqueCredit("agent")).toBe(false);
-    expect(peutAccederPolitiqueCredit(undefined)).toBe(false);
+    expect(canAccessCreditPolicy("agent")).toBe(false);
+    expect(canAccessCreditPolicy(undefined)).toBe(false);
   });
 });

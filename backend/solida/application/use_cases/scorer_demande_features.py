@@ -45,7 +45,7 @@ def _actualiser_features(
     )
 
 
-def _features_vers_dict(individuelles: FeaturesIndividuelles, en_groupe: bool) -> dict[str, float]:
+def _features_to_dict(individuelles: FeaturesIndividuelles, en_groupe: bool) -> dict[str, float]:
     """Ne garde que les champs numériques : `predire()`/`contributions()` attendent des
     variables du modèle, pas les champs texte (`segment`, `tendance_epargne_12m`), et une
     valeur `None` (primo-emprunteur) est omise plutôt que remplacée par un zéro trompeur.

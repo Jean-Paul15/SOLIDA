@@ -21,14 +21,14 @@ from solida.domain.values.dossier import (
 DUREE_HISTORIQUE_MOUVEMENTS = timedelta(days=365)
 
 STATUT_SOCIETAIRE_PAR_DEFAUT = "actif"
-"""Le générateur ne modélise ni churn ni radiation, voir `LecteurCoreSimPostgres`."""
+"""Le générateur ne modélise ni churn ni radiation, voir `CoreSimPostgresReader`."""
 
 
 @dataclass(frozen=True)
 class ConsulterDossier:
     lecteur: LecteurCoreSim
 
-    def executer(self, societaire_id: str) -> DossierSocietaire | None:
+    def execute(self, societaire_id: str) -> DossierSocietaire | None:
         societaire = self.lecteur.charger_societaire(societaire_id)
         if societaire is None:
             return None

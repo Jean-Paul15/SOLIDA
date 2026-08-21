@@ -14,7 +14,7 @@ from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDataba
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from solida.adapters.persistence.modeles_sqlalchemy import AccessToken, Utilisateur
+from solida.adapters.persistence.orm_models import AccessToken, User
 from solida.infrastructure.config import Configuration
 
 _COMMON_PASSWORDS_FILE = Path(__file__).with_name("mots_de_passe_courants.txt")
@@ -36,7 +36,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 async def get_user_db(
     session: AsyncSession = Depends(get_session),
 ) -> AsyncGenerator[SQLAlchemyUserDatabase, None]:
-    yield SQLAlchemyUserDatabase(session, Utilisateur)
+    yield SQLAlchemyUserDatabase(session, User)
 
 
 async def get_token_db(
@@ -45,51 +45,51 @@ async def get_token_db(
     yield SQLAlchemyAccessTokenDatabase(session, AccessToken)
 
 
-class UserManager(UUIDIDMixin, BaseUserManager[Utilisateur, uuid.UUID]):
+class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = _config.secret_auth
     verification_token_secret = _config.secret_auth
 
-    async def _get_by_identifier(self, identifiant: str) -> Utilisateur | None:
+    async def _get_by_identifier(self, identifiant: str) -> User | None:
         # BaseUserManager type user_db en BaseUserDatabase abstrait ; on sait qu'il
         # s'agit toujours du SQLAlchemyUserDatabase injecte par get_user_manager.
-        user_db = cast(SQLAlchemyUserDatabase[Utilisateur, uuid.UUID], self.user_db)
-        statement = select(Utilisateur).where(Utilisateur.identifiant == identifiant)
+        user_db = cast(SQLAlchemyUserDatabase[User, uuid.UUID], self.user_db)
+        statement = select(User).where(User.identifiant == identifiant)
         result = await user_db.session.execute(statement)
         return result.scalar_one_or_none()
 
     async def authenticate_by_identifier(
         self, identifiant: str, mot_de_passe: str
-    ) -> Utilisateur | None:
+    ) -> User | None:
         """Équivalent de `authenticate()`, mais par `identifiant` plutôt que par e-mail.
 
         Reprend la mitigation de `authenticate()` : hacher un mot de passe même
         quand l'identifiant n'existe pas, pour ne pas révéler par le temps de
         réponse si un identifiant est valide.
         """
-        utilisateur = await self._get_by_identifier(identifiant)
-        if utilisateur is None:
+        user = await self._get_by_identifier(identifiant)
+        if user is None:
             self.password_helper.hash(mot_de_passe)
             return None
 
         verifie, updated_hash = self.password_helper.verify_and_update(
-            mot_de_passe, utilisateur.hashed_password
+            mot_de_passe, user.hashed_password
         )
         if not verifie:
             return None
         if updated_hash is not None:
-            await self.user_db.update(utilisateur, {"hashed_password": updated_hash})
-        return utilisateur
+            await self.user_db.update(user, {"hashed_password": updated_hash})
+        return user
 
-    async def get_by_identifier(self, identifiant: str) -> Utilisateur:
-        utilisateur = await self._get_by_identifier(identifiant)
-        if utilisateur is None:
+    async def get_by_identifier(self, identifiant: str) -> User:
+        user = await self._get_by_identifier(identifiant)
+        if user is None:
             raise exceptions.UserNotExists()
-        return utilisateur
+        return user
 
-    async def change_password(self, utilisateur: Utilisateur, nouveau_mot_de_passe: str) -> None:
+    async def change_password(self, user: User, nouveau_mot_de_passe: str) -> None:
         password_hash = self.password_helper.hash(nouveau_mot_de_passe)
         await self.user_db.update(
-            utilisateur,
+            user,
             {
                 "hashed_password": password_hash,
                 "doit_changer_mot_de_passe": False,
@@ -111,7 +111,7 @@ def load_common_passwords() -> frozenset[str]:
 
 
 async def revoke_user_tokens(session: AsyncSession, utilisateur_id: uuid.UUID) -> None:
-    """Détruit tous les jetons actifs d'un utilisateur — une seule session à la fois,
+    """Détruit tous les jetons actifs d'un user — une seule session à la fois,
     et un changement de mot de passe invalide les sessions ouvertes ailleurs."""
     await session.execute(delete(AccessToken).where(AccessToken.user_id == utilisateur_id))
     await session.commit()
@@ -128,7 +128,7 @@ cookie_transport = CookieTransport(
 
 def get_strategy(
     token_db: AccessTokenDatabase[AccessToken] = Depends(get_token_db),
-) -> DatabaseStrategy[Utilisateur, uuid.UUID, AccessToken]:
+) -> DatabaseStrategy[User, uuid.UUID, AccessToken]:
     return DatabaseStrategy(token_db, lifetime_seconds=SESSION_DURATION_SECONDS)
 
 
@@ -138,7 +138,7 @@ authentication_backend = AuthenticationBackend(
     get_strategy=get_strategy,
 )
 
-fastapi_users = FastAPIUsers[Utilisateur, uuid.UUID](get_user_manager, [authentication_backend])
+fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [authentication_backend])
 
 MAX_INACTIVITY_DURATION = timedelta(minutes=15)
 """Expiration par inactivité, vérifiée côté serveur à chaque requête — un minuteur
@@ -150,9 +150,9 @@ _active_user_dependency = fastapi_users.current_user(active=True)
 
 async def current_active_user(
     request: Request,
-    utilisateur: Utilisateur = Depends(_active_user_dependency),
+    user: User = Depends(_active_user_dependency),
     token_db: SQLAlchemyAccessTokenDatabase = Depends(get_token_db),
-) -> Utilisateur:
+) -> User:
     """Comme `fastapi_users.current_user(active=True)`, avec en plus l'expiration par
     inactivité : au-delà de `MAX_INACTIVITY_DURATION` sans requête, la session est détruite
     même si elle n'a pas atteint sa durée de vie absolue de `SESSION_DURATION_SECONDS`."""
@@ -169,4 +169,4 @@ async def current_active_user(
         )
 
     await token_db.update(token, {"derniere_activite_le": now})
-    return utilisateur
+    return user

@@ -16,8 +16,8 @@ from solida.adapters.http.schemas.societaires.identite import (
     ActiviteEconomique,
     IdentiteSocietaire,
     NiveauInstruction,
-    ResultatRechercheSocietaire,
     Segment,
+    SocietaireSearchResult,
     StatutSocietaire,
 )
 
@@ -29,9 +29,9 @@ __all__ = [
     "MembreGroupe",
     "MouvementEpargne",
     "NiveauInstruction",
-    "ResultatRechercheSocietaire",
     "RoleGroupe",
     "Segment",
+    "SocietaireSearchResult",
     "StatutCredit",
     "StatutCreditMembre",
     "StatutGroupe",

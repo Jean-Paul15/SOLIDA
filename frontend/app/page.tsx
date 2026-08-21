@@ -1,5 +1,5 @@
-import { EnTete } from "@/components/solida/EnTete";
-import { RechercheSocietaire } from "@/components/solida/RechercheSocietaire";
+import { Header } from "@/components/solida/Header";
+import { SocietaireSearch } from "@/components/solida/SocietaireSearch";
 import { enforcePasswordUpToDate, readSession } from "@/lib/session";
 
 export default async function PageRecherche() {
@@ -8,9 +8,9 @@ export default async function PageRecherche() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
+      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
       <main className="flex-1 px-6">
-        <RechercheSocietaire />
+        <SocietaireSearch />
       </main>
     </div>
   );

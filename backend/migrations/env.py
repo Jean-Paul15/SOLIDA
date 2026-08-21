@@ -4,7 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from solida.adapters.persistence.modeles_sqlalchemy import Base
+from solida.adapters.persistence.orm_models import Base
 
 config = context.config
 

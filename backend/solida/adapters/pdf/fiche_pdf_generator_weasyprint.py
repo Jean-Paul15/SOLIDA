@@ -3,7 +3,7 @@ from pathlib import Path
 import jinja2
 import weasyprint
 
-from solida.adapters.http.mappers.fiche import fiche_vers_schema
+from solida.adapters.http.mappers.fiche import fiche_to_schema
 from solida.domain.values.decision import DecisionEnregistree
 from solida.domain.values.fiche import EnTeteFiche
 
@@ -26,7 +26,7 @@ class WeasyPrintFichePdfGenerator:
     navigateur headless — conforme à la contrainte de légèreté du projet)."""
 
     def generer(self, decision: DecisionEnregistree, entete: EnTeteFiche) -> bytes:
-        fiche = fiche_vers_schema(decision, entete)
+        fiche = fiche_to_schema(decision, entete)
         gabarit = _ENVIRONNEMENT.get_template("fiche.html")
         html = gabarit.render(fiche=fiche, libelle_tranche=_LIBELLE_TRANCHE[fiche.resultat.tranche])
         return weasyprint.HTML(string=html).write_pdf()

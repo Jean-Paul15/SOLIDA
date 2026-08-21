@@ -1,8 +1,8 @@
 import Image from "next/image";
 import type { ContributionVariable, FicheJustification, ProduitCreditApi } from "@/lib/contracts";
-import { formaterMontant } from "@/lib/format";
-import { COULEUR_TRANCHE, LIBELLE_OBJET_CREDIT, LIBELLE_TRANCHE } from "@/lib/libelles";
-import { trouverProduit } from "@/lib/produits";
+import { formatAmount } from "@/lib/format";
+import { TRANCHE_COLOR, LABEL_OBJET_CREDIT, LABEL_TRANCHE } from "@/lib/labels";
+import { findProduit } from "@/lib/produits";
 
 interface FicheApercuProps {
   fiche: FicheJustification;
@@ -10,14 +10,14 @@ interface FicheApercuProps {
   produits: ProduitCreditApi[];
 }
 
-function BlocFacteurs({ titre, facteurs }: { titre: string; facteurs: ContributionVariable[] }) {
+function FactorsBlock({ title, factors }: { title: string; factors: ContributionVariable[] }) {
   return (
     <div className="flex flex-1 flex-col gap-2">
       <span className="text-[11px] font-medium tracking-wide text-neutre-500 uppercase">
-        {titre}
+        {title}
       </span>
       <ul className="flex flex-col gap-2">
-        {facteurs.map((f) => (
+        {factors.map((f) => (
           <li key={f.code_variable} className="text-[11px] text-neutre-700">
             <span className="font-medium text-neutre-950">
               {f.libelle} : {f.valeur}
@@ -32,9 +32,9 @@ function BlocFacteurs({ titre, facteurs }: { titre: string; facteurs: Contributi
 }
 
 export function FicheApercu({ fiche, versionApplication, produits }: FicheApercuProps) {
-  const { resultat, demande } = fiche;
-  const couleurs = COULEUR_TRANCHE[resultat.tranche];
-  const produit = trouverProduit(produits, demande.produit_id);
+  const { resultat: result, demande } = fiche;
+  const couleurs = TRANCHE_COLOR[result.tranche];
+  const produit = findProduit(produits, demande.produit_id);
 
   return (
     <div
@@ -68,25 +68,25 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
         <div className="flex flex-col gap-1">
           <span className="font-medium text-neutre-500 uppercase">Demande</span>
           <span>{produit?.libelle ?? demande.produit_id}</span>
-          <span>{formaterMontant(demande.montant_demande)} sollicités</span>
+          <span>{formatAmount(demande.montant_demande)} sollicités</span>
           <span>{demande.duree_demandee_mois} mois</span>
-          <span>{LIBELLE_OBJET_CREDIT[demande.objet_credit]}</span>
+          <span>{LABEL_OBJET_CREDIT[demande.objet_credit]}</span>
         </div>
       </div>
 
       <div
-        className={`flex flex-col gap-1 rounded border-l-3 ${couleurs.bordure} ${couleurs.fond} p-3`}
+        className={`flex flex-col gap-1 rounded border-l-3 ${couleurs.border} ${couleurs.background} p-3`}
       >
         <span className="text-[11px] text-neutre-500">Résultat</span>
         <div className="flex items-baseline gap-3">
-          <span className="font-mono text-xl">{Math.round(resultat.score)}</span>
-          <span className={`text-sm font-semibold ${couleurs.texte}`}>
-            {LIBELLE_TRANCHE[resultat.tranche]}
+          <span className="font-mono text-xl">{Math.round(result.score)}</span>
+          <span className={`text-sm font-semibold ${couleurs.text}`}>
+            {LABEL_TRANCHE[result.tranche]}
           </span>
         </div>
-        {resultat.tranche !== "refus" && (
+        {result.tranche !== "refus" && (
           <span className="text-[11px]">
-            Montant recommandé : {formaterMontant(resultat.montant_recommande)}
+            Montant recommandé : {formatAmount(result.montant_recommande)}
           </span>
         )}
       </div>
@@ -96,20 +96,20 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
           Trajectoire de progression
         </span>
         <div className="flex gap-4 text-[11px]">
-          {resultat.trajectoire_progression.map((p) => (
+          {result.trajectoire_progression.map((p) => (
             <span key={p.cycle}>
-              Cycle +{p.cycle} : {formaterMontant(p.plafond_accessible)}
+              Cycle +{p.cycle} : {formatAmount(p.plafond_accessible)}
             </span>
           ))}
         </div>
       </div>
 
       <div className="flex gap-6 border-t border-neutre-200 pt-3">
-        <BlocFacteurs titre="Éléments favorables" facteurs={fiche.facteurs_favorables} />
-        <BlocFacteurs titre="Points de vigilance" facteurs={fiche.facteurs_defavorables} />
+        <FactorsBlock title="Éléments favorables" factors={fiche.facteurs_favorables} />
+        <FactorsBlock title="Points de vigilance" factors={fiche.facteurs_defavorables} />
       </div>
 
-      {fiche.conditions_reexamen.length > 0 && resultat.tranche !== "accord" && (
+      {fiche.conditions_reexamen.length > 0 && result.tranche !== "accord" && (
         <div className="flex flex-col gap-1 border-t border-neutre-200 pt-3">
           <span className="text-[11px] font-medium text-neutre-500 uppercase">
             Conditions de réexamen
@@ -126,8 +126,7 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
         <span className="max-w-[75%]">{fiche.mention_legale}</span>
         <div className="flex flex-col items-end">
           <span>
-            Modèle {resultat.version_modele} · Grille {resultat.version_grille} ·{" "}
-            {versionApplication}
+            Modèle {result.version_modele} · Grille {result.version_grille} · {versionApplication}
           </span>
           <span>Page 1/1</span>
         </div>

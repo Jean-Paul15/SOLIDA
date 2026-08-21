@@ -8,5 +8,5 @@ from solida.domain.values.decision import DecisionEnregistree
 class LireDecision:
     decision_repository: DecisionRepository
 
-    def executer(self, decision_id: str) -> DecisionEnregistree | None:
+    def execute(self, decision_id: str) -> DecisionEnregistree | None:
         return self.decision_repository.lire(decision_id)

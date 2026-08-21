@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from solida.domain.erreurs import InvariantScoreViole
+from solida.domain.errors import InvariantScoreViole
 from solida.domain.rules.scorecard import (
     ParametresScorecard,
     calculer_score,

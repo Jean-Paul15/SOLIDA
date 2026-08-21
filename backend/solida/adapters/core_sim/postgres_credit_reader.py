@@ -33,7 +33,7 @@ def _capital_restant_du(
     return round(montant_octroye * fraction_restante)
 
 
-def _ligne_vers_credit(ligne: Any, aujourdhui: date) -> Credit:
+def _ligne_to_credit(ligne: Any, aujourdhui: date) -> Credit:
     date_deblocage: date = ligne.date_deblocage
     duree_mois: int = ligne.duree_mois
     statut: str = ligne.statut
@@ -69,4 +69,4 @@ class PostgresCreditReader:
         aujourdhui = date.today()
         with self._moteur.connect() as connexion:
             lignes = connexion.execute(requete, {"id": societaire_id})
-            return [_ligne_vers_credit(ligne, aujourdhui) for ligne in lignes]
+            return [_ligne_to_credit(ligne, aujourdhui) for ligne in lignes]

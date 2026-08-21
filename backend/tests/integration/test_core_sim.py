@@ -3,7 +3,7 @@ import os
 import pytest
 from sqlalchemy import create_engine, text
 
-from solida.adapters.core_sim.lecteur_postgres import LecteurCoreSimPostgres
+from solida.adapters.core_sim.core_sim_postgres_reader import CoreSimPostgresReader
 
 pytestmark = pytest.mark.skipif(
     "CORESIM_DATABASE_URL" not in os.environ,
@@ -12,13 +12,13 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def lecteur() -> LecteurCoreSimPostgres:
+def lecteur() -> CoreSimPostgresReader:
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
-    return LecteurCoreSimPostgres(moteur)
+    return CoreSimPostgresReader(moteur)
 
 
 @pytest.fixture(scope="module")
-def un_societaire_id(lecteur: LecteurCoreSimPostgres) -> str:
+def un_societaire_id(lecteur: CoreSimPostgresReader) -> str:
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
     with moteur.connect() as connexion:
         ligne = connexion.execute(text("SELECT societaire_id FROM societaires LIMIT 1")).first()
@@ -37,7 +37,7 @@ def test_le_role_lecteur_ne_peut_pas_ecrire_dans_coresim() -> None:
 
 
 def test_charger_societaire_ne_renvoie_jamais_le_sexe_ou_le_statut_matrimonial(
-    lecteur: LecteurCoreSimPostgres, un_societaire_id: str
+    lecteur: CoreSimPostgresReader, un_societaire_id: str
 ) -> None:
     societaire = lecteur.charger_societaire(un_societaire_id)
     assert societaire is not None
@@ -46,12 +46,12 @@ def test_charger_societaire_ne_renvoie_jamais_le_sexe_ou_le_statut_matrimonial(
     assert "statut_matrimonial" not in champs
 
 
-def test_charger_societaire_introuvable_renvoie_none(lecteur: LecteurCoreSimPostgres) -> None:
+def test_charger_societaire_introuvable_renvoie_none(lecteur: CoreSimPostgresReader) -> None:
     assert lecteur.charger_societaire("SOC-INEXISTANT") is None
 
 
 def test_rechercher_par_numero_membre_exact(
-    lecteur: LecteurCoreSimPostgres, un_societaire_id: str
+    lecteur: CoreSimPostgresReader, un_societaire_id: str
 ) -> None:
     societaire = lecteur.charger_societaire(un_societaire_id)
     assert societaire is not None
@@ -59,7 +59,7 @@ def test_rechercher_par_numero_membre_exact(
     assert any(r.societaire_id == un_societaire_id for r in resultats)
 
 
-def test_capital_restant_du_est_nul_pour_un_credit_solde(lecteur: LecteurCoreSimPostgres) -> None:
+def test_capital_restant_du_est_nul_pour_un_credit_solde(lecteur: CoreSimPostgresReader) -> None:
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
     with moteur.connect() as connexion:
         ligne = connexion.execute(
@@ -73,7 +73,7 @@ def test_capital_restant_du_est_nul_pour_un_credit_solde(lecteur: LecteurCoreSim
 
 
 def test_credit_en_souffrance_a_un_capital_restant_du_positif(
-    lecteur: LecteurCoreSimPostgres,
+    lecteur: CoreSimPostgresReader,
 ) -> None:
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
     with moteur.connect() as connexion:
@@ -88,7 +88,7 @@ def test_credit_en_souffrance_a_un_capital_restant_du_positif(
 
 
 def test_charger_groupe_exclut_le_societaire_evalue_de_ses_propres_agregats(
-    lecteur: LecteurCoreSimPostgres,
+    lecteur: CoreSimPostgresReader,
 ) -> None:
     moteur = create_engine(os.environ["CORESIM_DATABASE_URL"])
     with moteur.connect() as connexion:

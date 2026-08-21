@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from solida.adapters.http.schemas.scoring import EntreeScoring, ResultatScoring
+from solida.adapters.http.schemas.scoring import ScoringInput, ScoringResult
 
 
 class DecisionRegistre(BaseModel):
@@ -8,8 +8,8 @@ class DecisionRegistre(BaseModel):
     societaire_id: str
     societaire_nom: str
     agence: str
-    demande: EntreeScoring
-    resultat: ResultatScoring
+    demande: ScoringInput
+    resultat: ScoringResult
     horodatage: str
     agent_nom: str
 

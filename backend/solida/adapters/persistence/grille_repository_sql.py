@@ -4,7 +4,7 @@ from sqlalchemy import Engine, bindparam, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import IntegrityError
 
-from solida.domain.erreurs import VersionGrilleDejaExistante
+from solida.domain.errors import VersionGrilleDejaExistante
 from solida.domain.rules.grille import ParametresGrille
 from solida.domain.rules.progressif_plafond import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
@@ -12,7 +12,7 @@ from solida.domain.values.grille import ConfigurationGrille
 from solida.domain.values.montant import Montant
 
 
-def _ligne_vers_configuration(ligne: Any) -> ConfigurationGrille:
+def _ligne_to_configuration(ligne: Any) -> ConfigurationGrille:
     seuils = ligne.seuils
     return ConfigurationGrille(
         version_grille=ligne.version_grille,
@@ -51,7 +51,7 @@ def _ligne_vers_configuration(ligne: Any) -> ConfigurationGrille:
     )
 
 
-def _configuration_vers_seuils(configuration: ConfigurationGrille) -> dict[str, Any]:
+def _configuration_to_seuils(configuration: ConfigurationGrille) -> dict[str, Any]:
     grille, progressif = configuration.grille, configuration.progressif
     return {
         "marge": grille.marge,
@@ -86,7 +86,7 @@ class SqlGrilleRepository:
         """)
         with self._moteur.connect() as connexion:
             ligne = connexion.execute(requete).one()
-        return _ligne_vers_configuration(ligne)
+        return _ligne_to_configuration(ligne)
 
     def enregistrer_nouvelle_version(
         self, configuration: ConfigurationGrille
@@ -109,7 +109,7 @@ class SqlGrilleRepository:
                     instruction,
                     {
                         "version_grille": configuration.version_grille,
-                        "seuils": _configuration_vers_seuils(configuration),
+                        "seuils": _configuration_to_seuils(configuration),
                         "pdo": configuration.scorecard.pdo,
                         "score_reference": configuration.scorecard.score_reference,
                         "odds_reference": configuration.scorecard.odds_reference,
@@ -125,4 +125,4 @@ class SqlGrilleRepository:
                     f"La version de grille {configuration.version_grille!r} existe déjà."
                 ) from erreur
             connexion.commit()
-        return _ligne_vers_configuration(ligne)
+        return _ligne_to_configuration(ligne)

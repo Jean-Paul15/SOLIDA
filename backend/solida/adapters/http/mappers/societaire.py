@@ -2,7 +2,7 @@ from solida.adapters.http.schemas import societaires as schema_societaires
 from solida.domain.values.dossier import DossierSocietaire, SyntheseGroupe
 
 
-def groupe_vers_schema(groupe: SyntheseGroupe) -> schema_societaires.SyntheseGroupe:
+def groupe_to_schema(groupe: SyntheseGroupe) -> schema_societaires.SyntheseGroupe:
     return schema_societaires.SyntheseGroupe(
         groupe_id=groupe.groupe_id,
         nom_groupe=groupe.nom_groupe,
@@ -26,8 +26,8 @@ def groupe_vers_schema(groupe: SyntheseGroupe) -> schema_societaires.SyntheseGro
     )
 
 
-def dossier_vers_schema(dossier: DossierSocietaire) -> schema_societaires.DossierSocietaire:
-    groupe = groupe_vers_schema(dossier.groupe) if dossier.groupe is not None else None
+def dossier_to_schema(dossier: DossierSocietaire) -> schema_societaires.DossierSocietaire:
+    groupe = groupe_to_schema(dossier.groupe) if dossier.groupe is not None else None
 
     return schema_societaires.DossierSocietaire(
         identite=schema_societaires.IdentiteSocietaire(

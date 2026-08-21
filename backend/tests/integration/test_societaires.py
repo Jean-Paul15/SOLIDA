@@ -16,7 +16,7 @@ pytestmark = pytest.mark.skipif(
 def client_agent() -> TestClient:
     client = TestClient(app)
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "agent.be", "mot_de_passe": "solida-demo"},
     )
     return client
@@ -45,14 +45,14 @@ def societaire_autre_agence() -> str:
 
 
 def test_recherche_sous_deux_caracteres_renvoie_une_liste_vide(client_agent: TestClient) -> None:
-    reponse = client_agent.get("/api/v1/societaires/recherche", params={"terme": "A"})
+    reponse = client_agent.get("/api/v1/societaires/search", params={"terme": "A"})
     assert reponse.status_code == 200
     assert reponse.json() == {"elements": [], "total": 0}
 
 
 def test_recherche_ne_renvoie_que_lagence_de_lagent(client_agent: TestClient) -> None:
     reponse = client_agent.get(
-        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 50}
+        "/api/v1/societaires/search", params={"terme": "an", "limite": 50}
     )
     assert reponse.status_code == 200
     elements = reponse.json()["elements"]
@@ -63,7 +63,7 @@ def test_recherche_ne_renvoie_que_lagence_de_lagent(client_agent: TestClient) ->
 def test_recherche_avec_limite_excessive_est_rejetee(client_agent: TestClient) -> None:
     # Plafond serveur sur `limite`, independant de ce que le client demande.
     reponse = client_agent.get(
-        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 999999}
+        "/api/v1/societaires/search", params={"terme": "an", "limite": 999999}
     )
     assert reponse.status_code == 422
 
@@ -72,7 +72,7 @@ def test_recherche_avec_limite_negative_est_rejetee(client_agent: TestClient) ->
     # Round 3 du pentest : une valeur negative atteignait le LIMIT SQL et remontait en 500
     # brut au lieu d'un 422 propre.
     reponse = client_agent.get(
-        "/api/v1/societaires/recherche", params={"terme": "an", "limite": -1}
+        "/api/v1/societaires/search", params={"terme": "an", "limite": -1}
     )
     assert reponse.status_code == 422
 
@@ -116,10 +116,10 @@ def test_total_de_recherche_reflete_le_vrai_nombre_de_correspondances_pas_la_pag
     # que la page renvoyee. Une page plus petite doit avoir moins d'`elements` mais le meme
     # `total` qu'une page plus large, sur le meme terme.
     petite_page = client_agent.get(
-        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 1}
+        "/api/v1/societaires/search", params={"terme": "an", "limite": 1}
     ).json()
     grande_page = client_agent.get(
-        "/api/v1/societaires/recherche", params={"terme": "an", "limite": 50}
+        "/api/v1/societaires/search", params={"terme": "an", "limite": 50}
     ).json()
     assert len(petite_page["elements"]) == 1
     assert petite_page["total"] == grande_page["total"]

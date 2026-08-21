@@ -2,7 +2,7 @@ from datetime import datetime
 
 from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
-from solida.domain.erreurs import (
+from solida.domain.errors import (
     AccesRefuse,
     DureeDemandeeInvalide,
     MontantDemandeInvalide,

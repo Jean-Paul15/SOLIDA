@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 RETENTION = timedelta(days=365)
 
 
-def purger(essai_a_blanc: bool = False) -> int:
+def purge(essai_a_blanc: bool = False) -> int:
     """Supprime les entrées de `journal_audit` plus vieilles que `RETENTION`.
 
     Renvoie le nombre de lignes supprimées — ou, en essai à blanc, le nombre de lignes
@@ -59,7 +59,7 @@ def purger(essai_a_blanc: bool = False) -> int:
         return resultat.rowcount
 
 
-def _principal() -> None:
+def _main() -> None:
     analyseur = argparse.ArgumentParser(description=__doc__)
     analyseur.add_argument(
         "--essai-a-blanc",
@@ -68,10 +68,10 @@ def _principal() -> None:
     )
     arguments = analyseur.parse_args()
     logging.basicConfig(level=logging.INFO)
-    nb = purger(arguments.essai_a_blanc)
+    nb = purge(arguments.essai_a_blanc)
     verbe = "seraient supprimées" if arguments.essai_a_blanc else "supprimées"
     logger.info("%d entrée(s) du journal d'audit %s (rétention : %s).", nb, verbe, RETENTION)
 
 
 if __name__ == "__main__":
-    _principal()
+    _main()

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from solida.application.use_cases.generer_fiche import GenererFiche
-from solida.domain.erreurs import AccesRefuse
+from solida.domain.errors import AccesRefuse
 from solida.domain.ports.archivage import FicheRepository
 from solida.domain.ports.audit import AuditLog
 from solida.domain.ports.fiches_archivees import FicheArchiveeRepository
@@ -17,14 +17,14 @@ class ArchiverFiche:
     fiche_archivee_repository: FicheArchiveeRepository
     audit_log: AuditLog
 
-    def executer(
+    def execute(
         self,
         decision_id: str,
         archive_par: str,
         agent_role: str,
         agent_agence_id: str | None,
     ) -> str | None:
-        resultat = self.generer_fiche.executer(decision_id)
+        resultat = self.generer_fiche.execute(decision_id)
         if resultat is None:
             return None
         decision, entete = resultat

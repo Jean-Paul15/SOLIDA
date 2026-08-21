@@ -22,10 +22,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { SyntheseGroupe } from "@/lib/contracts";
-import { LIBELLE_STATUT_CREDIT_MEMBRE } from "@/lib/libelles";
+import { LABEL_STATUT_CREDIT_MEMBRE } from "@/lib/labels";
 import { fetchGroup } from "@/lib/services/societaires";
 
-const LIBELLE_ROLE: Record<string, string> = {
+const LABEL_ROLE: Record<string, string> = {
   membre: "Membre",
   presidente: "Présidente",
   tresoriere: "Trésorière",
@@ -39,35 +39,35 @@ interface GroupeCautionDialogProps {
 export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) {
   const router = useRouter();
   const [groupe, setGroupe] = useState<SyntheseGroupe | null>(null);
-  const [enCours, setEnCours] = useState(false);
-  const [erreur, setErreur] = useState<string | null>(null);
+  const [inProgress, setInProgress] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function surOuverture(ouvert: boolean) {
-    if (!ouvert || groupe || enCours) return;
-    setEnCours(true);
-    setErreur(null);
+  function handleOpenChange(open: boolean) {
+    if (!open || groupe || inProgress) return;
+    setInProgress(true);
+    setError(null);
     fetchGroup(societaireId)
       .then(setGroupe)
-      .catch(() => setErreur("Le groupe de caution n'a pas pu être chargé."))
-      .finally(() => setEnCours(false));
+      .catch(() => setError("Le groupe de caution n'a pas pu être chargé."))
+      .finally(() => setInProgress(false));
   }
 
   return (
-    <Dialog onOpenChange={surOuverture}>
+    <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           Voir le groupe
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[560px] gap-4 overflow-y-auto sm:max-w-[720px]">
-        {enCours && (
+        {inProgress && (
           <div className="flex flex-1 items-center justify-center gap-2 py-10 text-sm text-neutre-500">
             <Loader2 className="size-4 animate-spin" />
             Chargement du groupe…
           </div>
         )}
 
-        {erreur && <p className="py-10 text-center text-sm text-decision-refus">{erreur}</p>}
+        {error && <p className="py-10 text-center text-sm text-decision-refus">{error}</p>}
 
         {groupe && (
           <>
@@ -114,13 +114,13 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
                     }
                   >
                     <TableCell>{m.nom_complet}</TableCell>
-                    <TableCell>{LIBELLE_ROLE[m.role]}</TableCell>
+                    <TableCell>{LABEL_ROLE[m.role]}</TableCell>
                     <TableCell>{Math.floor(m.anciennete_mois / 12)} an(s)</TableCell>
                     <TableCell>
                       <Badge
                         variant={m.statut_credit === "en_souffrance" ? "destructive" : "secondary"}
                       >
-                        {LIBELLE_STATUT_CREDIT_MEMBRE[m.statut_credit]}
+                        {LABEL_STATUT_CREDIT_MEMBRE[m.statut_credit]}
                       </Badge>
                     </TableCell>
                     <TableCell>{m.caution_appelee ? "Oui" : "—"}</TableCell>

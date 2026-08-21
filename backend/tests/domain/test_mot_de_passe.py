@@ -1,6 +1,6 @@
 import pytest
 
-from solida.domain.erreurs import MotDePasseInvalide
+from solida.domain.errors import MotDePasseInvalide
 from solida.domain.rules.mot_de_passe import valider_mot_de_passe
 
 COURANTS = frozenset({"password", "123456"})

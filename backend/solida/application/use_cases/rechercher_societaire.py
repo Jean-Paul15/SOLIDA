@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from solida.domain.ports.core_sim import LecteurCoreSim
-from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
+from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 LONGUEUR_MINIMALE_TERME = 2
 
@@ -10,9 +10,9 @@ LONGUEUR_MINIMALE_TERME = 2
 class RechercherSocietaire:
     lecteur: LecteurCoreSim
 
-    def executer(
+    def execute(
         self, terme: str, limite: int, agence_id: str | None
-    ) -> list[ResultatRechercheSocietaire]:
+    ) -> list[SocietaireSearchResult]:
         if len(terme) < LONGUEUR_MINIMALE_TERME:
             return []
         return self.lecteur.rechercher_societaires(terme, limite, agence_id)

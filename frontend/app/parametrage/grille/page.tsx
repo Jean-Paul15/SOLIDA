@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { EnTete } from "@/components/solida/EnTete";
+import { Header } from "@/components/solida/Header";
 import { PolitiqueCredit } from "@/components/solida/PolitiqueCredit";
 import { fetchBackend } from "@/lib/backend";
 import type {
@@ -9,13 +9,13 @@ import type {
   DecisionRegistreApi,
   ProduitCreditApi,
 } from "@/lib/contracts";
-import { peutAccederPolitiqueCredit } from "@/lib/roles";
+import { canAccessCreditPolicy } from "@/lib/roles";
 import { enforcePasswordUpToDate, readSession, redirectIfUnauthenticated } from "@/lib/session";
 
 export default async function PageGrille() {
   const session = await readSession();
   enforcePasswordUpToDate(session);
-  if (!peutAccederPolitiqueCredit(session?.role)) {
+  if (!canAccessCreditPolicy(session?.role)) {
     redirect("/acces-refuse");
   }
 
@@ -40,7 +40,7 @@ export default async function PageGrille() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
+      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-4 px-6 py-6">
         <Link
           href="/"

@@ -22,7 +22,7 @@ class ActualisationSituation(BaseModel):
     nb_personnes_a_charge: int | None = None
 
 
-class EntreeScoring(BaseModel):
+class ScoringInput(BaseModel):
     societaire_id: str
     produit_id: str
     montant_demande: int = Field(gt=0)
@@ -50,7 +50,7 @@ class PalierProgression(BaseModel):
     plafond_accessible: int
 
 
-class ResultatScoring(BaseModel):
+class ScoringResult(BaseModel):
     decision_id: str
     societaire_id: str
     score: float

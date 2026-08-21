@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 
 from solida.application.use_cases.scorer_demande_features import (
     _actualiser_features,
-    _features_vers_dict,
+    _features_to_dict,
     _revenu_effectif,
 )
 from solida.application.use_cases.scorer_demande_validations import (
@@ -18,7 +18,7 @@ from solida.application.use_cases.scorer_demande_validations import (
     valider_produit_catalogue,
     valider_societaire_trouve,
 )
-from solida.domain.erreurs import DonneesInsuffisantes
+from solida.domain.errors import DonneesInsuffisantes
 from solida.domain.ports.audit import AuditLog
 from solida.domain.ports.core_sim import LecteurCoreSim
 from solida.domain.ports.decisions import DecisionRepository
@@ -65,7 +65,7 @@ class ScorerDemande:
     decision_repository: DecisionRepository
     audit_log: AuditLog
 
-    def previsualiser(
+    def preview(
         self,
         demande: DemandeScoring,
         entree_brute: dict[str, object],
@@ -73,7 +73,7 @@ class ScorerDemande:
         agent_nom: str,
         agent_agence_id: str | None,
     ) -> DecisionAEnregistrer:
-        """Calcule le score sans l'enregistrer — l'agent doit encore confirmer avant que
+        """Calcule le score sans l'enregistrer — l'agent doit encore confirm avant que
         quoi que ce soit ne soit écrit dans le registre des décisions."""
         decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
         self.audit_log.enregistrer_evenement(
@@ -81,7 +81,7 @@ class ScorerDemande:
         )
         return decision
 
-    def confirmer(
+    def confirm(
         self,
         demande: DemandeScoring,
         entree_brute: dict[str, object],
@@ -140,7 +140,7 @@ class ScorerDemande:
         )
         resultat_cascade = determiner_mode(contexte_cascade, ParametresCascade())
 
-        features_dict = _features_vers_dict(features_actualisees, features_solidaires.en_groupe)
+        features_dict = _features_to_dict(features_actualisees, features_solidaires.en_groupe)
         probabilite = self.scoring_model.predire(features_dict)
         contributions_log_odds = self.scoring_model.contributions(features_dict)
 

@@ -2,7 +2,7 @@ from solida.adapters.http.schemas import produits as schema_produits
 from solida.domain.entities.produit_credit import ProduitCredit
 
 
-def produit_vers_schema(produit: ProduitCredit) -> schema_produits.ProduitCredit:
+def produit_to_schema(produit: ProduitCredit) -> schema_produits.ProduitCredit:
     return schema_produits.ProduitCredit(
         produit_id=produit.produit_id,
         libelle=produit.libelle,

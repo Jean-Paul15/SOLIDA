@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OngletProduits } from "@/components/solida/OngletProduits";
-import { OngletSeuils } from "@/components/solida/OngletSeuils";
-import { OngletSimulation } from "@/components/solida/OngletSimulation";
-import { useEnregistrementPolitique } from "@/components/solida/useEnregistrementPolitique";
+import { ProductsTab } from "@/components/solida/ProductsTab";
+import { ThresholdsTab } from "@/components/solida/ThresholdsTab";
+import { SimulationTab } from "@/components/solida/SimulationTab";
+import { useSavePolicy } from "@/components/solida/useSavePolicy";
 import type { ConfigurationGrilleApi, ProduitCreditApi } from "@/lib/contracts";
-import { peutModifierGrille } from "@/lib/roles";
+import { canEditGrille } from "@/lib/roles";
 import { probabiliteDepuisScore, seuilEconomique, trancheDepuisProbabilite } from "@/lib/scorecard";
 
 interface PolitiqueCreditProps {
@@ -25,7 +25,7 @@ export function PolitiqueCredit({
   role,
   produits,
 }: PolitiqueCreditProps) {
-  const autoriseAModifier = peutModifierGrille(role);
+  const autoriseAModifier = canEditGrille(role);
   const [plafondsProduits, setPlafondsProduits] = useState<Record<string, number>>(
     configurationInitiale.progressif.plafonds_produits
   );
@@ -51,7 +51,7 @@ export function PolitiqueCredit({
   const parametresGrille = { marge, lgd, multiplicateurAccord, multiplicateurExamen };
   const seuil = seuilEconomique(parametresGrille);
 
-  const { version, enregistrementEnCours, enregistrer } = useEnregistrementPolitique(
+  const { version, enregistrementEnCours, enregistrer } = useSavePolicy(
     configurationInitiale,
     autoriseAModifier
   );
@@ -88,7 +88,7 @@ export function PolitiqueCredit({
       </TabsList>
 
       <TabsContent value="seuils">
-        <OngletSeuils
+        <ThresholdsTab
           preregl={preregl}
           onChangePreregl={setPreregl}
           marge={marge}
@@ -116,7 +116,7 @@ export function PolitiqueCredit({
       </TabsContent>
 
       <TabsContent value="produits">
-        <OngletProduits
+        <ProductsTab
           produits={produits}
           plafondsProduits={plafondsProduits}
           onChangePlafond={(produitId, valeur) =>
@@ -128,7 +128,7 @@ export function PolitiqueCredit({
       </TabsContent>
 
       <TabsContent value="simulation">
-        <OngletSimulation total={total} compte={compte} tauxApprobation={tauxApprobation} />
+        <SimulationTab total={total} compte={compte} tauxApprobation={tauxApprobation} />
       </TabsContent>
     </Tabs>
   );

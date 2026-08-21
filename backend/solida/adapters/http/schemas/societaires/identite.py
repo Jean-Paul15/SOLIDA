@@ -7,7 +7,7 @@ StatutSocietaire = Literal["actif", "inactif", "radie"]
 NiveauInstruction = Literal["aucun", "primaire", "secondaire", "superieur"]
 
 
-class ResultatRechercheSocietaire(BaseModel):
+class SocietaireSearchResult(BaseModel):
     societaire_id: str
     nom_complet: str
     numero_membre: str

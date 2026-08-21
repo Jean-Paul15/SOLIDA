@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from solida.adapters.http.auth_dependencies import require_role
-from solida.domain.erreurs import AccesRefuse
+from solida.domain.errors import AccesRefuse
 from solida.infrastructure.application_fastapi import app
 
 
@@ -41,9 +41,9 @@ pytestmark = pytest.mark.skipif(
 def comptes_demo_provisionnes() -> None:
     """Rejoue le provisioning avant ce module : les tests supposent l'état documenté par le
     README (migrations puis `cli_provisionner_comptes demo`), pas seulement les migrations."""
-    from solida.infrastructure.cli_provisionner_comptes import provisionner_demo
+    from solida.infrastructure.cli_provisionner_comptes import provision_demo
 
-    provisionner_demo()
+    provision_demo()
 
 
 @pytest.fixture
@@ -53,18 +53,18 @@ def client() -> TestClient:
 
 def test_connexion_avec_identifiants_valides_pose_le_cookie(client: TestClient) -> None:
     reponse = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "agent.be", "mot_de_passe": "solida-demo"},
     )
 
     # Compte de démo provisionné via `cli_provisionner_comptes demo`, exempté du changement
-    # de mot de passe forcé (voir provisionner_demo) : False, pas True.
+    # de mot de passe forcé (voir provision_demo) : False, pas True.
     assert reponse.status_code == 200
     assert reponse.json() == {
-        "nom": "Agent Bè",
+        "name": "Agent Bè",
         "role": "agent",
         "agence": "CAI-00",
-        "doit_changer_mot_de_passe": False,
+        "must_change_password": False,
     }
     assert "solida_session" in reponse.cookies
 
@@ -72,10 +72,10 @@ def test_connexion_avec_identifiants_valides_pose_le_cookie(client: TestClient) 
 def test_connexion_avec_mauvais_mot_de_passe_refuse(client: TestClient) -> None:
     # Pas "agent.be" : cette identifiant est partagé par de nombreux autres tests qui s'y
     # connectent avec succès, un échec de trop l'exposerait au verrouillage après 5 échecs.
-    from solida.infrastructure.cli_provisionner_comptes import creer_compte
+    from solida.infrastructure.cli_provisionner_comptes import create_account
 
     identifiant = f"compte.mdp.incorrect.test.{uuid.uuid4().hex[:8]}"
-    creer_compte(
+    create_account(
         identifiant=identifiant,
         nom_complet="Compte Test Mot De Passe Incorrect",
         role="agent",
@@ -84,7 +84,7 @@ def test_connexion_avec_mauvais_mot_de_passe_refuse(client: TestClient) -> None:
     )
 
     reponse = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
     )
 
@@ -94,7 +94,7 @@ def test_connexion_avec_mauvais_mot_de_passe_refuse(client: TestClient) -> None:
 def test_connexion_avec_identifiant_inconnu_refuse(client: TestClient) -> None:
     # Identifiant unique par exécution, même raison que test_connexion_se_verrouille_apres_...
     reponse = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={
             "identifiant": f"nexiste.pas.{uuid.uuid4().hex[:8]}",
             "mot_de_passe": "solida-demo",
@@ -106,34 +106,34 @@ def test_connexion_avec_identifiant_inconnu_refuse(client: TestClient) -> None:
 
 def test_moi_relit_lutilisateur_depuis_le_cookie_de_connexion(client: TestClient) -> None:
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "agent.agoe", "mot_de_passe": "solida-demo"},
     )
 
-    reponse = client.get("/api/v1/auth/moi")
+    reponse = client.get("/api/v1/auth/me")
 
     assert reponse.status_code == 200
     assert reponse.json() == {
-        "nom": "Agent Agoè",
+        "name": "Agent Agoè",
         "role": "agent",
         "agence": "CAI-01",
-        "doit_changer_mot_de_passe": False,
+        "must_change_password": False,
     }
 
 
 def test_deconnexion_revoque_le_jeton_pas_seulement_le_cookie(client: TestClient) -> None:
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "agent.be", "mot_de_passe": "solida-demo"},
     )
     jeton = client.cookies.get("solida_session")
     assert jeton is not None
 
-    reponse_deconnexion = client.post("/api/v1/auth/deconnexion")
+    reponse_deconnexion = client.post("/api/v1/auth/logout")
     assert reponse_deconnexion.status_code == 200
 
     client.cookies.set("solida_session", jeton)
-    reponse_moi = client.get("/api/v1/auth/moi")
+    reponse_moi = client.get("/api/v1/auth/me")
     assert reponse_moi.status_code == 401
 
 
@@ -143,13 +143,13 @@ def test_connexion_se_verrouille_apres_cinq_echecs(client: TestClient) -> None:
     identifiant = f"compte.verrouillage.test.{uuid.uuid4().hex[:8]}"
     for _ in range(5):
         reponse = client.post(
-            "/api/v1/auth/connexion",
+            "/api/v1/auth/login",
             json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
         )
         assert reponse.status_code == 401
 
     reponse_bloquee = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
     )
     assert reponse_bloquee.status_code == 429
@@ -165,21 +165,21 @@ def test_connexion_se_verrouille_par_identifiant_et_ip_pas_identifiant_seul(
     identifiant = f"compte.verrouillage.ip.test.{uuid.uuid4().hex[:8]}"
     for _ in range(5):
         reponse = client.post(
-            "/api/v1/auth/connexion",
+            "/api/v1/auth/login",
             json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
             headers={"X-Real-IP": "203.0.113.10"},
         )
         assert reponse.status_code == 401
 
     bloquee_meme_ip = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
         headers={"X-Real-IP": "203.0.113.10"},
     )
     assert bloquee_meme_ip.status_code == 429
 
     pas_bloquee_autre_ip = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "mauvais"},
         headers={"X-Real-IP": "203.0.113.99"},
     )
@@ -189,7 +189,7 @@ def test_connexion_se_verrouille_par_identifiant_et_ip_pas_identifiant_seul(
 def test_une_nouvelle_connexion_revoque_la_precedente() -> None:
     premier_client = TestClient(app)
     premier_client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "administrateur.systeme", "mot_de_passe": "solida-demo"},
     )
     jeton_initial = premier_client.cookies.get("solida_session")
@@ -197,12 +197,12 @@ def test_une_nouvelle_connexion_revoque_la_precedente() -> None:
 
     second_client = TestClient(app)
     second_client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "administrateur.systeme", "mot_de_passe": "solida-demo"},
     )
 
     premier_client.cookies.set("solida_session", jeton_initial)
-    reponse = premier_client.get("/api/v1/auth/moi")
+    reponse = premier_client.get("/api/v1/auth/me")
     assert reponse.status_code == 401
 
 
@@ -210,12 +210,12 @@ def test_changer_mot_de_passe_avec_mot_de_passe_actuel_incorrect_refuse(
     client: TestClient,
 ) -> None:
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "auditeur.interne", "mot_de_passe": "solida-demo"},
     )
 
     reponse = client.post(
-        "/api/v1/auth/changer-mot-de-passe",
+        "/api/v1/auth/change-password",
         json={"mot_de_passe_actuel": "mauvais", "nouveau_mot_de_passe": "un-nouveau-mdp-solide"},
     )
 
@@ -224,12 +224,12 @@ def test_changer_mot_de_passe_avec_mot_de_passe_actuel_incorrect_refuse(
 
 def test_changer_mot_de_passe_refuse_un_mot_de_passe_trop_court(client: TestClient) -> None:
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "auditeur.interne", "mot_de_passe": "solida-demo"},
     )
 
     reponse = client.post(
-        "/api/v1/auth/changer-mot-de-passe",
+        "/api/v1/auth/change-password",
         json={"mot_de_passe_actuel": "solida-demo", "nouveau_mot_de_passe": "court"},
     )
 
@@ -238,12 +238,12 @@ def test_changer_mot_de_passe_refuse_un_mot_de_passe_trop_court(client: TestClie
 
 def test_changer_mot_de_passe_reussit_et_leve_le_drapeau(client: TestClient) -> None:
     # Compte jetable, identifiant unique par exécution : la réussite du changement modifie
-    # durablement le mot de passe (creer_compte ne le réémet jamais sur un conflit), un
+    # durablement le mot de passe (create_account ne le réémet jamais sur un conflit), un
     # identifiant fixe casserait un second lancement de la suite avec l'ancien mot de passe.
-    from solida.infrastructure.cli_provisionner_comptes import creer_compte
+    from solida.infrastructure.cli_provisionner_comptes import create_account
 
     identifiant = f"compte.changement.test.{uuid.uuid4().hex[:8]}"
-    creer_compte(
+    create_account(
         identifiant=identifiant,
         nom_complet="Compte Test Changement",
         role="agent",
@@ -251,12 +251,12 @@ def test_changer_mot_de_passe_reussit_et_leve_le_drapeau(client: TestClient) -> 
         mot_de_passe="solida-demo",
     )
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "solida-demo"},
     )
 
     reponse = client.post(
-        "/api/v1/auth/changer-mot-de-passe",
+        "/api/v1/auth/change-password",
         json={
             "mot_de_passe_actuel": "solida-demo",
             "nouveau_mot_de_passe": "un-nouveau-mdp-solide",
@@ -265,11 +265,11 @@ def test_changer_mot_de_passe_reussit_et_leve_le_drapeau(client: TestClient) -> 
     assert reponse.status_code == 200
 
     reponse_connexion = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "un-nouveau-mdp-solide"},
     )
     assert reponse_connexion.status_code == 200
-    assert reponse_connexion.json()["doit_changer_mot_de_passe"] is False
+    assert reponse_connexion.json()["must_change_password"] is False
 
 
 def test_une_session_inactive_depuis_plus_de_15_minutes_expire(client: TestClient) -> None:
@@ -278,7 +278,7 @@ def test_une_session_inactive_depuis_plus_de_15_minutes_expire(client: TestClien
     from solida.infrastructure.database import solida_engine
 
     client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": "superviseur.reseau", "mot_de_passe": "solida-demo"},
     )
     jeton = client.cookies.get("solida_session")
@@ -293,27 +293,27 @@ def test_une_session_inactive_depuis_plus_de_15_minutes_expire(client: TestClien
             {"jeton": jeton},
         )
 
-    reponse = client.get("/api/v1/auth/moi")
+    reponse = client.get("/api/v1/auth/me")
     assert reponse.status_code == 401
 
 
 def test_un_compte_bloque_ne_peut_plus_se_connecter(client: TestClient) -> None:
     # Identifiant unique par exécution : chaque tentative sur un compte bloqué journalise
     # un échec, un identifiant fixe finirait par déclencher le verrouillage lui-même.
-    from solida.infrastructure.cli_provisionner_comptes import bloquer_compte, creer_compte
+    from solida.infrastructure.cli_provisionner_comptes import lock_account, create_account
 
     identifiant = f"compte.blocage.test.{uuid.uuid4().hex[:8]}"
-    creer_compte(
+    create_account(
         identifiant=identifiant,
         nom_complet="Compte Test Blocage",
         role="agent",
         agence_id="CAI-00",
         mot_de_passe="solida-demo",
     )
-    bloquer_compte(identifiant)
+    lock_account(identifiant)
 
     reponse = client.post(
-        "/api/v1/auth/connexion",
+        "/api/v1/auth/login",
         json={"identifiant": identifiant, "mot_de_passe": "solida-demo"},
     )
     assert reponse.status_code == 401

@@ -7,7 +7,7 @@ from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.domain.entities.groupe import GroupeCaution
 from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
-from solida.domain.erreurs import (
+from solida.domain.errors import (
     AccesRefuse,
     DonneesInsuffisantes,
     DureeDemandeeInvalide,
@@ -267,35 +267,35 @@ def test_previsualiser_societaire_introuvable() -> None:
     cas_usage, _, _ = _cas_usage(societaire=None)
 
     with pytest.raises(SocietaireIntrouvable):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_acces_refuse_hors_agence() -> None:
     cas_usage, _, _ = _cas_usage(societaire=_societaire(agence="CAI-00"))
 
     with pytest.raises(AccesRefuse):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-07")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-07")
 
 
 def test_previsualiser_refuse_un_credit_en_cours() -> None:
     cas_usage, _, _ = _cas_usage(societaire=_societaire(a_credit_en_cours=True))
 
     with pytest.raises(SurEndettement):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_un_multi_octroi() -> None:
     cas_usage, _, _ = _cas_usage(decision_existante=True)
 
     with pytest.raises(SurEndettement):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_des_donnees_insuffisantes() -> None:
     cas_usage, _, _ = _cas_usage(individuelles=None)
 
     with pytest.raises(DonneesInsuffisantes):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_un_produit_absent_de_la_grille() -> None:
@@ -310,28 +310,28 @@ def test_previsualiser_refuse_un_produit_absent_de_la_grille() -> None:
     cas_usage, _, _ = _cas_usage(configuration=configuration)
 
     with pytest.raises(ProduitIntrouvable):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_un_montant_au_dela_du_plafond() -> None:
     cas_usage, _, _ = _cas_usage()
 
     with pytest.raises(MontantDemandeInvalide):
-        cas_usage.previsualiser(_demande(montant_demande=600000), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(montant_demande=600000), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_un_produit_absent_du_catalogue() -> None:
     cas_usage, _, _ = _cas_usage(produits=[])
 
     with pytest.raises(ProduitIntrouvable):
-        cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_une_duree_hors_bornes() -> None:
     cas_usage, _, _ = _cas_usage(produits=[_produit(duree_min_mois=3, duree_max_mois=24)])
 
     with pytest.raises(DureeDemandeeInvalide):
-        cas_usage.previsualiser(_demande(duree_demandee_mois=36), {}, "agent-1", "Agent", "CAI-00")
+        cas_usage.preview(_demande(duree_demandee_mois=36), {}, "agent-1", "Agent", "CAI-00")
 
 
 # --- ScorerDemande : chemin nominal ---
@@ -340,7 +340,7 @@ def test_previsualiser_refuse_une_duree_hors_bornes() -> None:
 def test_previsualiser_accord_nominal_ne_persiste_rien() -> None:
     cas_usage, depot_decisions, journal = _cas_usage(probabilite=0.05)
 
-    decision = cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+    decision = cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
     assert decision.tranche == "accord"
     assert depot_decisions.decisions_enregistrees == []
@@ -350,7 +350,7 @@ def test_previsualiser_accord_nominal_ne_persiste_rien() -> None:
 def test_confirmer_accord_persiste_et_journalise() -> None:
     cas_usage, depot_decisions, journal = _cas_usage(probabilite=0.05)
 
-    decision = cas_usage.confirmer(_demande(), {}, "agent-1", "Agent", "CAI-00")
+    decision = cas_usage.confirm(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
     assert decision.tranche == "accord"
     assert len(depot_decisions.decisions_enregistrees) == 1
@@ -360,6 +360,6 @@ def test_confirmer_accord_persiste_et_journalise() -> None:
 def test_previsualiser_refus_a_probabilite_elevee() -> None:
     cas_usage, _, _ = _cas_usage(probabilite=0.5)
 
-    decision = cas_usage.previsualiser(_demande(), {}, "agent-1", "Agent", "CAI-00")
+    decision = cas_usage.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
     assert decision.tranche == "refus"

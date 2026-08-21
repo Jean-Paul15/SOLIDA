@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from solida.domain.erreurs import ScorecardImmuable
+from solida.domain.errors import ScorecardImmuable
 from solida.domain.ports.grille import GrilleRepository
 from solida.domain.values.grille import ConfigurationGrille
 
@@ -9,7 +9,7 @@ from solida.domain.values.grille import ConfigurationGrille
 class LireGrilleActive:
     grille_repository: GrilleRepository
 
-    def executer(self) -> ConfigurationGrille:
+    def execute(self) -> ConfigurationGrille:
         return self.grille_repository.lire_active()
 
 
@@ -22,7 +22,7 @@ class ModifierGrille:
 
     grille_repository: GrilleRepository
 
-    def executer(self, nouvelle_configuration: ConfigurationGrille) -> ConfigurationGrille:
+    def execute(self, nouvelle_configuration: ConfigurationGrille) -> ConfigurationGrille:
         active = self.grille_repository.lire_active()
         nouveau = nouvelle_configuration.scorecard
         actuel = active.scorecard

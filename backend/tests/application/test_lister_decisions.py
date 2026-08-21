@@ -97,7 +97,7 @@ def test_decision_hors_agence_de_lagent_est_exclue_meme_si_le_depot_la_renvoie()
         lecteur=_LecteurFactice({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
     )
 
-    affichees, total = cas_usage.executer("CAI-00", limite=20, decalage=0)
+    affichees, total = cas_usage.execute("CAI-00", limite=20, decalage=0)
 
     assert [a.decision.decision_id for a in affichees] == ["D1"]
     assert total == 2  # le compte brut du dépôt n'est pas corrigé, limite connue (voir commentaire)
@@ -113,6 +113,6 @@ def test_superviseur_sans_filtre_agence_voit_tout() -> None:
         lecteur=_LecteurFactice({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
     )
 
-    affichees, _ = cas_usage.executer(None, limite=20, decalage=0)
+    affichees, _ = cas_usage.execute(None, limite=20, decalage=0)
 
     assert [a.decision.decision_id for a in affichees] == ["D1", "D2"]

@@ -1,22 +1,22 @@
 "use client";
 
 import type { ScoringResult } from "@/lib/contracts";
-import { FiltresRegistre } from "./FiltresRegistre";
-import { TableauDecisions } from "./TableauDecisions";
-import { useFiltresRegistre } from "./useFiltresRegistre";
+import { RegistryFilters } from "./RegistryFilters";
+import { DecisionsTable } from "./DecisionsTable";
+import { useRegistryFilters } from "./useRegistryFilters";
 
 export interface DecisionRegistreVue {
   decisionId: string;
   societaireId: string;
   societaireNom: string;
   agence: string;
-  resultat: ScoringResult;
-  horodatage: string;
-  agentNom: string;
+  result: ScoringResult;
+  timestamp: string;
+  agentName: string;
   /** Toujours `undefined` : la finalisation d'une décision (montant réellement accordé)
    * n'est pas encore modélisée côté backend (`decision_finale`, voir
    * docs/backend/02-persistance-et-migrations.md). */
-  montantAccorde?: number;
+  grantedAmount?: number;
 }
 
 interface RegistreDecisionsProps {
@@ -35,12 +35,12 @@ export function RegistreDecisions({ decisions }: RegistreDecisionsProps) {
     agents,
     tranche,
     setTranche,
-    filtrees,
-  } = useFiltresRegistre(decisions);
+    filtered,
+  } = useRegistryFilters(decisions);
 
   return (
     <div className="flex flex-col gap-4">
-      <FiltresRegistre
+      <RegistryFilters
         periode={periode}
         setPeriode={setPeriode}
         agence={agence}
@@ -52,7 +52,7 @@ export function RegistreDecisions({ decisions }: RegistreDecisionsProps) {
         tranche={tranche}
         setTranche={setTranche}
       />
-      <TableauDecisions filtrees={filtrees} />
+      <DecisionsTable filtered={filtered} />
     </div>
   );
 }

@@ -10,7 +10,7 @@ class ListerDecisions:
     decision_repository: DecisionRepository
     lecteur: LecteurCoreSim
 
-    def executer(
+    def execute(
         self, agence_id: str | None, limite: int, decalage: int
     ) -> tuple[list[DecisionRegistreAffichee], int]:
         decisions = self.decision_repository.lister(agence_id, limite, decalage)

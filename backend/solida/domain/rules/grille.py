@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from solida.domain.erreurs import GrilleInvalide
+from solida.domain.errors import GrilleInvalide
 from solida.domain.values.probabilite import ProbabiliteDefaut
 from solida.domain.values.tranche import TrancheDecision
 

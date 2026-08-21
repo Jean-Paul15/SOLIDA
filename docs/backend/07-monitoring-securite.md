@@ -106,7 +106,7 @@ manque caché.
 
 ## Comptes bloqués — visibilité admin
 
-`bloquer_compte`/`debloquer_compte` restent **volontairement CLI-only**, choix de sécurité
+`lock_account`/`unlock_account` restent **volontairement CLI-only**, choix de sécurité
 délibéré déjà en place avant ce travail (« surface d'attaque nulle sur la gestion des comptes »,
 `cli_provisionner_comptes.py`) : décision confirmée, pas remise en cause. Un administrateur
 consulte les comptes désactivés via `lister-bloques` (CLI, lecture seule, ajouté ici) — pas via

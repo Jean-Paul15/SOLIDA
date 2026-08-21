@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { EnTete } from "@/components/solida/EnTete";
+import { Header } from "@/components/solida/Header";
 import type { DecisionRegistreVue } from "@/components/solida/RegistreDecisions";
 import { RegistreDecisions } from "@/components/solida/RegistreDecisions";
 import { fetchBackend } from "@/lib/backend";
@@ -22,14 +22,14 @@ export default async function PageRegistre() {
     societaireId: d.societaire_id,
     societaireNom: d.societaire_nom,
     agence: d.agence,
-    resultat: d.resultat,
-    horodatage: d.horodatage,
-    agentNom: d.agent_nom,
+    result: d.resultat,
+    timestamp: d.horodatage,
+    agentName: d.agent_nom,
   }));
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
+      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-4 px-6 py-6">
         <Link
           href="/"

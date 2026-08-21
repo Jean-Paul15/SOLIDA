@@ -22,39 +22,39 @@ def _generer_lectures(connexion: sa.Connection, acteur_id: str, nombre: int) -> 
 
 
 def test_detecter_signale_un_acteur_au_dessus_du_seuil() -> None:
-    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, detecter
+    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, detect
 
     acteur_id = f"test-volume-{uuid.uuid4().hex[:8]}"
     moteur = sa.create_engine(os.environ["SOLIDA_DATABASE_URL"])
     with moteur.begin() as connexion:
         _generer_lectures(connexion, acteur_id, SEUIL_LECTURES + 1)
 
-    resultats = {a.acteur_id: a.nombre_lectures for a in detecter()}
+    resultats = {a.acteur_id: a.nombre_lectures for a in detect()}
     assert acteur_id in resultats
     assert resultats[acteur_id] == SEUIL_LECTURES + 1
 
 
 def test_detecter_ne_signale_pas_un_acteur_sous_le_seuil() -> None:
-    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, detecter
+    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, detect
 
     acteur_id = f"test-volume-{uuid.uuid4().hex[:8]}"
     moteur = sa.create_engine(os.environ["SOLIDA_DATABASE_URL"])
     with moteur.begin() as connexion:
         _generer_lectures(connexion, acteur_id, SEUIL_LECTURES)
 
-    resultats = {a.acteur_id for a in detecter()}
+    resultats = {a.acteur_id for a in detect()}
     assert acteur_id not in resultats
 
 
 def test_alerter_ecrit_une_entree_journal_audit_sans_toucher_au_compte() -> None:
-    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, alerter
+    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, alert
 
     acteur_id = f"test-volume-{uuid.uuid4().hex[:8]}"
     moteur = sa.create_engine(os.environ["SOLIDA_DATABASE_URL"])
     with moteur.begin() as connexion:
         _generer_lectures(connexion, acteur_id, SEUIL_LECTURES + 1)
 
-    depasses = alerter()
+    depasses = alert()
     assert any(a.acteur_id == acteur_id for a in depasses)
 
     with moteur.connect() as connexion:
@@ -70,14 +70,14 @@ def test_alerter_ecrit_une_entree_journal_audit_sans_toucher_au_compte() -> None
 
 
 def test_alerter_essai_a_blanc_necrit_rien() -> None:
-    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, alerter
+    from solida.batch.jobs.detecter_lectures_anormales import SEUIL_LECTURES, alert
 
     acteur_id = f"test-volume-{uuid.uuid4().hex[:8]}"
     moteur = sa.create_engine(os.environ["SOLIDA_DATABASE_URL"])
     with moteur.begin() as connexion:
         _generer_lectures(connexion, acteur_id, SEUIL_LECTURES + 1)
 
-    alerter(essai_a_blanc=True)
+    alert(essai_a_blanc=True)
 
     with moteur.connect() as connexion:
         alerte = connexion.execute(

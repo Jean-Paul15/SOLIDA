@@ -13,10 +13,10 @@ async function post(path: string, input: ScoringInput): Promise<ScoringResult> {
 
 /** Calcule le score sans l'enregistrer : l'agent doit encore confirmer explicitement. */
 export function previewScore(input: ScoringInput): Promise<ScoringResult> {
-  return post("/api/v1/scoring/previsualiser", input);
+  return post("/api/v1/scoring/preview", input);
 }
 
 /** Persiste la décision pour de bon, à n'appeler qu'après validation explicite de l'agent. */
 export function confirmDecision(input: ScoringInput): Promise<ScoringResult> {
-  return post("/api/v1/scoring/confirmer", input);
+  return post("/api/v1/scoring/confirm", input);
 }

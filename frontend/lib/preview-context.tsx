@@ -4,31 +4,29 @@ import { createContext, useContext, useState } from "react";
 import type { ScoringInput, ScoringResult } from "@/lib/contracts";
 
 interface Preview {
-  entree: ScoringInput;
-  resultat: ScoringResult;
+  input: ScoringInput;
+  result: ScoringResult;
   societaireNom: string;
 }
 
 interface PreviewContextValue {
-  previsualisation: Preview | null;
-  definirPrevisualisation: (p: Preview | null) => void;
+  preview: Preview | null;
+  setPreview: (p: Preview | null) => void;
 }
 
 const PreviewContext = createContext<PreviewContextValue | null>(null);
 
 export function PreviewProvider({ children }: { children: React.ReactNode }) {
-  const [previsualisation, definirPrevisualisation] = useState<Preview | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   return (
-    <PreviewContext.Provider value={{ previsualisation, definirPrevisualisation }}>
-      {children}
-    </PreviewContext.Provider>
+    <PreviewContext.Provider value={{ preview, setPreview }}>{children}</PreviewContext.Provider>
   );
 }
 
 export function usePreview(): PreviewContextValue {
-  const contexte = useContext(PreviewContext);
-  if (!contexte) {
+  const context = useContext(PreviewContext);
+  if (!context) {
     throw new Error("usePreview doit être utilisé sous PreviewProvider.");
   }
-  return contexte;
+  return context;
 }

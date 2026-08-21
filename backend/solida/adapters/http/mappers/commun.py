@@ -3,7 +3,7 @@ from solida.adapters.http.schemas import scoring as schema_scoring
 from solida.domain.values.points_variable import PointsVariable
 
 
-def _decomposition_vers_schema(
+def _decomposition_to_schema(
     decomposition: list[PointsVariable], features_utilisees: dict[str, float]
 ) -> list[schema_scoring.ContributionVariable]:
     contributions = []

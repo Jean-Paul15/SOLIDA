@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from solida.domain.ports.audit import AuditLog
 from solida.domain.ports.core_sim import LecteurCoreSim
-from solida.domain.values.resultat_recherche import ResultatRechercheSocietaire
+from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 TYPE_EVENEMENT_CONSULTATION = "consultation_dossier"
 LIMITE_PAR_DEFAUT = 5
@@ -17,9 +17,9 @@ class ListerSocietairesRecents:
     lecteur: LecteurCoreSim
     audit_log: AuditLog
 
-    def executer(
+    def execute(
         self, agent_id: str, limite: int = LIMITE_PAR_DEFAUT
-    ) -> list[ResultatRechercheSocietaire]:
+    ) -> list[SocietaireSearchResult]:
         identifiants = self.audit_log.lister_objets_recents(
             TYPE_EVENEMENT_CONSULTATION, agent_id, limite
         )
@@ -30,7 +30,7 @@ class ListerSocietairesRecents:
                 continue
             credits = self.lecteur.charger_historique_credit(societaire_id)
             resultats.append(
-                ResultatRechercheSocietaire(
+                SocietaireSearchResult(
                     societaire_id=societaire.societaire_id,
                     nom_complet=societaire.nom_complet,
                     numero_membre=societaire.numero_membre,

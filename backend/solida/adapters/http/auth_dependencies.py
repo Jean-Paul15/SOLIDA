@@ -1,4 +1,4 @@
-"""Dépendances FastAPI d'authentification exposées aux routeurs HTTP (`adapters/http/`).
+"""Dépendances FastAPI d'authentification exposées aux routers HTTP (`adapters/http/`).
 
 `current_active_user` est un stub : sa résolution réelle (session DB, cookie, jeton) exige
 des bibliothèques techniques (SQLAlchemy, fastapi_users) que `domain`/`adapters` n'ont pas le
@@ -7,23 +7,23 @@ remplace ce stub par l'implémentation réelle (`infrastructure/auth.py`) via
 `app.dependency_overrides` au moment de l'assemblage de l'application — seul point qui connaît
 les deux côtés. `require_role` ne dépend que de ce stub (jamais directement d'infrastructure) :
 un seul override suffit à couvrir toutes les variantes de rôles déjà construites par les
-routeurs.
+routers.
 """
 
 from collections.abc import Callable, Coroutine
 
 from fastapi import Depends, Request
 
-from solida.adapters.persistence.modeles_sqlalchemy import Utilisateur
-from solida.domain.erreurs import AccesRefuse
+from solida.adapters.persistence.orm_models import User
+from solida.domain.errors import AccesRefuse
 
 
-def current_active_user() -> Utilisateur:
+def current_active_user() -> User:
     """Stub remplacé par `infrastructure.auth.current_active_user` à l'assemblage de l'app."""
     raise NotImplementedError
 
 
-def require_role(*allowed_roles: str) -> Callable[..., Coroutine[None, None, Utilisateur]]:
+def require_role(*allowed_roles: str) -> Callable[..., Coroutine[None, None, User]]:
     """Dépendance FastAPI qui vérifie le rôle à l'endpoint.
 
     Ne remplace pas la vérification d'agence dans le cas d'usage — les deux
@@ -31,10 +31,10 @@ def require_role(*allowed_roles: str) -> Callable[..., Coroutine[None, None, Uti
     la liste avant même d'atteindre le cas d'usage.
     """
 
-    async def dependency(utilisateur: Utilisateur = Depends(current_active_user)) -> Utilisateur:
-        if utilisateur.role not in allowed_roles:
-            raise AccesRefuse(f"Le rôle '{utilisateur.role}' n'a pas accès à cette action.")
-        return utilisateur
+    async def dependency(user: User = Depends(current_active_user)) -> User:
+        if user.role not in allowed_roles:
+            raise AccesRefuse(f"Le rôle '{user.role}' n'a pas accès à cette action.")
+        return user
 
     return dependency
 

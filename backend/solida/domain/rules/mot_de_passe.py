@@ -1,4 +1,4 @@
-from solida.domain.erreurs import MotDePasseInvalide
+from solida.domain.errors import MotDePasseInvalide
 
 LONGUEUR_MINIMALE = 8
 """NIST SP 800-63B rev.4 : 8 caractères est le plancher SHALL, quel que soit le nombre de

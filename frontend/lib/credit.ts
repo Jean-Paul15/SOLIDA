@@ -7,7 +7,7 @@
  *
  * echeance = montant × [i × (1+i)^n] / [(1+i)^n − 1], où i est le taux mensuel.
  */
-export function calculerEcheanceMensuelle(
+export function calculateMonthlyInstallment(
   montantDemande: number,
   dureeMois: number,
   tauxMensuel: number
@@ -24,7 +24,7 @@ export function calculerEcheanceMensuelle(
 // d'une table de taux par produit de crédit : à remplacer dès qu'elle existe.
 export const TAUX_MENSUEL_DEMONSTRATION = 0.18 / 12;
 
-export function calculerTauxEndettement(
+export function calculateDebtRatio(
   chargesMensuelles: number,
   revenuMensuel: number,
   echeanceMensuelle: number

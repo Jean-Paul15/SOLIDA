@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 
-from solida.domain.erreurs import InvariantScoreViole
+from solida.domain.errors import InvariantScoreViole
 from solida.domain.values.points_variable import PointsVariable
 from solida.domain.values.probabilite import ProbabiliteDefaut
 from solida.domain.values.score import Score

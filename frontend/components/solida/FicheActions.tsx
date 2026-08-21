@@ -12,19 +12,19 @@ interface FicheActionsProps {
 }
 
 export function FicheActions({ decisionId }: FicheActionsProps) {
-  const [archivageEnCours, setArchivageEnCours] = useState(false);
-  const [archivee, setArchivee] = useState(false);
+  const [archivingInProgress, setArchivingInProgress] = useState(false);
+  const [archived, setArchived] = useState(false);
 
-  async function surArchiver() {
-    setArchivageEnCours(true);
+  async function handleArchive() {
+    setArchivingInProgress(true);
     try {
       await archiveFiche(decisionId);
       toast.success("Fiche archivée.");
-      setArchivee(true);
+      setArchived(true);
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "L'archivage a échoué.");
     } finally {
-      setArchivageEnCours(false);
+      setArchivingInProgress(false);
     }
   }
 
@@ -45,15 +45,15 @@ export function FicheActions({ decisionId }: FicheActionsProps) {
       <Button
         variant="outline"
         className="justify-start gap-2"
-        onClick={surArchiver}
-        disabled={archivageEnCours || archivee}
+        onClick={handleArchive}
+        disabled={archivingInProgress || archived}
       >
-        {archivageEnCours ? (
+        {archivingInProgress ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <Save className="size-4" />
         )}
-        {archivee ? "Archivée" : "Archiver au dossier"}
+        {archived ? "Archivée" : "Archiver au dossier"}
       </Button>
     </div>
   );

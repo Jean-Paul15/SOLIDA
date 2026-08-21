@@ -2,16 +2,16 @@ import { AlertTriangle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { EnTete } from "@/components/solida/EnTete";
-import { MouvementsEpargne } from "@/components/solida/MouvementsEpargne";
+import { Header } from "@/components/solida/Header";
+import { SavingsMovements } from "@/components/solida/SavingsMovements";
 import { NouvelleDemandeSheet } from "@/components/solida/NouvelleDemandeSheet";
-import { PanneauActiviteEconomique } from "@/components/solida/PanneauActiviteEconomique";
-import { PanneauGarantie } from "@/components/solida/PanneauGarantie";
-import { PanneauProfil } from "@/components/solida/PanneauProfil";
-import { TableauHistoriqueCredit } from "@/components/solida/TableauHistoriqueCredit";
+import { EconomicActivityPanel } from "@/components/solida/EconomicActivityPanel";
+import { GuaranteePanel } from "@/components/solida/GuaranteePanel";
+import { ProfilePanel } from "@/components/solida/ProfilePanel";
+import { CreditHistoryTable } from "@/components/solida/CreditHistoryTable";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ProduitCreditApi } from "@/lib/contracts";
-import { peutScorer } from "@/lib/roles";
+import { canScore } from "@/lib/roles";
 import {
   enforcePasswordUpToDate,
   readSession,
@@ -46,7 +46,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
+      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-6 px-6 py-6">
         <Link
@@ -77,7 +77,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
               {identite.agence} · {activite.secteur}
             </span>
           </div>
-          {peutScorer(session?.role) && (
+          {canScore(session?.role) && (
             <NouvelleDemandeSheet
               societaireId={id}
               nomComplet={identite.nom_complet}
@@ -100,16 +100,16 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
 
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-5 flex flex-col gap-4">
-            <PanneauProfil identite={identite} activite={activite} />
-            <PanneauActiviteEconomique activite={activite} />
+            <ProfilePanel identite={identite} activite={activite} />
+            <EconomicActivityPanel activite={activite} />
           </div>
 
           <div className="col-span-4">
-            <MouvementsEpargne epargne={epargne} />
+            <SavingsMovements epargne={epargne} />
           </div>
 
           <div className="col-span-3">
-            <PanneauGarantie
+            <GuaranteePanel
               segment={identite.segment}
               groupe={groupe}
               societaireId={id}
@@ -120,7 +120,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
 
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium text-neutre-500">Historique de crédit</span>
-          <TableauHistoriqueCredit historique={historique_credit} produits={produits} />
+          <CreditHistoryTable historique={historique_credit} produits={produits} />
         </div>
 
         <span className="text-xs text-neutre-500">

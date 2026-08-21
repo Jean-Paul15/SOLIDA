@@ -2,7 +2,7 @@ import pytest
 
 from solida.application.use_cases.scorer_demande_features import (
     _actualiser_features,
-    _features_vers_dict,
+    _features_to_dict,
     _revenu_effectif,
 )
 from solida.domain.values.demande import ActualisationSituation, DemandeScoring
@@ -89,20 +89,20 @@ def test_actualiser_features_utilise_les_charges_et_personnes_a_charge_actualise
     assert actualisees.nb_personnes_a_charge == 4
 
 
-# --- _features_vers_dict ---
+# --- _features_to_dict ---
 
 
-def test_features_vers_dict_omet_les_champs_none() -> None:
+def test_features_to_dict_omet_les_champs_none() -> None:
     features = _features_individuelles(max_jours_retard_historique=None, montant_max_rembourse=None)
 
-    valeurs = _features_vers_dict(features, en_groupe=False)
+    valeurs = _features_to_dict(features, en_groupe=False)
 
     assert "max_jours_retard_historique" not in valeurs
     assert "montant_max_rembourse" not in valeurs
     assert valeurs["en_groupe"] == 0.0
 
 
-def test_features_vers_dict_marque_en_groupe() -> None:
-    valeurs = _features_vers_dict(_features_individuelles(), en_groupe=True)
+def test_features_to_dict_marque_en_groupe() -> None:
+    valeurs = _features_to_dict(_features_individuelles(), en_groupe=True)
 
     assert valeurs["en_groupe"] == 1.0

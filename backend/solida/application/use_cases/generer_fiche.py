@@ -12,7 +12,7 @@ class GenererFiche:
     decision_repository: DecisionRepository
     lecteur: LecteurCoreSim
 
-    def executer(self, decision_id: str) -> tuple[DecisionEnregistree, EnTeteFiche] | None:
+    def execute(self, decision_id: str) -> tuple[DecisionEnregistree, EnTeteFiche] | None:
         decision = self.decision_repository.lire(decision_id)
         if decision is None:
             return None

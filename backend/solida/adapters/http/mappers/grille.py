@@ -2,7 +2,7 @@ from solida.adapters.http.schemas import grille as schema_grille
 from solida.domain.values.grille import ConfigurationGrille
 
 
-def grille_vers_schema(configuration: ConfigurationGrille) -> schema_grille.ConfigurationGrille:
+def grille_to_schema(configuration: ConfigurationGrille) -> schema_grille.ConfigurationGrille:
     return schema_grille.ConfigurationGrille(
         version_grille=configuration.version_grille,
         grille=schema_grille.ParametresGrille(

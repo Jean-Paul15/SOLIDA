@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EnTete } from "@/components/solida/EnTete";
+import { Header } from "@/components/solida/Header";
 import { FicheApercu } from "@/components/solida/FicheApercu";
 import { FicheActions } from "@/components/solida/FicheActions";
 import { fetchBackend } from "@/lib/backend";
@@ -36,7 +36,7 @@ export default async function PageFiche({ params }: PageFicheProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <EnTete agence={session?.agence} utilisateur={session?.nom} role={session?.role} />
+      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
       <div className="mx-auto w-full max-w-[1000px] px-6 pt-4">
         <Link
           href={`/scoring/${decisionId}`}

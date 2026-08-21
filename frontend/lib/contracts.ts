@@ -14,7 +14,7 @@ export type StatutSocietaire = "actif" | "inactif" | "radie";
 
 export type Tranche = "accord" | "accord_sous_condition" | "comite_de_credit" | "refus";
 
-export type ModeCalcul = "socle_seul" | "enrichi";
+export type CalculationMode = "socle_seul" | "enrichi";
 
 export type TendanceEpargne = "hausse" | "stable" | "erosion";
 
@@ -67,7 +67,7 @@ export interface ScoringResult {
   tranche: Tranche;
   montant_recommande: number;
   montant_demande: number;
-  mode_calcul: ModeCalcul;
+  mode_calcul: CalculationMode;
   motif_mode?: string;
   decomposition: ContributionVariable[];
   points_de_base: number;
@@ -190,7 +190,7 @@ export interface DossierSocietaire {
   alertes: string[];
 }
 
-export interface ErreurApi {
+export interface ApiErrorBody {
   code: string;
   message: string;
   details?: unknown;
@@ -207,7 +207,7 @@ export interface DecisionRegistreApi {
   agent_nom: string;
 }
 
-export interface ParametresGrilleApi {
+export interface GridParametersApi {
   marge: number;
   lgd: number;
   multiplicateur_accord: number;
@@ -215,7 +215,7 @@ export interface ParametresGrilleApi {
   multiplicateur_examen: number;
 }
 
-export interface ParametresProgressifApi {
+export interface ProgressiveParametersApi {
   coefficient_progression: number;
   montant_plancher: number;
   plafonds_produits: Record<string, number>;
@@ -237,7 +237,7 @@ export interface ProduitCreditApi {
   taux_annuel: number;
 }
 
-export interface ParametresScorecardApi {
+export interface ScorecardParametersApi {
   pdo: number;
   score_reference: number;
   odds_reference: number;
@@ -245,17 +245,17 @@ export interface ParametresScorecardApi {
 
 export interface ConfigurationGrilleApi {
   version_grille: string;
-  grille: ParametresGrilleApi;
-  progressif: ParametresProgressifApi;
-  scorecard: ParametresScorecardApi;
+  grille: GridParametersApi;
+  progressif: ProgressiveParametersApi;
+  scorecard: ScorecardParametersApi;
   auteur: string;
   date_activation: string;
   active: boolean;
 }
 
-export interface ReponseConnexionApi {
-  nom: string;
+export interface LoginResponseApi {
+  name: string;
   role: string;
   agence: string | null;
-  doit_changer_mot_de_passe: boolean;
+  must_change_password: boolean;
 }

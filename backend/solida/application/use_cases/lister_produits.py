@@ -16,7 +16,7 @@ class ListerProduits:
     lecteur: LecteurCoreSim
     grille_repository: GrilleRepository
 
-    def executer(self) -> list[ProduitCredit]:
+    def execute(self) -> list[ProduitCredit]:
         produits = self.lecteur.charger_produits()
         plafonds = self.grille_repository.lire_active().progressif.plafonds_produits
         return [

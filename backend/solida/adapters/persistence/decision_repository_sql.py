@@ -15,7 +15,7 @@ from solida.domain.values.score import Score
 from solida.domain.values.tranche import TrancheDecision
 
 
-def _decomposition_vers_json(points: list[PointsVariable]) -> list[dict[str, Any]]:
+def _decomposition_to_json(points: list[PointsVariable]) -> list[dict[str, Any]]:
     return [{"code_variable": p.code_variable, "points": p.points} for p in points]
 
 
@@ -23,7 +23,7 @@ def _decomposition_depuis_json(valeurs: list[dict[str, Any]]) -> list[PointsVari
     return [PointsVariable(code_variable=v["code_variable"], points=v["points"]) for v in valeurs]
 
 
-def _resultat_complementaire_vers_json(decision: DecisionAEnregistrer) -> dict[str, Any]:
+def _resultat_complementaire_to_json(decision: DecisionAEnregistrer) -> dict[str, Any]:
     return {
         "motif_mode": decision.motif_mode.value if decision.motif_mode else None,
         "points_de_base": decision.points_de_base,
@@ -37,7 +37,7 @@ def _resultat_complementaire_vers_json(decision: DecisionAEnregistrer) -> dict[s
     }
 
 
-def _ligne_vers_decision(
+def _ligne_to_decision(
     ligne: Any, agent_nom: str, agent_agence_id: str | None
 ) -> DecisionEnregistree:
     complement = ligne.resultat_complementaire
@@ -126,7 +126,7 @@ class SqlDecisionRepository:
                 },
             ).first()
             if doublon is not None:
-                return _ligne_vers_decision(doublon, doublon.agent_nom, doublon.agent_agence_id)
+                return _ligne_to_decision(doublon, doublon.agent_nom, doublon.agent_agence_id)
 
             ligne = connexion.execute(
                 instruction,
@@ -141,15 +141,15 @@ class SqlDecisionRepository:
                     "tranche": decision.tranche.value,
                     "montant_recommande": decision.montant_recommande.valeur,
                     "mode_calcul": decision.mode_calcul.value,
-                    "decomposition": _decomposition_vers_json(decision.decomposition),
-                    "resultat_complementaire": _resultat_complementaire_vers_json(decision),
+                    "decomposition": _decomposition_to_json(decision.decomposition),
+                    "resultat_complementaire": _resultat_complementaire_to_json(decision),
                     "version_modele": decision.version_modele,
                     "version_grille": decision.version_grille,
                 },
             ).one()
             connexion.commit()
 
-        return _ligne_vers_decision(ligne, decision.agent_nom, decision.agent_agence_id)
+        return _ligne_to_decision(ligne, decision.agent_nom, decision.agent_agence_id)
 
     def lire(self, decision_id: str) -> DecisionEnregistree | None:
         requete = text("""
@@ -162,7 +162,7 @@ class SqlDecisionRepository:
             ligne = connexion.execute(requete, {"id": uuid.UUID(decision_id)}).first()
         if ligne is None:
             return None
-        return _ligne_vers_decision(ligne, ligne.agent_nom, ligne.agent_agence_id)
+        return _ligne_to_decision(ligne, ligne.agent_nom, ligne.agent_agence_id)
 
     def lister(
         self, agence_id: str | None, limite: int, decalage: int
@@ -180,7 +180,7 @@ class SqlDecisionRepository:
                 requete, {"agence_id": agence_id, "limite": limite, "decalage": decalage}
             )
             return [
-                _ligne_vers_decision(ligne, ligne.agent_nom, ligne.agent_agence_id)
+                _ligne_to_decision(ligne, ligne.agent_nom, ligne.agent_agence_id)
                 for ligne in lignes
             ]
 

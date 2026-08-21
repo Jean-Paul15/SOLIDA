@@ -112,7 +112,7 @@ def test_executer_renvoie_none_si_societaire_introuvable() -> None:
         )
     )
 
-    assert cas_usage.executer("SOC-1") is None
+    assert cas_usage.execute("SOC-1") is None
 
 
 def test_executer_compose_le_dossier_complet() -> None:
@@ -141,7 +141,7 @@ def test_executer_compose_le_dossier_complet() -> None:
         )
     )
 
-    dossier = cas_usage.executer("SOC-1")
+    dossier = cas_usage.execute("SOC-1")
 
     assert dossier is not None
     assert dossier.identite.societaire_id == "SOC-1"
