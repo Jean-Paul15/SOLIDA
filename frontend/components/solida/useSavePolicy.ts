@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { ConfigurationGrilleApi } from "@/lib/contracts";
 import { ApiError, throwIfError } from "@/lib/services/error-service";
+import { withMinDuration } from "@/lib/timing";
 
 interface ParametresPolitique {
   marge: number;
@@ -29,25 +30,27 @@ export function useSavePolicy(
       odds_reference: oddsReference,
     } = configurationInitiale.scorecard;
     try {
-      const reponse = await fetch("/api/v1/parametrage/grille", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          version_grille: nouvelleVersion,
-          grille: {
-            marge: parametres.marge,
-            lgd: parametres.lgd,
-            multiplicateur_accord: parametres.multiplicateurAccord,
-            multiplicateur_vigilance: configurationInitiale.grille.multiplicateur_vigilance,
-            multiplicateur_examen: parametres.multiplicateurExamen,
-          },
-          progressif: {
-            ...configurationInitiale.progressif,
-            plafonds_produits: parametres.plafondsProduits,
-          },
-          scorecard: { pdo, score_reference: scoreReference, odds_reference: oddsReference },
-        }),
-      });
+      const reponse = await withMinDuration(
+        fetch("/api/v1/parametrage/grille", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            version_grille: nouvelleVersion,
+            grille: {
+              marge: parametres.marge,
+              lgd: parametres.lgd,
+              multiplicateur_accord: parametres.multiplicateurAccord,
+              multiplicateur_vigilance: configurationInitiale.grille.multiplicateur_vigilance,
+              multiplicateur_examen: parametres.multiplicateurExamen,
+            },
+            progressif: {
+              ...configurationInitiale.progressif,
+              plafonds_produits: parametres.plafondsProduits,
+            },
+            scorecard: { pdo, score_reference: scoreReference, odds_reference: oddsReference },
+          }),
+        })
+      );
       await throwIfError(reponse);
       setVersion(nouvelleVersion);
       toast.success(`Politique de crédit ${nouvelleVersion} enregistrée`);

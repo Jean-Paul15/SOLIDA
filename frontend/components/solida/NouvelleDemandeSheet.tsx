@@ -110,10 +110,10 @@ export function NouvelleDemandeSheet({
         )}
 
         <SheetFooter className="flex-row justify-end gap-2">
-          <Button variant="outline" onClick={annuler} disabled={inProgress}>
+          <Button variant="outline" onClick={annuler} loading={inProgress}>
             Annuler
           </Button>
-          <Button onClick={calculerLeScore} disabled={inProgress || montant <= 0}>
+          <Button onClick={calculerLeScore} loading={inProgress} disabled={montant <= 0}>
             {inProgress ? "Calcul…" : "Calculer le score"}
           </Button>
         </SheetFooter>

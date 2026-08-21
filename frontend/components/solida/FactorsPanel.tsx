@@ -54,12 +54,12 @@ export function FactorsPanel({
               <Button
                 variant="outline"
                 onClick={onCancel}
-                disabled={confirmationInProgress}
+                loading={confirmationInProgress}
                 className="flex-1"
               >
                 Annuler
               </Button>
-              <Button onClick={onConfirm} disabled={confirmationInProgress} className="flex-1">
+              <Button onClick={onConfirm} loading={confirmationInProgress} className="flex-1">
                 {confirmationInProgress ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />

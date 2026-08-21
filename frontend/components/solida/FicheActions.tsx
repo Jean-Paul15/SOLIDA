@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { archiveFiche } from "@/lib/services/fiche";
 import { ApiError } from "@/lib/services/error-service";
+import { withMinDuration } from "@/lib/timing";
 
 interface FicheActionsProps {
   decisionId: string;
@@ -18,7 +19,7 @@ export function FicheActions({ decisionId }: FicheActionsProps) {
   async function handleArchive() {
     setArchivingInProgress(true);
     try {
-      await archiveFiche(decisionId);
+      await withMinDuration(archiveFiche(decisionId));
       toast.success("Fiche archivée.");
       setArchived(true);
     } catch (e) {
@@ -46,7 +47,8 @@ export function FicheActions({ decisionId }: FicheActionsProps) {
         variant="outline"
         className="justify-start gap-2"
         onClick={handleArchive}
-        disabled={archivingInProgress || archived}
+        loading={archivingInProgress}
+        disabled={archived}
       >
         {archivingInProgress ? (
           <Loader2 className="size-4 animate-spin" />

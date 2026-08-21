@@ -59,13 +59,7 @@ export function Header({ agence, userName, role }: HeaderProps) {
       <div className="flex items-center gap-4 text-sm text-neutre-700">
         {agence && <span>{agence}</span>}
         {userName && <span>{userName}</span>}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={logOut}
-          disabled={loggingOut}
-          className="gap-1.5"
-        >
+        <Button variant="ghost" size="sm" onClick={logOut} loading={loggingOut} className="gap-1.5">
           {loggingOut ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4" />}
           Se déconnecter
         </Button>

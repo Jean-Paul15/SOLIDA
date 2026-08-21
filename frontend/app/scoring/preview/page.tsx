@@ -9,6 +9,7 @@ import { ScoringResultView } from "@/components/solida/ScoringResultView";
 import { ApiError } from "@/lib/services/error-service";
 import { confirmDecision } from "@/lib/services/scoring";
 import { usePreview } from "@/lib/preview-context";
+import { withMinDuration } from "@/lib/timing";
 
 export default function PagePrevisualisationScoring() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function PagePrevisualisationScoring() {
   async function handleConfirm() {
     setConfirmationInProgress(true);
     try {
-      const enregistre = await confirmDecision(input);
+      const enregistre = await withMinDuration(confirmDecision(input));
       toast.success("Décision enregistrée.");
       setPreview(null);
       router.push(`/scoring/${enregistre.decision_id}`);

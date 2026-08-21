@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -156,9 +157,11 @@ export function ThresholdsTab({
 
           <Button
             onClick={enregistrer}
-            disabled={enregistrementEnCours || !autoriseAModifier}
-            className="self-start"
+            loading={enregistrementEnCours}
+            disabled={!autoriseAModifier}
+            className="self-start gap-1.5"
           >
+            {enregistrementEnCours && <Loader2 className="size-4 animate-spin" />}
             {enregistrementEnCours ? "Enregistrement…" : "Enregistrer la grille"}
           </Button>
           {!autoriseAModifier && (

@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/services/error-service";
 import { changePassword } from "@/lib/services/auth";
+import { withMinDuration } from "@/lib/timing";
 
 function PasswordField({
   id,
@@ -71,11 +72,13 @@ export function ChangePasswordForm() {
 
     setInProgress(true);
     try {
-      await changePassword(actuel, nouveau);
+      await withMinDuration(changePassword(actuel, nouveau));
       toast.success("Mot de passe modifié.");
       router.push("/");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Le changement a échoué.");
+      const message = e instanceof ApiError ? e.message : "Le changement a échoué.";
+      setError(message);
+      toast.error(message);
     } finally {
       setInProgress(false);
     }
@@ -103,7 +106,7 @@ export function ChangePasswordForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={inProgress} className="w-full">
+      <Button type="submit" loading={inProgress} className="w-full">
         {inProgress ? "Modification…" : "Changer le mot de passe"}
       </Button>
     </form>

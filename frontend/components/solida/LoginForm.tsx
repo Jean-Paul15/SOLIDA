@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { LoginResponseApi } from "@/lib/contracts";
 import { safeRelativePath } from "@/lib/redirect";
+import { withMinDuration } from "@/lib/timing";
 
 export function LoginForm() {
   const router = useRouter();
@@ -35,15 +36,17 @@ export function LoginForm() {
     const controleur = new AbortController();
     const delaiAbandon = setTimeout(() => controleur.abort(), 15_000);
     try {
-      const reponse = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifiant: formData.get("identifiant"),
-          mot_de_passe: formData.get("mot_de_passe"),
-        }),
-        signal: controleur.signal,
-      });
+      const reponse = await withMinDuration(
+        fetch("/api/v1/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identifiant: formData.get("identifiant"),
+            mot_de_passe: formData.get("mot_de_passe"),
+          }),
+          signal: controleur.signal,
+        })
+      );
 
       if (!reponse.ok) {
         setError(
@@ -114,7 +117,8 @@ export function LoginForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={inProgress} className="w-full">
+      <Button type="submit" loading={inProgress} className="w-full gap-1.5">
+        {inProgress && <Loader2 className="size-4 animate-spin" />}
         {inProgress ? "Connexion…" : "Se connecter"}
       </Button>
     </form>

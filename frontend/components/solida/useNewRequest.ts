@@ -15,6 +15,7 @@ import { usePreview } from "@/lib/preview-context";
 import { findProduit } from "@/lib/produits";
 import { ApiError } from "@/lib/services/error-service";
 import { previewScore } from "@/lib/services/scoring";
+import { withMinDuration } from "@/lib/timing";
 
 // Catalogue de durees "standard" (aligne sur simulateur/config.yaml, duree_mois_choix) : filtre
 // ensuite aux bornes reelles du produit selectionne plutot qu'affiche une liste universelle qui
@@ -103,7 +104,7 @@ export function useNewRequest({
         : undefined,
     };
     try {
-      const result = await previewScore(input);
+      const result = await withMinDuration(previewScore(input));
       setPreview({ input, result, societaireNom: nomComplet });
       setSheetOpen(false);
       router.push("/scoring/preview");
