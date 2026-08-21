@@ -39,10 +39,16 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  loading = false,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    /** État transitoire (action en cours) : contrairement à `disabled`, le bouton
+     * reste focusable et dans l'ordre de tabulation (`aria-disabled`, pas
+     * `disabled`) — le clic est intercepté en JS plutôt que bloqué par le DOM. */
+    loading?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : "button";
 
@@ -51,7 +57,18 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      aria-disabled={loading || props.disabled || undefined}
+      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+        if (loading) {
+          event.preventDefault();
+          return;
+        }
+        onClick?.(event);
+      }}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        loading && "cursor-not-allowed opacity-50"
+      )}
       {...props}
     />
   );
