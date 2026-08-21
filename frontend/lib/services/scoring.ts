@@ -1,13 +1,12 @@
 import type { ScoringInput, ScoringResult } from "@/lib/contracts";
-import { throwIfError } from "@/lib/services/error-service";
+import { apiFetch } from "@/lib/services/error-service";
 
 async function post(path: string, input: ScoringInput): Promise<ScoringResult> {
-  const response = await fetch(path, {
+  const response = await apiFetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  await throwIfError(response);
   return response.json();
 }
 

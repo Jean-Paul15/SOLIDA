@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ScoringResultView } from "@/components/solida/ScoringResultView";
-import { ApiError } from "@/lib/services/error-service";
+import { useApiErrorToast } from "@/lib/services/error-service";
 import { confirmDecision } from "@/lib/services/scoring";
 import { usePreview } from "@/lib/preview-context";
 import { withMinDuration } from "@/lib/timing";
@@ -15,6 +15,7 @@ export default function PagePrevisualisationScoring() {
   const router = useRouter();
   const { preview, setPreview } = usePreview();
   const [confirmationInProgress, setConfirmationInProgress] = useState(false);
+  const gererErreur = useApiErrorToast();
 
   if (!preview) {
     return (
@@ -40,7 +41,7 @@ export default function PagePrevisualisationScoring() {
       setPreview(null);
       router.push(`/scoring/${enregistre.decision_id}`);
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "L'enregistrement a échoué.");
+      gererErreur(e, "L'enregistrement a échoué.");
       setConfirmationInProgress(false);
     }
   }

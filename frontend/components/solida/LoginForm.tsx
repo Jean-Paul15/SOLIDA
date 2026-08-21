@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { LoginResponseApi } from "@/lib/contracts";
 import { safeRelativePath } from "@/lib/redirect";
+import { ApiError, apiFetch } from "@/lib/services/error-service";
 import { withMinDuration } from "@/lib/timing";
 
 export function LoginForm() {
@@ -37,26 +38,20 @@ export function LoginForm() {
     const delaiAbandon = setTimeout(() => controleur.abort(), 15_000);
     try {
       const reponse = await withMinDuration(
-        fetch("/api/v1/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            identifiant: formData.get("identifiant"),
-            mot_de_passe: formData.get("mot_de_passe"),
-          }),
-          signal: controleur.signal,
-        })
+        apiFetch(
+          "/api/v1/auth/login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              identifiant: formData.get("identifiant"),
+              mot_de_passe: formData.get("mot_de_passe"),
+            }),
+            signal: controleur.signal,
+          },
+          { authRoute: true }
+        )
       );
-
-      if (!reponse.ok) {
-        setError(
-          reponse.status === 429
-            ? "Compte temporairement bloqué après plusieurs échecs, réessayez plus tard."
-            : "Identifiant ou mot de passe incorrect."
-        );
-        identifiantRef.current?.focus();
-        return;
-      }
 
       const { must_change_password }: LoginResponseApi = await reponse.json();
       router.push(
@@ -64,8 +59,13 @@ export function LoginForm() {
           ? "/changer-mot-de-passe"
           : safeRelativePath(searchParams.get("redirect"))
       );
-    } catch {
-      setError("Connexion au serveur impossible. Vérifiez votre réseau et réessayez.");
+    } catch (e) {
+      setError(
+        e instanceof ApiError
+          ? e.message
+          : "Connexion au serveur impossible. Vérifiez votre réseau et réessayez."
+      );
+      identifiantRef.current?.focus();
     } finally {
       clearTimeout(delaiAbandon);
       setInProgress(false);

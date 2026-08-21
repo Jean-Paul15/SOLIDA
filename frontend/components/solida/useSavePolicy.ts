@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ConfigurationGrilleApi } from "@/lib/contracts";
-import { ApiError, throwIfError } from "@/lib/services/error-service";
+import { apiFetch, useApiErrorToast } from "@/lib/services/error-service";
 import { withMinDuration } from "@/lib/timing";
 
 interface ParametresPolitique {
@@ -18,6 +18,7 @@ export function useSavePolicy(
 ) {
   const [version, setVersion] = useState(configurationInitiale.version_grille);
   const [enregistrementEnCours, setEnregistrementEnCours] = useState(false);
+  const gererErreur = useApiErrorToast();
 
   async function enregistrer(parametres: ParametresPolitique) {
     if (!autoriseAModifier) return;
@@ -34,8 +35,8 @@ export function useSavePolicy(
       odds_reference: oddsReference,
     } = configurationInitiale.scorecard;
     try {
-      const reponse = await withMinDuration(
-        fetch("/api/v1/parametrage/grille", {
+      await withMinDuration(
+        apiFetch("/api/v1/parametrage/grille", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -55,11 +56,10 @@ export function useSavePolicy(
           }),
         })
       );
-      await throwIfError(reponse);
       setVersion(nouvelleVersion);
       toast.success(`Politique de crédit ${nouvelleVersion} enregistrée`);
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "L'enregistrement a échoué.");
+      gererErreur(e, "L'enregistrement a échoué.");
     } finally {
       setEnregistrementEnCours(false);
     }

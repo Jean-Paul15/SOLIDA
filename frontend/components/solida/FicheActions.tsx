@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { archiveFiche } from "@/lib/services/fiche";
-import { ApiError } from "@/lib/services/error-service";
+import { useApiErrorToast } from "@/lib/services/error-service";
 import { withMinDuration } from "@/lib/timing";
 
 interface FicheActionsProps {
@@ -15,6 +15,7 @@ interface FicheActionsProps {
 export function FicheActions({ decisionId }: FicheActionsProps) {
   const [archivingInProgress, setArchivingInProgress] = useState(false);
   const [archived, setArchived] = useState(false);
+  const gererErreur = useApiErrorToast();
 
   async function handleArchive() {
     setArchivingInProgress(true);
@@ -23,7 +24,7 @@ export function FicheActions({ decisionId }: FicheActionsProps) {
       toast.success("Fiche archivée.");
       setArchived(true);
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "L'archivage a échoué.");
+      gererErreur(e, "L'archivage a échoué.");
     } finally {
       setArchivingInProgress(false);
     }

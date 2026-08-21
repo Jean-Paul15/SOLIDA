@@ -1,7 +1,7 @@
-import { throwIfError } from "@/lib/services/error-service";
+import { apiFetch } from "@/lib/services/error-service";
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  const response = await fetch("/api/v1/auth/change-password", {
+  await apiFetch("/api/v1/auth/change-password", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -9,5 +9,4 @@ export async function changePassword(currentPassword: string, newPassword: strin
       nouveau_mot_de_passe: newPassword,
     }),
   });
-  await throwIfError(response);
 }

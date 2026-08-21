@@ -12,7 +12,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
-import { ApiError } from "@/lib/services/error-service";
+import { ApiError, useApiErrorToast } from "@/lib/services/error-service";
 import { changePassword } from "@/lib/services/auth";
 import { withMinDuration } from "@/lib/timing";
 
@@ -55,6 +55,7 @@ export function ChangePasswordForm() {
   const router = useRouter();
   const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const gererErreur = useApiErrorToast();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,9 +77,8 @@ export function ChangePasswordForm() {
       toast.success("Mot de passe modifié.");
       router.push("/");
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : "Le changement a échoué.";
-      setError(message);
-      toast.error(message);
+      setError(e instanceof ApiError ? e.message : "Le changement a échoué.");
+      gererErreur(e, "Le changement a échoué.");
     } finally {
       setInProgress(false);
     }

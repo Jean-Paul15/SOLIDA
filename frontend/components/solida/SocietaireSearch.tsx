@@ -5,17 +5,21 @@ import { useEffect, useState } from "react";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SocietaireSearchResult } from "@/lib/contracts";
+import { ApiError, apiFetch, useApiErrorToast } from "@/lib/services/error-service";
 
 type RequestState = "idle" | "loading" | "success" | "error";
 
 export function SocietaireSearch() {
   const router = useRouter();
+  const gererErreur = useApiErrorToast();
   const [terme, setTerme] = useState("");
   const [requestState, setRequestState] = useState<RequestState>("idle");
+  const [messageErreur, setMessageErreur] = useState<string | null>(null);
   const [resultats, setResultats] = useState<SocietaireSearchResult[]>([]);
   const [total, setTotal] = useState(0);
   const [recents, setRecents] = useState<SocietaireSearchResult[]>([]);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const [tentative, setTentative] = useState(0);
 
   function navigateTo(societaireId: string): void {
     setNavigatingId(societaireId);
@@ -23,11 +27,16 @@ export function SocietaireSearch() {
   }
 
   useEffect(() => {
-    fetch("/api/v1/societaires/recent")
-      .then((r) => (r.ok ? r.json() : { elements: [] }))
+    apiFetch("/api/v1/societaires/recent")
+      .then((r) => r.json())
       .then((donnees) => setRecents(donnees.elements))
-      .catch(() => setRecents([]));
-  }, []);
+      .catch((e: unknown) => {
+        setRecents([]);
+        if (e instanceof ApiError && e.kind === "session_expiree") {
+          gererErreur(e, "");
+        }
+      });
+  }, [gererErreur]);
 
   useEffect(() => {
     if (terme.trim().length < 2) {
@@ -37,17 +46,23 @@ export function SocietaireSearch() {
     let annule = false;
     const delai = setTimeout(async () => {
       try {
-        const reponse = await fetch(
+        const reponse = await apiFetch(
           `/api/v1/societaires/search?terme=${encodeURIComponent(terme)}&limite=8`
         );
-        if (!reponse.ok) throw new Error("erreur serveur");
         const donnees = await reponse.json();
         if (annule) return;
         setResultats(donnees.elements);
         setTotal(donnees.total);
         setRequestState("success");
-      } catch {
-        if (!annule) setRequestState("error");
+      } catch (e) {
+        if (annule) return;
+        setRequestState("error");
+        setMessageErreur(
+          e instanceof ApiError ? e.message : "La recherche est momentanément indisponible."
+        );
+        if (e instanceof ApiError && e.kind === "session_expiree") {
+          gererErreur(e, "");
+        }
       }
     }, 250);
 
@@ -55,7 +70,9 @@ export function SocietaireSearch() {
       annule = true;
       clearTimeout(delai);
     };
-  }, [terme]);
+    // `tentative` ne sert qu'à forcer une nouvelle exécution depuis le bouton "Réessayer" :
+    // sans elle, remettre requestState à "idle" ne relance rien puisque `terme` n'a pas changé.
+  }, [terme, gererErreur, tentative]);
 
   const enRepos = terme.trim().length < 2;
   const chargement = !enRepos && requestState === "idle";
@@ -89,10 +106,13 @@ export function SocietaireSearch() {
 
             {requestState === "error" && (
               <div className="flex flex-col items-center gap-2 py-6 text-sm text-neutre-700">
-                <p>La recherche est momentanément indisponible.</p>
+                <p>{messageErreur ?? "La recherche est momentanément indisponible."}</p>
                 <button
                   type="button"
-                  onClick={() => setRequestState("idle")}
+                  onClick={() => {
+                    setRequestState("idle");
+                    setTentative((t) => t + 1);
+                  }}
                   className="cursor-pointer text-solida-teal-800 underline"
                 >
                   Réessayer
