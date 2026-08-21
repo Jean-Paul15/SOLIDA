@@ -15,6 +15,12 @@ export function SocietaireSearch() {
   const [resultats, setResultats] = useState<SocietaireSearchResult[]>([]);
   const [total, setTotal] = useState(0);
   const [recents, setRecents] = useState<SocietaireSearchResult[]>([]);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
+
+  function navigateTo(societaireId: string): void {
+    setNavigatingId(societaireId);
+    router.push(`/societaires/${societaireId}`);
+  }
 
   useEffect(() => {
     fetch("/api/v1/societaires/recent")
@@ -107,8 +113,10 @@ export function SocietaireSearch() {
                 <CommandItem
                   key={r.societaire_id}
                   value={r.societaire_id}
-                  onSelect={() => router.push(`/societaires/${r.societaire_id}`)}
-                  className="flex h-[52px] flex-col items-start justify-center gap-0.5 border-l-2 border-l-transparent data-selected:border-l-solida-teal-800 data-selected:bg-solida-teal-50"
+                  onSelect={() => navigateTo(r.societaire_id)}
+                  className={`flex h-[52px] flex-col items-start justify-center gap-0.5 border-l-2 border-l-transparent data-selected:border-l-solida-teal-800 data-selected:bg-solida-teal-50 ${
+                    navigatingId === r.societaire_id ? "bg-solida-teal-50" : ""
+                  }`}
                 >
                   <div className="flex w-full items-center justify-between">
                     <span className="text-sm font-medium text-neutre-950">{r.nom_complet}</span>
@@ -139,8 +147,10 @@ export function SocietaireSearch() {
               <button
                 key={r.societaire_id}
                 type="button"
-                onClick={() => router.push(`/societaires/${r.societaire_id}`)}
-                className="flex h-[52px] cursor-pointer flex-col items-start justify-center gap-0.5 px-3 text-left hover:bg-neutre-50"
+                onClick={() => navigateTo(r.societaire_id)}
+                className={`flex h-[52px] cursor-pointer flex-col items-start justify-center gap-0.5 px-3 text-left hover:bg-neutre-50 ${
+                  navigatingId === r.societaire_id ? "bg-solida-teal-50" : ""
+                }`}
               >
                 <div className="flex w-full items-center justify-between">
                   <span className="text-sm font-medium text-neutre-950">{r.nom_complet}</span>

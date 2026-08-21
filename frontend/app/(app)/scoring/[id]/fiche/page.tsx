@@ -1,17 +1,11 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/solida/Header";
 import { FicheApercu } from "@/components/solida/FicheApercu";
 import { FicheActions } from "@/components/solida/FicheActions";
 import { fetchBackend } from "@/lib/backend";
 import type { FicheJustification, ProduitCreditApi } from "@/lib/contracts";
-import {
-  enforcePasswordUpToDate,
-  readSession,
-  redirectIfAccessDenied,
-  redirectIfUnauthenticated,
-} from "@/lib/session";
+import { redirectIfAccessDenied, redirectIfUnauthenticated } from "@/lib/session";
 
 const VERSION_APPLICATION = "solida-frontend-0.1.0";
 
@@ -31,12 +25,8 @@ export default async function PageFiche({ params }: PageFicheProps) {
   const ficheData: FicheJustification = await reponse.json();
   const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
 
-  const session = await readSession();
-  enforcePasswordUpToDate(session);
-
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
+    <>
       <div className="mx-auto w-full max-w-[1000px] px-6 pt-4">
         <Link
           href={`/scoring/${decisionId}`}
@@ -57,6 +47,6 @@ export default async function PageFiche({ params }: PageFicheProps) {
         </div>
         <FicheActions decisionId={decisionId} />
       </main>
-    </div>
+    </>
   );
 }

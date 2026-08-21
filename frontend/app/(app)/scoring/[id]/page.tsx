@@ -1,16 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/solida/Header";
 import { ScoringResultView } from "@/components/solida/ScoringResultView";
 import { fetchBackend } from "@/lib/backend";
 import type { DossierSocietaire, ScoringResult } from "@/lib/contracts";
-import {
-  enforcePasswordUpToDate,
-  readSession,
-  redirectIfAccessDenied,
-  redirectIfUnauthenticated,
-} from "@/lib/session";
+import { redirectIfAccessDenied, redirectIfUnauthenticated } from "@/lib/session";
 
 interface PageResultatScoringProps {
   params: Promise<{ id: string }>;
@@ -30,12 +24,8 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
   if (!reponseDossier.ok) notFound();
   const dossier: DossierSocietaire = await reponseDossier.json();
 
-  const session = await readSession();
-  enforcePasswordUpToDate(session);
-
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header agence={session?.agence} userName={session?.name} role={session?.role} />
+    <>
       <div className="mx-auto w-full max-w-[1440px] px-6 pt-4">
         <Link
           href={`/societaires/${result.societaire_id}`}
@@ -48,6 +38,6 @@ export default async function PageResultatScoring({ params }: PageResultatScorin
       <main className="flex flex-1 flex-col">
         <ScoringResultView result={result} />
       </main>
-    </div>
+    </>
   );
 }

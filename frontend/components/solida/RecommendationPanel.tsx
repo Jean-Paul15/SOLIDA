@@ -24,7 +24,7 @@ export function RecommendationPanel({ result, zones }: RecommendationPanelProps)
   const positionScore = gaugePosition(result.score);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-col gap-4">
       <div
         className={`flex flex-col gap-3 rounded-lg border-l-3 ${couleurs.border} ${couleurs.background} p-4`}
       >

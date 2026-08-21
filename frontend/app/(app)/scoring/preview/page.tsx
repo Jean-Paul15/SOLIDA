@@ -18,7 +18,7 @@ export default function PagePrevisualisationScoring() {
 
   if (!preview) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-[600px] flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="mx-auto flex flex-1 max-w-[600px] flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-sm text-neutre-500">
           Aucun aperçu de score en attente. Repartez de la recherche pour lancer une nouvelle
           demande.
@@ -51,7 +51,7 @@ export default function PagePrevisualisationScoring() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <>
       <div className="mx-auto w-full max-w-[1440px] px-6 pt-4">
         <Link
           href={`/societaires/${input.societaire_id}`}
@@ -70,6 +70,6 @@ export default function PagePrevisualisationScoring() {
           confirmationInProgress={confirmationInProgress}
         />
       </main>
-    </div>
+    </>
   );
 }

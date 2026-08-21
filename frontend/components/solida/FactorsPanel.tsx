@@ -22,7 +22,7 @@ export function FactorsPanel({
   const sommeContributions = result.decomposition.reduce((s, c) => s + c.points, 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-col gap-4">
       <h2 className="font-serif-title text-lg font-semibold text-neutre-950">
         Facteurs déterminants
       </h2>

@@ -33,10 +33,10 @@ export function ScoringResultView({
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-6 px-6 py-6">
       <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-5">
+        <div className="col-span-5 h-full">
           <RecommendationPanel result={result} zones={zones} />
         </div>
-        <div className="col-span-7">
+        <div className="col-span-7 h-full">
           <FactorsPanel
             result={result}
             isPreview={isPreview}

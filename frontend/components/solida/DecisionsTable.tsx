@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -20,6 +21,12 @@ interface DecisionsTableProps {
 
 export function DecisionsTable({ filtered }: DecisionsTableProps) {
   const router = useRouter();
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
+
+  function navigateTo(decisionId: string): void {
+    setNavigatingId(decisionId);
+    router.push(`/scoring/${decisionId}`);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -43,8 +50,8 @@ export function DecisionsTable({ filtered }: DecisionsTableProps) {
             return (
               <TableRow
                 key={d.decisionId}
-                onClick={() => router.push(`/scoring/${d.decisionId}`)}
-                className="cursor-pointer"
+                onClick={() => navigateTo(d.decisionId)}
+                className={`cursor-pointer ${navigatingId === d.decisionId ? "bg-solida-teal-50" : ""}`}
               >
                 <TableCell>
                   {new Date(d.timestamp).toLocaleString("fr-FR", {
