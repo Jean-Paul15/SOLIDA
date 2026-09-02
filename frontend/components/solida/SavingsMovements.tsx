@@ -13,31 +13,26 @@ import { formatAmount } from "@/lib/format";
 import type { SyntheseEpargne } from "@/lib/contracts";
 import { savingsTrajectory } from "@/lib/savings-trajectory";
 
-const FLECHE_TENDANCE = {
+const TREND_LABEL = {
   hausse: "↗ en hausse",
   stable: "→ stable",
   erosion: "↘ en érosion",
 };
 
-// Les 4 horizons agrègent les mouvements réels par mois calendaire (net dépôts - retraits),
-// jamais un point par mouvement brut. La courbe et les puces de régularité sont recalculées sur
-// exactement les mêmes données mensuelles : un mois marqué avec dépôt allume toujours sa puce et
-// produit toujours la hausse de solde correspondante (voir simulateur/simulateur/pipeline.py,
-// gen_epargne, qui aligne désormais les mouvements générés sur les mois "avec dépôt" plutôt que
-// sur un échantillon aléatoire décorrélé).
+// La courbe et les puces reposent sur la même agrégation mensuelle des mouvements réels.
 const HORIZONS = [3, 6, 9, 12] as const;
 
 export function SavingsMovements({ epargne }: { epargne: SyntheseEpargne }) {
   const [maintenant] = useState(() => Date.now());
   const [monthsHorizon, setMonthsHorizon] = useState<number>(12);
 
-  const donnees = useMemo(
+  const chartData = useMemo(
     () => savingsTrajectory(epargne, monthsHorizon, maintenant),
     [epargne, monthsHorizon, maintenant]
   );
 
-  const nbMoisAvecDepot = donnees.filter((d) => d.depots > 0).length;
-  const moisRemplis = donnees.map((d) => d.depots > 0);
+  const depositMonths = chartData.filter((month) => month.depots > 0).length;
+  const filledMonths = chartData.map((month) => month.depots > 0);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-neutre-200 p-4">
@@ -61,12 +56,12 @@ export function SavingsMovements({ epargne }: { epargne: SyntheseEpargne }) {
         <span className="font-mono text-lg text-neutre-950">
           {formatAmount(epargne.solde_moyen_6m)}
         </span>
-        <span className="text-xs text-neutre-500">{FLECHE_TENDANCE[epargne.tendance_12m]}</span>
+        <span className="text-xs text-neutre-500">{TREND_LABEL[epargne.tendance_12m]}</span>
       </div>
 
       <div className="h-[120px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={donnees} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+          <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
             <defs>
               <linearGradient id="degradeSolde" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--color-solida-teal-700)" stopOpacity={0.18} />
@@ -102,11 +97,11 @@ export function SavingsMovements({ epargne }: { epargne: SyntheseEpargne }) {
       </div>
 
       <div className="flex gap-1">
-        {moisRemplis.map((remplit, i) => (
+        {filledMonths.map((isFilled, index) => (
           <div
-            key={i}
+            key={index}
             className={
-              remplit
+              isFilled
                 ? "size-3.5 rounded-sm bg-solida-teal-600"
                 : "size-3.5 rounded-sm border border-neutre-300"
             }
@@ -114,7 +109,7 @@ export function SavingsMovements({ epargne }: { epargne: SyntheseEpargne }) {
         ))}
       </div>
       <span className="text-xs text-neutre-500">
-        Régularité d&rsquo;épargne : {nbMoisAvecDepot}/{monthsHorizon} mois avec dépôt
+        Régularité d&rsquo;épargne : {depositMonths}/{monthsHorizon} mois avec dépôt
       </span>
 
       <span className="text-xs text-neutre-500">

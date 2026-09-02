@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from solida.domain.ports.audit import AuditLog
-from solida.domain.ports.core_sim import LecteurCoreSim
+from solida.domain.ports.core_sim import CoreSimReader
 from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 TYPE_EVENEMENT_CONSULTATION = "consultation_dossier"
@@ -10,11 +10,9 @@ LIMITE_PAR_DEFAUT = 5
 
 @dataclass(frozen=True)
 class ListerSocietairesRecents:
-    """Sociétés distinctes les plus récemment consultées par l'agent — construit à partir
-    du journal d'audit, pas d'une table dédiée : c'est déjà une trace qu'on doit garder,
-    l'utiliser aussi pour l'écran de recherche n'ajoute aucune donnée nouvelle."""
+    """Réutilise le journal d'audit plutôt qu'une table de récents dédiée."""
 
-    lecteur: LecteurCoreSim
+    core_sim_reader: CoreSimReader
     audit_log: AuditLog
 
     def execute(
@@ -23,13 +21,13 @@ class ListerSocietairesRecents:
         identifiants = self.audit_log.lister_objets_recents(
             TYPE_EVENEMENT_CONSULTATION, agent_id, limite
         )
-        resultats = []
+        search_results = []
         for societaire_id in identifiants:
-            societaire = self.lecteur.charger_societaire(societaire_id)
+            societaire = self.core_sim_reader.charger_societaire(societaire_id)
             if societaire is None:
                 continue
-            credits = self.lecteur.charger_historique_credit(societaire_id)
-            resultats.append(
+            credits = self.core_sim_reader.charger_historique_credit(societaire_id)
+            search_results.append(
                 SocietaireSearchResult(
                     societaire_id=societaire.societaire_id,
                     nom_complet=societaire.nom_complet,
@@ -40,4 +38,4 @@ class ListerSocietairesRecents:
                     a_credit_en_cours=any(c.statut == "en_cours" for c in credits),
                 )
             )
-        return resultats
+        return search_results

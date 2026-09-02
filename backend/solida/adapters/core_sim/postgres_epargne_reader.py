@@ -7,47 +7,47 @@ from solida.domain.entities.mouvement_epargne import MouvementEpargne
 
 
 class PostgresEpargneReader:
-    def __init__(self, moteur: Engine) -> None:
-        self._moteur = moteur
+    def __init__(self, engine: Engine) -> None:
+        self._engine = engine
 
     def charger_compte_epargne(self, societaire_id: str) -> CompteEpargne | None:
-        requete = text("""
+        query = text("""
             SELECT compte_id, societaire_id, solde_epargne_moyen_6m, nb_mois_avec_depot_12m,
                    croissance_epargne_12m, volatilite_epargne
             FROM comptes_epargne WHERE societaire_id = :id
         """)
-        with self._moteur.connect() as connexion:
-            ligne = connexion.execute(requete, {"id": societaire_id}).first()
-        if ligne is None:
+        with self._engine.connect() as connection:
+            row = connection.execute(query, {"id": societaire_id}).first()
+        if row is None:
             return None
         return CompteEpargne(
-            compte_id=ligne.compte_id,
-            societaire_id=ligne.societaire_id,
-            solde_moyen_6m=round(ligne.solde_epargne_moyen_6m),
-            nb_mois_avec_depot_12m=ligne.nb_mois_avec_depot_12m,
-            croissance_12m=float(ligne.croissance_epargne_12m),
-            volatilite=float(ligne.volatilite_epargne),
+            compte_id=row.compte_id,
+            societaire_id=row.societaire_id,
+            solde_moyen_6m=round(row.solde_epargne_moyen_6m),
+            nb_mois_avec_depot_12m=row.nb_mois_avec_depot_12m,
+            croissance_12m=float(row.croissance_epargne_12m),
+            volatilite=float(row.volatilite_epargne),
         )
 
     def charger_mouvements_epargne(
         self, societaire_id: str, depuis: date
     ) -> list[MouvementEpargne]:
-        requete = text("""
+        query = text("""
             SELECT m.mouvement_id, m.compte_id, m.date_operation, m.sens, m.montant
             FROM mouvements_epargne m
             JOIN comptes_epargne c ON c.compte_id = m.compte_id
             WHERE c.societaire_id = :id AND m.date_operation >= :depuis
             ORDER BY m.date_operation
         """)
-        with self._moteur.connect() as connexion:
-            lignes = connexion.execute(requete, {"id": societaire_id, "depuis": depuis})
+        with self._engine.connect() as connection:
+            rows = connection.execute(query, {"id": societaire_id, "depuis": depuis})
             return [
                 MouvementEpargne(
-                    mouvement_id=ligne.mouvement_id,
-                    compte_id=ligne.compte_id,
-                    date_operation=ligne.date_operation,
-                    sens=ligne.sens,
-                    montant=round(ligne.montant),
+                    mouvement_id=row.mouvement_id,
+                    compte_id=row.compte_id,
+                    date_operation=row.date_operation,
+                    sens=row.sens,
+                    montant=round(row.montant),
                 )
-                for ligne in lignes
+                for row in rows
             ]

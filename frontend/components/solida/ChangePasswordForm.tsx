@@ -61,19 +61,19 @@ export function ChangePasswordForm() {
     event.preventDefault();
     setError(null);
 
-    const donnees = new FormData(event.currentTarget);
-    const actuel = String(donnees.get("mot_de_passe_actuel") ?? "");
-    const nouveau = String(donnees.get("nouveau_mot_de_passe") ?? "");
-    const confirmation = String(donnees.get("confirmation_mot_de_passe") ?? "");
+    const formData = new FormData(event.currentTarget);
+    const currentPassword = String(formData.get("mot_de_passe_actuel") ?? "");
+    const newPassword = String(formData.get("nouveau_mot_de_passe") ?? "");
+    const passwordConfirmation = String(formData.get("confirmation_mot_de_passe") ?? "");
 
-    if (nouveau !== confirmation) {
+    if (newPassword !== passwordConfirmation) {
       setError("Les deux mots de passe saisis ne correspondent pas.");
       return;
     }
 
     setInProgress(true);
     try {
-      await withMinDuration(changePassword(actuel, nouveau));
+      await withMinDuration(changePassword(currentPassword, newPassword));
       toast.success("Mot de passe modifié.");
       router.push("/");
     } catch (e) {

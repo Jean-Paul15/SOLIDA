@@ -20,7 +20,7 @@ from solida.application.use_cases.scorer_demande_validations import (
 )
 from solida.domain.errors import DonneesInsuffisantes
 from solida.domain.ports.audit import AuditLog
-from solida.domain.ports.core_sim import LecteurCoreSim
+from solida.domain.ports.core_sim import CoreSimReader
 from solida.domain.ports.decisions import DecisionRepository
 from solida.domain.ports.feature_store import FeatureStore
 from solida.domain.ports.grille import GrilleRepository
@@ -48,17 +48,13 @@ AVERTISSEMENT_MODELE_SUBSTITUT = (
     "réel entraîné : à recalibrer entièrement dès qu'il existe."
 )
 
-# Reprend la duree de session deja actee (DUREE_SESSION_SECONDES, infrastructure/auth.py — pas
-# importable ici, l'application ne depend pas de l'infrastructure) plutot que d'inventer un
-# nouveau seuil : au-dela d'une session de guichet, CORE-SIM a normalement eu le temps de
-# refleter un octroi confirme ; en-deca, deux "accord" pour le meme societaire sont un signal de
-# multi-octroi que le controle a_credit_en_cours seul ne voit pas encore.
+# Alignée sur la durée de session pour bloquer un multi-octroi avant le reflet CORE-SIM.
 FENETRE_MULTI_OCTROI = timedelta(hours=8)
 
 
 @dataclass(frozen=True)
 class ScorerDemande:
-    lecteur: LecteurCoreSim
+    core_sim_reader: CoreSimReader
     feature_store: FeatureStore
     scoring_model: ScoringModel
     grille_repository: GrilleRepository
@@ -68,14 +64,14 @@ class ScorerDemande:
     def preview(
         self,
         demande: DemandeScoring,
-        entree_brute: dict[str, object],
+        raw_input: dict[str, object],
         agent_id: str,
         agent_nom: str,
         agent_agence_id: str | None,
     ) -> DecisionAEnregistrer:
         """Calcule le score sans l'enregistrer — l'agent doit encore confirm avant que
         quoi que ce soit ne soit écrit dans le registre des décisions."""
-        decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
+        decision = self._calculate(demande, raw_input, agent_id, agent_nom, agent_agence_id)
         self.audit_log.enregistrer_evenement(
             "scoring_previsualise", agent_id, demande.societaire_id, {}
         )
@@ -84,7 +80,7 @@ class ScorerDemande:
     def confirm(
         self,
         demande: DemandeScoring,
-        entree_brute: dict[str, object],
+        raw_input: dict[str, object],
         agent_id: str,
         agent_nom: str,
         agent_agence_id: str | None,
@@ -92,32 +88,32 @@ class ScorerDemande:
         """Recalcule à l'identique (les features CORE-SIM peuvent avoir changé entre la
         prévisualisation et la confirmation — limite documentée, acceptable pour cette
         passe) puis persiste, cette fois pour de bon."""
-        decision = self._calculer(demande, entree_brute, agent_id, agent_nom, agent_agence_id)
+        decision = self._calculate(demande, raw_input, agent_id, agent_nom, agent_agence_id)
         enregistree = self.decision_repository.enregistrer(decision)
         self.audit_log.enregistrer_evenement(
             "scoring_confirme", agent_id, demande.societaire_id, {}
         )
         return enregistree
 
-    def _calculer(
+    def _calculate(
         self,
         demande: DemandeScoring,
-        entree_brute: dict[str, object],
+        raw_input: dict[str, object],
         agent_id: str,
         agent_nom: str,
         agent_agence_id: str | None,
     ) -> DecisionAEnregistrer:
         societaire = valider_societaire_trouve(
-            self.lecteur.charger_societaire(demande.societaire_id), demande.societaire_id
+            self.core_sim_reader.charger_societaire(demande.societaire_id), demande.societaire_id
         )
         valider_acces_agence(societaire, agent_agence_id)
         valider_pas_de_credit_en_cours(societaire, demande.societaire_id)
-        depuis = datetime.now(UTC) - FENETRE_MULTI_OCTROI
+        since = datetime.now(UTC) - FENETRE_MULTI_OCTROI
         valider_pas_de_multi_octroi(
-            self.decision_repository, demande.societaire_id, depuis, entree_brute
+            self.decision_repository, demande.societaire_id, since, raw_input
         )
 
-        groupe = self.lecteur.charger_groupe(demande.societaire_id)
+        groupe = self.core_sim_reader.charger_groupe(demande.societaire_id)
         features_individuelles = self.feature_store.lire_individuelles(demande.societaire_id)
         features_solidaires = self.feature_store.lire_solidaires(demande.societaire_id)
         if features_individuelles is None or features_solidaires is None:
@@ -150,7 +146,7 @@ class ScorerDemande:
         )
         valider_montant_sous_plafond(demande.montant_demande, plafond_produit_montant)
         catalogue_produit = valider_produit_catalogue(
-            self.lecteur.charger_produits(), demande.produit_id
+            self.core_sim_reader.charger_produits(), demande.produit_id
         )
         valider_duree_dans_bornes(demande.duree_demandee_mois, catalogue_produit)
 
@@ -198,7 +194,7 @@ class ScorerDemande:
             agent_nom=agent_nom,
             agent_agence_id=agent_agence_id,
             societaire_id=demande.societaire_id,
-            entree=entree_brute,
+            entree=raw_input,
             features_utilisees=features_dict,
             probabilite=probabilite.valeur,
             score=score,

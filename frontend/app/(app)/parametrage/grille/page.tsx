@@ -17,24 +17,24 @@ export default async function PageGrille() {
     redirect("/acces-refuse");
   }
 
-  const [reponseGrille, reponseRegistre, reponseProduits] = await Promise.all([
+  const [gridResponse, registerResponse, productsResponse] = await Promise.all([
     fetchBackend("/api/v1/parametrage/grille"),
     fetchBackend("/api/v1/registre?limite=50"),
     fetchBackend("/api/v1/produits"),
   ]);
-  redirectIfUnauthenticated(reponseGrille);
-  redirectIfUnauthenticated(reponseRegistre);
-  redirectIfUnauthenticated(reponseProduits);
+  redirectIfUnauthenticated(gridResponse);
+  redirectIfUnauthenticated(registerResponse);
+  redirectIfUnauthenticated(productsResponse);
 
-  const configurationInitiale: ConfigurationGrilleApi | null = reponseGrille.ok
-    ? await reponseGrille.json()
+  const initialConfiguration: ConfigurationGrilleApi | null = gridResponse.ok
+    ? await gridResponse.json()
     : null;
-  const scoresHistoriques: number[] = reponseRegistre.ok
-    ? ((await reponseRegistre.json()) as { elements: DecisionRegistreApi[] }).elements.map(
+  const historicalScores: number[] = registerResponse.ok
+    ? ((await registerResponse.json()) as { elements: DecisionRegistreApi[] }).elements.map(
         (d) => d.resultat.score
       )
     : [];
-  const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
+  const products: ProduitCreditApi[] = productsResponse.ok ? await productsResponse.json() : [];
 
   return (
     <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-4 px-6 py-6">
@@ -53,12 +53,12 @@ export default async function PageGrille() {
           Seuils de décision, plafonds par produit et simulation d&rsquo;impact sur le portefeuille.
         </p>
       </div>
-      {configurationInitiale ? (
+      {initialConfiguration ? (
         <PolitiqueCredit
-          configurationInitiale={configurationInitiale}
-          scoresHistoriques={scoresHistoriques}
+          initialConfiguration={initialConfiguration}
+          historicalScores={historicalScores}
           role={session?.role}
-          produits={produits}
+          products={products}
         />
       ) : (
         <p className="text-sm text-neutre-500">

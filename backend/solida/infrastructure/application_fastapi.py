@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from solida.adapters.http import auth_dependencies
 from solida.domain.errors import (
     AccesRefuse,
     DomainError,
@@ -15,7 +14,6 @@ from solida.domain.errors import (
     VersionGrilleDejaExistante,
 )
 from solida.infrastructure.access_logging_middleware import AccessLoggingMiddleware
-from solida.infrastructure.auth import current_active_user as infra_current_active_user
 from solida.infrastructure.logging_config import configure_logging
 from solida.infrastructure.routers import (
     auth,
@@ -47,13 +45,6 @@ def create_application() -> FastAPI:
     configure_logging()
     application = FastAPI(title="SOLIDA API")
     application.add_middleware(AccessLoggingMiddleware)
-    # Le stub `auth_dependencies.current_active_user` (adapters/http/) est ce que les
-    # routers importent : seule cette racine de composition a le droit de connaitre a la
-    # fois le stub et l'implementation reelle (infrastructure/auth.py), donc c'est ici,
-    # et seulement ici, que l'override est cable.
-    application.dependency_overrides[auth_dependencies.current_active_user] = (
-        infra_current_active_user
-    )
     application.include_router(health.router)
     application.include_router(auth.router)
     application.include_router(societaires.router)

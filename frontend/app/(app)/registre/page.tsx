@@ -7,10 +7,10 @@ import type { DecisionRegistreApi } from "@/lib/contracts";
 import { redirectIfUnauthenticated } from "@/lib/session";
 
 export default async function PageRegistre() {
-  const reponse = await fetchBackend("/api/v1/registre?limite=50");
-  redirectIfUnauthenticated(reponse);
-  const { elements }: { elements: DecisionRegistreApi[]; total: number } = reponse.ok
-    ? await reponse.json()
+  const response = await fetchBackend("/api/v1/registre?limite=50");
+  redirectIfUnauthenticated(response);
+  const { elements }: { elements: DecisionRegistreApi[]; total: number } = response.ok
+    ? await response.json()
     : { elements: [], total: 0 };
 
   const decisions: DecisionRegistreVue[] = elements.map((d) => ({

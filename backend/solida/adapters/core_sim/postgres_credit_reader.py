@@ -7,66 +7,56 @@ from solida.domain.entities.credit import Credit
 
 
 def _capital_restant_du(
-    montant_octroye: int, statut: str, date_deblocage: date, duree_mois: int, aujourdhui: date
+    montant_octroye: int, statut: str, date_deblocage: date, duree_mois: int, today: date
 ) -> int:
     """Approxime le capital restant dû.
 
-    Le générateur produit des crédits bruts (montant, durée, statut) mais pas
-    d'échéancier de remboursement détaillé : cette fonction est une estimation
-    d'affichage, documentée comme telle, pas un calcul comptable exact.
-
-    `solde` : intégralement remboursé, 0. `en_souffrance` : aucune donnée de
-    remboursement partiel n'existe dans le générateur, donc le montant octroyé
-    est traité comme intégralement impayé plutôt que d'appliquer un
-    amortissement qui suppose, à tort, un remboursement en cours. `en_cours` :
-    amortissement linéaire sur la durée écoulée, seule approximation
-    raisonnable pour un crédit dont l'issue n'est pas encore connue.
+    CORE-SIM ne fournit pas d'échéancier : la valeur reste une estimation d'affichage.
+    Un crédit en souffrance est traité comme impayé en totalité, faute de remboursement partiel.
     """
     if statut == "solde":
         return 0
     if statut == "en_souffrance":
         return montant_octroye
-    mois_ecoules = max(
-        0, (aujourdhui.year - date_deblocage.year) * 12 + aujourdhui.month - date_deblocage.month
+    elapsed_months = max(
+        0, (today.year - date_deblocage.year) * 12 + today.month - date_deblocage.month
     )
-    fraction_restante = max(0.0, 1.0 - min(mois_ecoules, duree_mois) / duree_mois)
-    return round(montant_octroye * fraction_restante)
+    remaining_fraction = max(0.0, 1.0 - min(elapsed_months, duree_mois) / duree_mois)
+    return round(montant_octroye * remaining_fraction)
 
 
-def _ligne_to_credit(ligne: Any, aujourdhui: date) -> Credit:
-    date_deblocage: date = ligne.date_deblocage
-    duree_mois: int = ligne.duree_mois
-    statut: str = ligne.statut
+def _row_to_credit(row: Any, today: date) -> Credit:
+    date_deblocage: date = row.date_deblocage
+    duree_mois: int = row.duree_mois
+    statut: str = row.statut
     return Credit(
-        credit_id=ligne.credit_id,
-        societaire_id=ligne.societaire_id,
-        produit_id=ligne.produit_id,
+        credit_id=row.credit_id,
+        societaire_id=row.societaire_id,
+        produit_id=row.produit_id,
         date_deblocage=date_deblocage,
-        date_echeance_prevue=ligne.date_issue,
+        date_echeance_prevue=row.date_issue,
         duree_mois=duree_mois,
-        numero_cycle=ligne.numero_cycle,
-        montant_octroye=ligne.montant_octroye,
+        numero_cycle=row.numero_cycle,
+        montant_octroye=row.montant_octroye,
         statut=statut,
-        jours_retard_max=(
-            None if ligne.jours_retard_max is None else round(ligne.jours_retard_max)
-        ),
+        jours_retard_max=(None if row.jours_retard_max is None else round(row.jours_retard_max)),
         capital_restant_du=_capital_restant_du(
-            ligne.montant_octroye, statut, date_deblocage, duree_mois, aujourdhui
+            row.montant_octroye, statut, date_deblocage, duree_mois, today
         ),
     )
 
 
 class PostgresCreditReader:
-    def __init__(self, moteur: Engine) -> None:
-        self._moteur = moteur
+    def __init__(self, engine: Engine) -> None:
+        self._engine = engine
 
     def charger_historique_credit(self, societaire_id: str) -> list[Credit]:
-        requete = text("""
+        query = text("""
             SELECT credit_id, societaire_id, produit_id, date_deblocage, date_issue, duree_mois,
                    numero_cycle, montant_octroye, statut, jours_retard_max
             FROM credits WHERE societaire_id = :id ORDER BY date_deblocage DESC
         """)
-        aujourdhui = date.today()
-        with self._moteur.connect() as connexion:
-            lignes = connexion.execute(requete, {"id": societaire_id})
-            return [_ligne_to_credit(ligne, aujourdhui) for ligne in lignes]
+        today = date.today()
+        with self._engine.connect() as connection:
+            rows = connection.execute(query, {"id": societaire_id})
+            return [_row_to_credit(row, today) for row in rows]

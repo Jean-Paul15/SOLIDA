@@ -23,15 +23,15 @@ const LIBELLE_SEGMENT: Record<string, string> = {
 
 export default async function PageDossier({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [reponse, reponseProduits] = await Promise.all([
+  const [dossierResponse, productsResponse] = await Promise.all([
     fetchBackend(`/api/v1/societaires/${id}/dossier`),
     fetchBackend("/api/v1/produits"),
   ]);
-  redirectIfUnauthenticated(reponse);
-  redirectIfAccessDenied(reponse);
-  if (!reponse.ok) notFound();
-  const dossier: DossierSocietaire = await reponse.json();
-  const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
+  redirectIfUnauthenticated(dossierResponse);
+  redirectIfAccessDenied(dossierResponse);
+  if (!dossierResponse.ok) notFound();
+  const dossier: DossierSocietaire = await dossierResponse.json();
+  const produits: ProduitCreditApi[] = productsResponse.ok ? await productsResponse.json() : [];
 
   const session = await readSession();
   const { identite, activite, epargne, historique_credit, alertes, groupe } = dossier;

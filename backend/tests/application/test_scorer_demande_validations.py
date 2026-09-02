@@ -26,7 +26,7 @@ from solida.domain.values.montant import Montant
 
 
 def _societaire(**overrides: object) -> Societaire:
-    valeurs: dict[str, object] = {
+    values: dict[str, object] = {
         "societaire_id": "SOC-1",
         "numero_membre": "100001",
         "nom_complet": "Test Societaire",
@@ -43,12 +43,12 @@ def _societaire(**overrides: object) -> Societaire:
         "groupe_id": None,
         "a_credit_en_cours": False,
     }
-    valeurs.update(overrides)
-    return Societaire(**valeurs)  # type: ignore[arg-type]
+    values.update(overrides)
+    return Societaire(**values)  # type: ignore[arg-type]
 
 
 def _produit(**overrides: object) -> ProduitCredit:
-    valeurs: dict[str, object] = {
+    values: dict[str, object] = {
         "produit_id": "PROD-1",
         "libelle": "Produit test",
         "type_garantie": "individuelle",
@@ -58,18 +58,18 @@ def _produit(**overrides: object) -> ProduitCredit:
         "duree_max_mois": 24,
         "taux_annuel": 0.18,
     }
-    valeurs.update(overrides)
-    return ProduitCredit(**valeurs)  # type: ignore[arg-type]
+    values.update(overrides)
+    return ProduitCredit(**values)  # type: ignore[arg-type]
 
 
-class _DecisionRepositoryFactice:
-    def __init__(self, existe: bool) -> None:
-        self._existe = existe
+class _FakeDecisionRepository:
+    def __init__(self, exists: bool) -> None:
+        self._exists = exists
 
     def existe_decision_accordee_depuis(
         self, societaire_id: str, depuis: datetime, entree_actuelle: dict[str, object]
     ) -> bool:
-        return self._existe
+        return self._exists
 
 
 def test_valider_societaire_trouve_renvoie_le_societaire() -> None:
@@ -107,14 +107,14 @@ def test_valider_pas_de_credit_en_cours_leve_si_credit_en_cours() -> None:
 
 def test_valider_pas_de_multi_octroi_ok_si_aucune_decision_recente() -> None:
     valider_pas_de_multi_octroi(
-        _DecisionRepositoryFactice(existe=False), "SOC-1", datetime.now(UTC), {}
+        _FakeDecisionRepository(exists=False), "SOC-1", datetime.now(UTC), {}
     )
 
 
 def test_valider_pas_de_multi_octroi_leve_si_decision_recente() -> None:
     with pytest.raises(SurEndettement):
         valider_pas_de_multi_octroi(
-            _DecisionRepositoryFactice(existe=True), "SOC-1", datetime.now(UTC), {}
+            _FakeDecisionRepository(exists=True), "SOC-1", datetime.now(UTC), {}
         )
 
 

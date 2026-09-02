@@ -70,7 +70,7 @@ def test_purge_supprime_seulement_les_entrees_plus_vieilles_que_la_retention() -
 def test_essai_a_blanc_ne_supprime_rien() -> None:
     _inserer(datetime.now(UTC) - RETENTION - timedelta(days=1))
     try:
-        nb_concernees = purge(essai_a_blanc=True)
+        nb_concernees = purge(dry_run=True)
         assert nb_concernees >= 1
 
         with solida_engine().connect() as connexion:

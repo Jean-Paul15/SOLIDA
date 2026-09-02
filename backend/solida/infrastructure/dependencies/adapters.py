@@ -21,13 +21,13 @@ from solida.infrastructure.database import coresim_engine, solida_engine
 
 
 @lru_cache
-def lecteur() -> CoreSimPostgresReader:
+def core_sim_reader() -> CoreSimPostgresReader:
     return CoreSimPostgresReader(coresim_engine())
 
 
 @lru_cache
 def feature_store() -> FeatureStoreCoreSim:
-    return FeatureStoreCoreSim(lecteur())
+    return FeatureStoreCoreSim(core_sim_reader())
 
 
 @lru_cache

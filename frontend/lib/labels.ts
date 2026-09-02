@@ -1,4 +1,4 @@
-import type { ObjetCredit, StatutCredit, Tranche } from "@/lib/contracts";
+import type { ObjetCredit, RoleGroupe, StatutCredit, Tranche } from "@/lib/contracts";
 
 export const LABEL_OBJET_CREDIT: Record<ObjetCredit, string> = {
   fonds_roulement: "Fonds de roulement",
@@ -30,6 +30,13 @@ export const LABEL_STATUT_CREDIT_MEMBRE: Record<
   en_cours: "En cours",
   solde: "Soldé",
   en_souffrance: "En souffrance",
+};
+
+export const GROUP_ROLE_LABEL: Record<RoleGroupe, string> = {
+  membre: "Membre",
+  presidente: "Présidente",
+  tresoriere: "Trésorière",
+  secretaire: "Secrétaire",
 };
 
 export const LABEL_TRANCHE: Record<Tranche, string> = {

@@ -4,18 +4,18 @@ import type { ProduitCreditApi } from "@/lib/contracts";
 import { formatAmount } from "@/lib/format";
 
 interface ProductsTabProps {
-  produits: ProduitCreditApi[];
-  plafondsProduits: Record<string, number>;
-  onChangePlafond: (produitId: string, valeur: number) => void;
-  autoriseAModifier: boolean;
+  products: ProduitCreditApi[];
+  productCaps: Record<string, number>;
+  onProductCapChange: (produitId: string, value: number) => void;
+  canEdit: boolean;
   version: string;
 }
 
 export function ProductsTab({
-  produits,
-  plafondsProduits,
-  onChangePlafond,
-  autoriseAModifier,
+  products,
+  productCaps,
+  onProductCapChange,
+  canEdit,
   version,
 }: ProductsTabProps) {
   return (
@@ -28,29 +28,31 @@ export function ProductsTab({
         <span className="text-xs text-neutre-500">Version active : {version}</span>
       </div>
       <div className="flex flex-col gap-3 rounded-lg border border-neutre-200 p-4">
-        {produits.map((p) => (
-          <div key={p.produit_id} className="flex items-center gap-3 text-sm">
+        {products.map((product) => (
+          <div key={product.produit_id} className="flex items-center gap-3 text-sm">
             <div className="flex flex-1 flex-col">
-              <span className="text-neutre-950">{p.libelle}</span>
+              <span className="text-neutre-950">{product.libelle}</span>
               <span className="text-xs text-neutre-500">
-                {p.duree_min_mois}–{p.duree_max_mois} mois · {(p.taux_annuel * 100).toFixed(0)}% ·{" "}
-                {p.type_garantie}
+                {product.duree_min_mois}–{product.duree_max_mois} mois ·{" "}
+                {(product.taux_annuel * 100).toFixed(0)}% · {product.type_garantie}
               </span>
             </div>
-            {autoriseAModifier ? (
+            {canEdit ? (
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   className="w-32"
-                  value={plafondsProduits[p.produit_id] ?? p.montant_max}
-                  onChange={(e) => onChangePlafond(p.produit_id, Number(e.target.value))}
-                  min={p.montant_min}
+                  value={productCaps[product.produit_id] ?? product.montant_max}
+                  onChange={(event) =>
+                    onProductCapChange(product.produit_id, Number(event.target.value))
+                  }
+                  min={product.montant_min}
                 />
                 <span className="text-xs text-neutre-500">FCFA</span>
               </div>
             ) : (
               <span className="font-mono text-neutre-950">
-                {formatAmount(plafondsProduits[p.produit_id] ?? p.montant_max)}
+                {formatAmount(productCaps[product.produit_id] ?? product.montant_max)}
               </span>
             )}
           </div>

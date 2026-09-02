@@ -109,9 +109,7 @@ def test_previsualiser_ne_persiste_rien(
     with moteur.connect() as connexion:
         avant = connexion.execute(text("SELECT count(*) FROM decision_scoring")).scalar_one()
 
-    reponse = client_agent.post(
-        "/api/v1/scoring/preview", json=_demande(societaire_agence_agent)
-    )
+    reponse = client_agent.post("/api/v1/scoring/preview", json=_demande(societaire_agence_agent))
     assert reponse.status_code == 200
     resultat = reponse.json()
     assert resultat["montant_demande"] == 100000

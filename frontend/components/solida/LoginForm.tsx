@@ -31,13 +31,11 @@ export function LoginForm() {
     setInProgress(true);
 
     const formData = new FormData(event.currentTarget);
-    // Delai d'abandon + try/catch : sans ca, une requete qui echoue avant meme d'atteindre
-    // le serveur (reseau coupe momentanement) ou qui ne repond jamais laissait le bouton
-    // bloque sur "Connexion..." indefiniment, sans autre issue que de recharger la page.
-    const controleur = new AbortController();
-    const delaiAbandon = setTimeout(() => controleur.abort(), 15_000);
+    // Évite un bouton bloqué si le réseau ne renvoie jamais de réponse.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000);
     try {
-      const reponse = await withMinDuration(
+      const response = await withMinDuration(
         apiFetch(
           "/api/v1/auth/login",
           {
@@ -47,13 +45,13 @@ export function LoginForm() {
               identifiant: formData.get("identifiant"),
               mot_de_passe: formData.get("mot_de_passe"),
             }),
-            signal: controleur.signal,
+            signal: controller.signal,
           },
           { authRoute: true }
         )
       );
 
-      const { must_change_password }: LoginResponseApi = await reponse.json();
+      const { must_change_password }: LoginResponseApi = await response.json();
       router.push(
         must_change_password
           ? "/changer-mot-de-passe"
@@ -67,7 +65,7 @@ export function LoginForm() {
       );
       identifiantRef.current?.focus();
     } finally {
-      clearTimeout(delaiAbandon);
+      clearTimeout(timeoutId);
       setInProgress(false);
     }
   }
@@ -81,10 +79,7 @@ export function LoginForm() {
           id="identifiant"
           name="identifiant"
           autoFocus
-          // "off" plutot que "username" : reduit (sans l'annuler completement, certains
-          // navigateurs l'ignorent sur un formulaire de connexion) le remplissage automatique
-          // d'un identifiant enregistre pour cette origine. Le vrai nettoyage se fait dans le
-          // gestionnaire de mots de passe du navigateur, pas dans le code.
+          // Réduit l'autoremplissage d'un identifiant mémorisé pour cette origine.
           autoComplete="off"
           disabled={inProgress}
           required

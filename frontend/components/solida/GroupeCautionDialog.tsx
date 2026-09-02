@@ -1,9 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,32 +11,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { SyntheseGroupe } from "@/lib/contracts";
-import { LABEL_STATUT_CREDIT_MEMBRE } from "@/lib/labels";
 import { ApiError, useApiErrorToast } from "@/lib/services/error-service";
 import { fetchGroup } from "@/lib/services/societaires";
-
-const LABEL_ROLE: Record<string, string> = {
-  membre: "Membre",
-  presidente: "Présidente",
-  tresoriere: "Trésorière",
-  secretaire: "Secrétaire",
-};
+import { GroupMembersTable } from "./GroupMembersTable";
 
 interface GroupeCautionDialogProps {
   societaireId: string;
 }
 
 export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) {
-  const router = useRouter();
   const handleError = useApiErrorToast();
   const [groupe, setGroupe] = useState<SyntheseGroupe | null>(null);
   const [inProgress, setInProgress] = useState(false);
@@ -116,42 +98,7 @@ export function GroupeCautionDialog({ societaireId }: GroupeCautionDialogProps) 
               </span>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Membre</TableHead>
-                  <TableHead>Rôle</TableHead>
-                  <TableHead>Ancienneté</TableHead>
-                  <TableHead>Statut crédit</TableHead>
-                  <TableHead>Caution appelée</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {groupe.membres.map((m) => (
-                  <TableRow
-                    key={m.societaire_id}
-                    onClick={() => router.push(`/societaires/${m.societaire_id}`)}
-                    className={
-                      m.societaire_id === societaireId
-                        ? "cursor-pointer bg-solida-teal-50"
-                        : "cursor-pointer"
-                    }
-                  >
-                    <TableCell>{m.nom_complet}</TableCell>
-                    <TableCell>{LABEL_ROLE[m.role]}</TableCell>
-                    <TableCell>{Math.floor(m.anciennete_mois / 12)} an(s)</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={m.statut_credit === "en_souffrance" ? "destructive" : "secondary"}
-                      >
-                        {LABEL_STATUT_CREDIT_MEMBRE[m.statut_credit]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{m.caution_appelee ? "Oui" : "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <GroupMembersTable members={groupe.membres} societaireId={societaireId} />
 
             <div className="flex justify-between border-t border-neutre-200 pt-3 text-sm text-neutre-500">
               <span>{groupe.nb_cycles_completes} cycle(s) menés à terme</span>

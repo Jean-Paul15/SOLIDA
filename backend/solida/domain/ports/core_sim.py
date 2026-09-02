@@ -11,7 +11,7 @@ from solida.domain.entities.societaire import Societaire
 from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 
-class LecteurCoreSim(Protocol):
+class CoreSimReader(Protocol):
     """Accès en lecture seule à CORE-SIM.
 
     Aucune implémentation de ce port n'écrit dans CORE-SIM : la garantie tient

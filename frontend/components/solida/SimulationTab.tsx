@@ -3,11 +3,11 @@ import { LABEL_TRANCHE } from "@/lib/labels";
 
 interface SimulationTabProps {
   total: number;
-  compte: (tranche: string) => number;
-  tauxApprobation: number;
+  count: (tranche: string) => number;
+  approvalRate: number;
 }
 
-export function SimulationTab({ total, compte, tauxApprobation }: SimulationTabProps) {
+export function SimulationTab({ total, count, approvalRate }: SimulationTabProps) {
   return (
     <div className="flex flex-col gap-3">
       <Section
@@ -27,14 +27,14 @@ export function SimulationTab({ total, compte, tauxApprobation }: SimulationTabP
             <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-neutre-200">
               <div
                 className="absolute h-full bg-solida-teal-600"
-                style={{ width: `${total > 0 ? (compte(t) / total) * 100 : 0}%` }}
+                style={{ width: `${total > 0 ? (count(t) / total) * 100 : 0}%` }}
               />
             </div>
-            <span className="w-10 text-right font-mono text-sm text-neutre-950">{compte(t)}</span>
+            <span className="w-10 text-right font-mono text-sm text-neutre-950">{count(t)}</span>
           </div>
         ))}
         <span className="text-xs text-neutre-500">
-          Taux d&rsquo;approbation : {(tauxApprobation * 100).toFixed(0)}%
+          Taux d&rsquo;approbation : {(approvalRate * 100).toFixed(0)}%
         </span>
       </div>
     </div>

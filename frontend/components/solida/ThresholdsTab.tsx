@@ -7,42 +7,42 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Section } from "@/components/solida/Section";
 import { scoreDepuisProbabilite } from "@/lib/scorecard";
 
-type Preregl = "prudent" | "equilibre" | "expansion";
+type PolicyPreset = "prudent" | "equilibre" | "expansion";
 
 interface ThresholdsTabProps {
-  preregl: Preregl;
-  onChangePreregl: (valeur: Preregl) => void;
-  marge: number;
-  onChangeMarge: (valeur: number) => void;
+  preset: PolicyPreset;
+  onPresetChange: (value: PolicyPreset) => void;
+  margin: number;
+  onMarginChange: (value: number) => void;
   lgd: number;
-  onChangeLgd: (valeur: number) => void;
-  multiplicateurAccord: number;
-  onChangeMultiplicateurAccord: (valeur: number) => void;
-  multiplicateurExamen: number;
-  onChangeMultiplicateurExamen: (valeur: number) => void;
-  seuil: number;
-  parametresScorecard: { pdo: number; scoreReference: number; oddsReference: number };
-  enregistrer: () => void;
-  enregistrementEnCours: boolean;
-  autoriseAModifier: boolean;
+  onLgdChange: (value: number) => void;
+  approvalMultiplier: number;
+  onApprovalMultiplierChange: (value: number) => void;
+  reviewMultiplier: number;
+  onReviewMultiplierChange: (value: number) => void;
+  threshold: number;
+  scorecardParameters: { pdo: number; scoreReference: number; oddsReference: number };
+  onSave: () => void;
+  isSaving: boolean;
+  canEdit: boolean;
 }
 
 export function ThresholdsTab({
-  preregl,
-  onChangePreregl,
-  marge,
-  onChangeMarge,
+  preset,
+  onPresetChange,
+  margin,
+  onMarginChange,
   lgd,
-  onChangeLgd,
-  multiplicateurAccord,
-  onChangeMultiplicateurAccord,
-  multiplicateurExamen,
-  onChangeMultiplicateurExamen,
-  seuil,
-  parametresScorecard,
-  enregistrer,
-  enregistrementEnCours,
-  autoriseAModifier,
+  onLgdChange,
+  approvalMultiplier,
+  onApprovalMultiplierChange,
+  reviewMultiplier,
+  onReviewMultiplierChange,
+  threshold,
+  scorecardParameters,
+  onSave,
+  isSaving,
+  canEdit,
 }: ThresholdsTabProps) {
   return (
     <div className="flex flex-col gap-6">
@@ -58,25 +58,25 @@ export function ThresholdsTab({
               ["equilibre", "Équilibré"],
               ["expansion", "Expansion contrôlée"],
             ] as const
-          ).map(([valeur, libelle]) => {
-            const desactive = valeur !== "equilibre";
-            const bouton = (
+          ).map(([value, label]) => {
+            const isDisabled = value !== "equilibre";
+            const button = (
               <Button
-                key={valeur}
+                key={value}
                 type="button"
-                variant={preregl === valeur ? "default" : "outline"}
+                variant={preset === value ? "default" : "outline"}
                 size="sm"
-                disabled={desactive}
-                onClick={() => onChangePreregl(valeur)}
+                disabled={isDisabled}
+                onClick={() => onPresetChange(value)}
               >
-                {libelle}
+                {label}
               </Button>
             );
-            if (!desactive) return bouton;
+            if (!isDisabled) return button;
             return (
-              <Tooltip key={valeur}>
+              <Tooltip key={value}>
                 <TooltipTrigger asChild>
-                  <span>{bouton}</span>
+                  <span>{button}</span>
                 </TooltipTrigger>
                 <TooltipContent>
                   Bientôt disponible, après validation par le comité risque.
@@ -96,11 +96,11 @@ export function ThresholdsTab({
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-sm">
               <Label>Marge nette</Label>
-              <span className="font-mono text-neutre-950">{(marge * 100).toFixed(0)}%</span>
+              <span className="font-mono text-neutre-950">{(margin * 100).toFixed(0)}%</span>
             </div>
             <Slider
-              value={[marge]}
-              onValueChange={([v]) => onChangeMarge(v)}
+              value={[margin]}
+              onValueChange={([value]) => onMarginChange(value)}
               min={0.05}
               max={0.3}
               step={0.01}
@@ -114,7 +114,7 @@ export function ThresholdsTab({
             </div>
             <Slider
               value={[lgd]}
-              onValueChange={([v]) => onChangeLgd(v)}
+              onValueChange={([value]) => onLgdChange(value)}
               min={0.4}
               max={0.9}
               step={0.01}
@@ -130,11 +130,11 @@ export function ThresholdsTab({
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-sm">
               <Label>Multiplicateur zone d&rsquo;accord</Label>
-              <span className="font-mono text-neutre-950">× {multiplicateurAccord.toFixed(2)}</span>
+              <span className="font-mono text-neutre-950">× {approvalMultiplier.toFixed(2)}</span>
             </div>
             <Slider
-              value={[multiplicateurAccord]}
-              onValueChange={([v]) => onChangeMultiplicateurAccord(v)}
+              value={[approvalMultiplier]}
+              onValueChange={([value]) => onApprovalMultiplierChange(value)}
               min={0.3}
               max={0.95}
               step={0.05}
@@ -144,11 +144,11 @@ export function ThresholdsTab({
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-sm">
               <Label>Multiplicateur zone d&rsquo;examen</Label>
-              <span className="font-mono text-neutre-950">× {multiplicateurExamen.toFixed(2)}</span>
+              <span className="font-mono text-neutre-950">× {reviewMultiplier.toFixed(2)}</span>
             </div>
             <Slider
-              value={[multiplicateurExamen]}
-              onValueChange={([v]) => onChangeMultiplicateurExamen(v)}
+              value={[reviewMultiplier]}
+              onValueChange={([value]) => onReviewMultiplierChange(value)}
               min={1.2}
               max={2.5}
               step={0.05}
@@ -156,15 +156,15 @@ export function ThresholdsTab({
           </div>
 
           <Button
-            onClick={enregistrer}
-            loading={enregistrementEnCours}
-            disabled={!autoriseAModifier}
+            onClick={onSave}
+            loading={isSaving}
+            disabled={!canEdit}
             className="self-start gap-1.5"
           >
-            {enregistrementEnCours && <Loader2 className="size-4 animate-spin" />}
-            {enregistrementEnCours ? "Enregistrement…" : "Enregistrer la grille"}
+            {isSaving && <Loader2 className="size-4 animate-spin" />}
+            {isSaving ? "Enregistrement…" : "Enregistrer la grille"}
           </Button>
-          {!autoriseAModifier && (
+          {!canEdit && (
             <p className="text-xs text-neutre-500">
               Lecture seule : la modification de la grille est réservée à la supervision. Les
               curseurs simulent l&rsquo;effet d&rsquo;un réglage sans l&rsquo;enregistrer.
@@ -182,18 +182,18 @@ export function ThresholdsTab({
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="text-neutre-500">Seuil économique</span>
-                <div className="font-mono text-neutre-950">{(seuil * 100).toFixed(1)}%</div>
+                <div className="font-mono text-neutre-950">{(threshold * 100).toFixed(1)}%</div>
               </div>
               <div>
                 <span className="text-neutre-500">Score accord</span>
                 <div className="font-mono text-neutre-950">
-                  {scoreDepuisProbabilite(seuil * multiplicateurAccord, parametresScorecard)}
+                  {scoreDepuisProbabilite(threshold * approvalMultiplier, scorecardParameters)}
                 </div>
               </div>
               <div>
                 <span className="text-neutre-500">Score refus</span>
                 <div className="font-mono text-neutre-950">
-                  {scoreDepuisProbabilite(seuil * multiplicateurExamen, parametresScorecard)}
+                  {scoreDepuisProbabilite(threshold * reviewMultiplier, scorecardParameters)}
                 </div>
               </div>
             </div>

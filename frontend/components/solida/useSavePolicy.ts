@@ -4,66 +4,60 @@ import type { ConfigurationGrilleApi } from "@/lib/contracts";
 import { apiFetch, useApiErrorToast } from "@/lib/services/error-service";
 import { withMinDuration } from "@/lib/timing";
 
-interface ParametresPolitique {
-  marge: number;
+interface PolicyParameters {
+  margin: number;
   lgd: number;
-  multiplicateurAccord: number;
-  multiplicateurExamen: number;
-  plafondsProduits: Record<string, number>;
+  approvalMultiplier: number;
+  reviewMultiplier: number;
+  productCaps: Record<string, number>;
 }
 
-export function useSavePolicy(
-  configurationInitiale: ConfigurationGrilleApi,
-  autoriseAModifier: boolean
-) {
-  const [version, setVersion] = useState(configurationInitiale.version_grille);
-  const [enregistrementEnCours, setEnregistrementEnCours] = useState(false);
+export function useSavePolicy(initialConfiguration: ConfigurationGrilleApi, canEdit: boolean) {
+  const [version, setVersion] = useState(initialConfiguration.version_grille);
+  const [isSaving, setIsSaving] = useState(false);
   const handleError = useApiErrorToast();
 
-  async function enregistrer(parametres: ParametresPolitique) {
-    if (!autoriseAModifier) return;
-    setEnregistrementEnCours(true);
-    // Format attendu vMAJOR.MINOR ; une valeur héritée d'un autre format (ex. donnée de
-    // test) ne doit jamais produire un "vNaN.x" affiché à l'agent — on repart proprement.
-    const correspondance = /^v(\d+)\.(\d+)$/.exec(version);
-    const nouvelleVersion = correspondance
-      ? `v${correspondance[1]}.${Number(correspondance[2]) + 1}`
-      : "v1.0";
+  async function save(parameters: PolicyParameters) {
+    if (!canEdit) return;
+    setIsSaving(true);
+    // Une version héritée invalide repart d'un format affichable pour l'agent.
+    const match = /^v(\d+)\.(\d+)$/.exec(version);
+    const nextVersion = match ? `v${match[1]}.${Number(match[2]) + 1}` : "v1.0";
     const {
       pdo,
       score_reference: scoreReference,
       odds_reference: oddsReference,
-    } = configurationInitiale.scorecard;
+    } = initialConfiguration.scorecard;
     try {
       await withMinDuration(
         apiFetch("/api/v1/parametrage/grille", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            version_grille: nouvelleVersion,
+            version_grille: nextVersion,
             grille: {
-              marge: parametres.marge,
-              lgd: parametres.lgd,
-              multiplicateur_accord: parametres.multiplicateurAccord,
-              multiplicateur_vigilance: configurationInitiale.grille.multiplicateur_vigilance,
-              multiplicateur_examen: parametres.multiplicateurExamen,
+              marge: parameters.margin,
+              lgd: parameters.lgd,
+              multiplicateur_accord: parameters.approvalMultiplier,
+              multiplicateur_vigilance: initialConfiguration.grille.multiplicateur_vigilance,
+              multiplicateur_examen: parameters.reviewMultiplier,
             },
             progressif: {
-              ...configurationInitiale.progressif,
-              plafonds_produits: parametres.plafondsProduits,
+              ...initialConfiguration.progressif,
+              plafonds_produits: parameters.productCaps,
             },
             scorecard: { pdo, score_reference: scoreReference, odds_reference: oddsReference },
           }),
         })
       );
-      setVersion(nouvelleVersion);
-      toast.success(`Politique de crédit ${nouvelleVersion} enregistrée`);
+      setVersion(nextVersion);
+      toast.success(`Politique de crédit ${nextVersion} enregistrée`);
     } catch (e) {
       handleError(e, "L'enregistrement a échoué.");
     } finally {
-      setEnregistrementEnCours(false);
+      setIsSaving(false);
     }
   }
 
-  return { version, enregistrementEnCours, enregistrer };
+  return { version, isSaving, save };
 }

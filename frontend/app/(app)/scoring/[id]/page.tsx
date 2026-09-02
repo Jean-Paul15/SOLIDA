@@ -12,17 +12,17 @@ interface PageResultatScoringProps {
 
 export default async function PageResultatScoring({ params }: PageResultatScoringProps) {
   const { id: decisionId } = await params;
-  const reponse = await fetchBackend(`/api/v1/scoring/${decisionId}`);
-  redirectIfUnauthenticated(reponse);
-  redirectIfAccessDenied(reponse);
-  if (!reponse.ok) notFound();
-  const result: ScoringResult = await reponse.json();
+  const scoringResponse = await fetchBackend(`/api/v1/scoring/${decisionId}`);
+  redirectIfUnauthenticated(scoringResponse);
+  redirectIfAccessDenied(scoringResponse);
+  if (!scoringResponse.ok) notFound();
+  const result: ScoringResult = await scoringResponse.json();
 
-  const reponseDossier = await fetchBackend(`/api/v1/societaires/${result.societaire_id}/dossier`);
-  redirectIfUnauthenticated(reponseDossier);
-  redirectIfAccessDenied(reponseDossier);
-  if (!reponseDossier.ok) notFound();
-  const dossier: DossierSocietaire = await reponseDossier.json();
+  const dossierResponse = await fetchBackend(`/api/v1/societaires/${result.societaire_id}/dossier`);
+  redirectIfUnauthenticated(dossierResponse);
+  redirectIfAccessDenied(dossierResponse);
+  if (!dossierResponse.ok) notFound();
+  const dossier: DossierSocietaire = await dossierResponse.json();
 
   return (
     <>

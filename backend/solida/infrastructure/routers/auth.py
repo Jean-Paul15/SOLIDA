@@ -6,7 +6,6 @@ from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from solida.adapters.http.auth_dependencies import client_ip_address, current_active_user
 from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.orm_models import AccessToken, User
 from solida.domain.errors import AccesRefuse
@@ -20,6 +19,7 @@ from solida.infrastructure.auth import (
     load_common_passwords,
     revoke_user_tokens,
 )
+from solida.infrastructure.auth.dependencies import client_ip_address, current_active_user
 from solida.infrastructure.dependencies import audit_log
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])

@@ -80,7 +80,7 @@ def _groupe(**overrides: object) -> GroupeCaution:
 
 
 @dataclass
-class _LecteurFactice:
+class _FakeCoreSimReader:
     societaire: Societaire | None
     credits: list[Credit]
     compte: CompteEpargne | None
@@ -106,18 +106,18 @@ class _LecteurFactice:
 
 
 def test_executer_renvoie_none_si_societaire_introuvable() -> None:
-    cas_usage = ConsulterDossier(
-        lecteur=_LecteurFactice(
+    use_case = ConsulterDossier(
+        core_sim_reader=_FakeCoreSimReader(
             societaire=None, credits=[], compte=None, groupe=None, mouvements=[]
         )
     )
 
-    assert cas_usage.execute("SOC-1") is None
+    assert use_case.execute("SOC-1") is None
 
 
 def test_executer_compose_le_dossier_complet() -> None:
-    cas_usage = ConsulterDossier(
-        lecteur=_LecteurFactice(
+    use_case = ConsulterDossier(
+        core_sim_reader=_FakeCoreSimReader(
             societaire=_societaire(),
             credits=[_credit()],
             compte=CompteEpargne(
@@ -141,7 +141,7 @@ def test_executer_compose_le_dossier_complet() -> None:
         )
     )
 
-    dossier = cas_usage.execute("SOC-1")
+    dossier = use_case.execute("SOC-1")
 
     assert dossier is not None
     assert dossier.identite.societaire_id == "SOC-1"

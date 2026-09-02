@@ -3,7 +3,6 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from solida.adapters.http import mappers
-from solida.adapters.http.auth_dependencies import current_active_user, require_role
 from solida.adapters.http.schemas.fiche import FicheJustification
 from solida.adapters.http.schemas.scoring import ScoringInput, ScoringResult
 from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
@@ -15,6 +14,7 @@ from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.domain.errors import AccesRefuse
 from solida.domain.values.decision import DecisionEnregistree
 from solida.domain.values.demande import ActualisationSituation, DemandeScoring
+from solida.infrastructure.auth.dependencies import current_active_user, require_role
 from solida.infrastructure.dependencies import (
     archiver_fiche,
     fiche_pdf_generator,
@@ -26,7 +26,7 @@ from solida.infrastructure.dependencies import (
 router = APIRouter(prefix="/api/v1/scoring", tags=["scoring"])
 
 
-def _erreur_introuvable() -> HTTPException:
+def _not_found_error() -> HTTPException:
     return HTTPException(
         status.HTTP_404_NOT_FOUND,
         detail={
@@ -36,15 +36,13 @@ def _erreur_introuvable() -> HTTPException:
     )
 
 
-def _valider_decision_id(decision_id: str) -> None:
-    """Rejette explicitement un format invalide avant toute requête DB : sans ça,
-    `uuid.UUID(...)` lève une `ValueError` non interceptée plus bas dans la pile,
-    remontant en 500 générique au lieu d'un 422 propre."""
+def _validate_decision_id(decision_id: str) -> None:
+    """Convertit les UUID invalides en erreur HTTP 422 plutôt qu'en erreur serveur."""
     try:
         uuid.UUID(decision_id)
     except ValueError as erreur:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={
                 "code": "identifiant_invalide",
                 "message": "L'identifiant de décision n'est pas un UUID valide.",
@@ -52,21 +50,21 @@ def _valider_decision_id(decision_id: str) -> None:
         ) from erreur
 
 
-def _demande_depuis_entree(entree: ScoringInput) -> DemandeScoring:
+def _to_demande(scoring_input: ScoringInput) -> DemandeScoring:
     return DemandeScoring(
-        societaire_id=entree.societaire_id,
-        produit_id=entree.produit_id,
-        montant_demande=entree.montant_demande,
-        duree_demandee_mois=entree.duree_demandee_mois,
-        objet_credit=entree.objet_credit,
-        groupe_id=entree.groupe_id,
+        societaire_id=scoring_input.societaire_id,
+        produit_id=scoring_input.produit_id,
+        montant_demande=scoring_input.montant_demande,
+        duree_demandee_mois=scoring_input.duree_demandee_mois,
+        objet_credit=scoring_input.objet_credit,
+        groupe_id=scoring_input.groupe_id,
         actualisation=(
             ActualisationSituation(
-                revenu_mensuel_declare=entree.actualisation.revenu_mensuel_declare,
-                charges_mensuelles=entree.actualisation.charges_mensuelles,
-                nb_personnes_a_charge=entree.actualisation.nb_personnes_a_charge,
+                revenu_mensuel_declare=scoring_input.actualisation.revenu_mensuel_declare,
+                charges_mensuelles=scoring_input.actualisation.charges_mensuelles,
+                nb_personnes_a_charge=scoring_input.actualisation.nb_personnes_a_charge,
             )
-            if entree.actualisation
+            if scoring_input.actualisation
             else None
         ),
     )
@@ -74,14 +72,14 @@ def _demande_depuis_entree(entree: ScoringInput) -> DemandeScoring:
 
 @router.post("/preview", response_model=ScoringResult)
 def preview(
-    entree: ScoringInput,
+    scoring_input: ScoringInput,
     user: User = Depends(require_role("agent")),
-    cas_usage: ScorerDemande = Depends(scorer_demande),
+    use_case: ScorerDemande = Depends(scorer_demande),
 ) -> ScoringResult:
     agent_agence_id = user.agence_id if user.role == "agent" else None
-    decision = cas_usage.preview(
-        _demande_depuis_entree(entree),
-        entree_brute=entree.model_dump(),
+    decision = use_case.preview(
+        _to_demande(scoring_input),
+        raw_input=scoring_input.model_dump(),
         agent_id=str(user.id),
         agent_nom=user.nom_complet,
         agent_agence_id=agent_agence_id,
@@ -91,14 +89,14 @@ def preview(
 
 @router.post("/confirm", response_model=ScoringResult, status_code=status.HTTP_201_CREATED)
 def confirm(
-    entree: ScoringInput,
+    scoring_input: ScoringInput,
     user: User = Depends(require_role("agent")),
-    cas_usage: ScorerDemande = Depends(scorer_demande),
+    use_case: ScorerDemande = Depends(scorer_demande),
 ) -> ScoringResult:
     agent_agence_id = user.agence_id if user.role == "agent" else None
-    decision = cas_usage.confirm(
-        _demande_depuis_entree(entree),
-        entree_brute=entree.model_dump(),
+    decision = use_case.confirm(
+        _to_demande(scoring_input),
+        raw_input=scoring_input.model_dump(),
         agent_id=str(user.id),
         agent_nom=user.nom_complet,
         agent_agence_id=agent_agence_id,
@@ -106,7 +104,7 @@ def confirm(
     return mappers.decision_to_resultat_scoring(decision)
 
 
-def _verifier_acces_agence(user: User, decision: DecisionEnregistree) -> None:
+def _validate_agency_access(user: User, decision: DecisionEnregistree) -> None:
     if user.role == "agent" and decision.agent_agence_id != user.agence_id:
         raise AccesRefuse("Cette décision ne concerne pas votre agence.")
 
@@ -115,13 +113,13 @@ def _verifier_acces_agence(user: User, decision: DecisionEnregistree) -> None:
 def lire(
     decision_id: str,
     user: User = Depends(current_active_user),
-    cas_usage: LireDecision = Depends(lire_decision),
+    use_case: LireDecision = Depends(lire_decision),
 ) -> ScoringResult:
-    _valider_decision_id(decision_id)
-    decision = cas_usage.execute(decision_id)
+    _validate_decision_id(decision_id)
+    decision = use_case.execute(decision_id)
     if decision is None:
-        raise _erreur_introuvable()
-    _verifier_acces_agence(user, decision)
+        raise _not_found_error()
+    _validate_agency_access(user, decision)
     return mappers.decision_to_resultat_scoring(decision)
 
 
@@ -129,31 +127,31 @@ def lire(
 def fiche(
     decision_id: str,
     user: User = Depends(current_active_user),
-    cas_usage: GenererFiche = Depends(generer_fiche),
+    use_case: GenererFiche = Depends(generer_fiche),
 ) -> FicheJustification:
-    _valider_decision_id(decision_id)
-    resultat = cas_usage.execute(decision_id)
-    if resultat is None:
-        raise _erreur_introuvable()
-    decision, entete = resultat
-    _verifier_acces_agence(user, decision)
-    return mappers.fiche_to_schema(decision, entete)
+    _validate_decision_id(decision_id)
+    result = use_case.execute(decision_id)
+    if result is None:
+        raise _not_found_error()
+    decision, header = result
+    _validate_agency_access(user, decision)
+    return mappers.fiche_to_schema(decision, header)
 
 
 @router.get("/{decision_id}/fiche/pdf")
 def fiche_pdf(
     decision_id: str,
     user: User = Depends(current_active_user),
-    cas_usage: GenererFiche = Depends(generer_fiche),
-    generateur: WeasyPrintFichePdfGenerator = Depends(fiche_pdf_generator),
+    use_case: GenererFiche = Depends(generer_fiche),
+    generator: WeasyPrintFichePdfGenerator = Depends(fiche_pdf_generator),
 ) -> Response:
-    _valider_decision_id(decision_id)
-    resultat = cas_usage.execute(decision_id)
-    if resultat is None:
-        raise _erreur_introuvable()
-    decision, entete = resultat
-    _verifier_acces_agence(user, decision)
-    pdf = generateur.generer(decision, entete)
+    _validate_decision_id(decision_id)
+    result = use_case.execute(decision_id)
+    if result is None:
+        raise _not_found_error()
+    decision, header = result
+    _validate_agency_access(user, decision)
+    pdf = generator.generer(decision, header)
     return Response(
         content=pdf,
         media_type="application/pdf",
@@ -165,15 +163,15 @@ def fiche_pdf(
 def archive(
     decision_id: str,
     user: User = Depends(require_role("agent")),
-    cas_usage: ArchiverFiche = Depends(archiver_fiche),
+    use_case: ArchiverFiche = Depends(archiver_fiche),
 ) -> dict[str, str]:
-    _valider_decision_id(decision_id)
-    fiche_id = cas_usage.execute(
+    _validate_decision_id(decision_id)
+    fiche_id = use_case.execute(
         decision_id,
         archive_par=user.nom_complet,
         agent_role=user.role,
         agent_agence_id=user.agence_id,
     )
     if fiche_id is None:
-        raise _erreur_introuvable()
+        raise _not_found_error()
     return {"fiche_id": fiche_id}

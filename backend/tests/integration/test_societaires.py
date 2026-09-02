@@ -51,9 +51,7 @@ def test_recherche_sous_deux_caracteres_renvoie_une_liste_vide(client_agent: Tes
 
 
 def test_recherche_ne_renvoie_que_lagence_de_lagent(client_agent: TestClient) -> None:
-    reponse = client_agent.get(
-        "/api/v1/societaires/search", params={"terme": "an", "limite": 50}
-    )
+    reponse = client_agent.get("/api/v1/societaires/search", params={"terme": "an", "limite": 50})
     assert reponse.status_code == 200
     elements = reponse.json()["elements"]
     assert elements
@@ -71,9 +69,7 @@ def test_recherche_avec_limite_excessive_est_rejetee(client_agent: TestClient) -
 def test_recherche_avec_limite_negative_est_rejetee(client_agent: TestClient) -> None:
     # Round 3 du pentest : une valeur negative atteignait le LIMIT SQL et remontait en 500
     # brut au lieu d'un 422 propre.
-    reponse = client_agent.get(
-        "/api/v1/societaires/search", params={"terme": "an", "limite": -1}
-    )
+    reponse = client_agent.get("/api/v1/societaires/search", params={"terme": "an", "limite": -1})
     assert reponse.status_code == 422
 
 

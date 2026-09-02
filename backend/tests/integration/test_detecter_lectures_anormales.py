@@ -77,7 +77,7 @@ def test_alerter_essai_a_blanc_necrit_rien() -> None:
     with moteur.begin() as connexion:
         _generer_lectures(connexion, acteur_id, SEUIL_LECTURES + 1)
 
-    alert(essai_a_blanc=True)
+    alert(dry_run=True)
 
     with moteur.connect() as connexion:
         alerte = connexion.execute(

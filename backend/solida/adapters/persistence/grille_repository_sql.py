@@ -12,46 +12,45 @@ from solida.domain.values.grille import ConfigurationGrille
 from solida.domain.values.montant import Montant
 
 
-def _ligne_to_configuration(ligne: Any) -> ConfigurationGrille:
-    seuils = ligne.seuils
+def _row_to_configuration(row: Any) -> ConfigurationGrille:
+    thresholds = row.seuils
     return ConfigurationGrille(
-        version_grille=ligne.version_grille,
+        version_grille=row.version_grille,
         grille=ParametresGrille(
-            marge=seuils["marge"],
-            lgd=seuils["lgd"],
-            multiplicateur_accord=seuils["multiplicateur_accord"],
-            multiplicateur_vigilance=seuils["multiplicateur_vigilance"],
-            multiplicateur_examen=seuils["multiplicateur_examen"],
+            marge=thresholds["marge"],
+            lgd=thresholds["lgd"],
+            multiplicateur_accord=thresholds["multiplicateur_accord"],
+            multiplicateur_vigilance=thresholds["multiplicateur_vigilance"],
+            multiplicateur_examen=thresholds["multiplicateur_examen"],
         ),
         progressif=ParametresProgressif(
-            coefficient_progression=seuils["coefficient_progression"],
-            montant_plancher=Montant(valeur=seuils["montant_plancher"]),
-            plafond_primo_emprunteur=Montant(valeur=seuils["plafond_primo_emprunteur"]),
+            coefficient_progression=thresholds["coefficient_progression"],
+            montant_plancher=Montant(valeur=thresholds["montant_plancher"]),
+            plafond_primo_emprunteur=Montant(valeur=thresholds["plafond_primo_emprunteur"]),
             plafonds_produits={
                 produit_id: Montant(valeur=montant)
-                for produit_id, montant in seuils["plafonds_produits"].items()
+                for produit_id, montant in thresholds["plafonds_produits"].items()
             },
-            modulation_base=seuils["modulation_base"],
-            modulation_pente=seuils["modulation_pente"],
-            modulation_min=seuils["modulation_min"],
-            modulation_max=seuils["modulation_max"],
+            modulation_base=thresholds["modulation_base"],
+            modulation_pente=thresholds["modulation_pente"],
+            modulation_min=thresholds["modulation_min"],
+            modulation_max=thresholds["modulation_max"],
         ),
         scorecard=ParametresScorecard(
-            pdo=ligne.pdo,
-            score_reference=ligne.score_reference,
-            odds_reference=ligne.odds_reference,
-            # Echelle bancaire conventionnelle (300-850, meme convention qu'un score FICO),
-            # pas un parametre metier de la cooperative : non stockee dans `seuils`.
+            pdo=row.pdo,
+            score_reference=row.score_reference,
+            odds_reference=row.odds_reference,
+            # Échelle bancaire fixe, non stockée dans les seuils métier.
             score_min=300,
             score_max=850,
         ),
-        auteur=ligne.auteur,
-        date_activation=ligne.date_activation,
-        active=ligne.active,
+        auteur=row.auteur,
+        date_activation=row.date_activation,
+        active=row.active,
     )
 
 
-def _configuration_to_seuils(configuration: ConfigurationGrille) -> dict[str, Any]:
+def _configuration_to_thresholds(configuration: ConfigurationGrille) -> dict[str, Any]:
     grille, progressif = configuration.grille, configuration.progressif
     return {
         "marge": grille.marge,
@@ -76,22 +75,22 @@ def _configuration_to_seuils(configuration: ConfigurationGrille) -> dict[str, An
 class SqlGrilleRepository:
     """Implémente `GrilleRepository` contre `grille_decision` (schéma `solida`)."""
 
-    def __init__(self, moteur: Engine) -> None:
-        self._moteur = moteur
+    def __init__(self, engine: Engine) -> None:
+        self._engine = engine
 
     def lire_active(self) -> ConfigurationGrille:
-        requete = text("""
+        query = text("""
             SELECT * FROM grille_decision WHERE active = true
             ORDER BY date_activation DESC LIMIT 1
         """)
-        with self._moteur.connect() as connexion:
-            ligne = connexion.execute(requete).one()
-        return _ligne_to_configuration(ligne)
+        with self._engine.connect() as connection:
+            row = connection.execute(query).one()
+        return _row_to_configuration(row)
 
     def enregistrer_nouvelle_version(
         self, configuration: ConfigurationGrille
     ) -> ConfigurationGrille:
-        instruction = text("""
+        insert_statement = text("""
             INSERT INTO grille_decision
                 (version_grille, seuils, pdo, score_reference, odds_reference,
                  auteur, active)
@@ -100,29 +99,27 @@ class SqlGrilleRepository:
                  :auteur, true)
             RETURNING *
         """).bindparams(bindparam("seuils", type_=JSONB))
-        with self._moteur.connect() as connexion:
+        with self._engine.connect() as connection:
             try:
-                connexion.execute(
+                connection.execute(
                     text("UPDATE grille_decision SET active = false WHERE active = true")
                 )
-                ligne = connexion.execute(
-                    instruction,
+                row = connection.execute(
+                    insert_statement,
                     {
                         "version_grille": configuration.version_grille,
-                        "seuils": _configuration_to_seuils(configuration),
+                        "seuils": _configuration_to_thresholds(configuration),
                         "pdo": configuration.scorecard.pdo,
                         "score_reference": configuration.scorecard.score_reference,
                         "odds_reference": configuration.scorecard.odds_reference,
                         "auteur": configuration.auteur,
                     },
                 ).one()
-            except IntegrityError as erreur:
-                # rollback() explicite : sans lui, la connexion reste dans un etat de
-                # transaction avortee, reutilise en echec par les appels suivants sur le
-                # meme pool jusqu'a ce qu'il soit recycle.
-                connexion.rollback()
+            except IntegrityError as error:
+                # Réinitialise la connexion avant de la rendre au pool.
+                connection.rollback()
                 raise VersionGrilleDejaExistante(
                     f"La version de grille {configuration.version_grille!r} existe déjà."
-                ) from erreur
-            connexion.commit()
-        return _ligne_to_configuration(ligne)
+                ) from error
+            connection.commit()
+        return _row_to_configuration(row)

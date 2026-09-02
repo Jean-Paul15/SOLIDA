@@ -19,21 +19,21 @@ from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 
 class CoreSimPostgresReader:
-    """Implémentation du port `LecteurCoreSim` contre le schéma réel produit par
+    """Implémentation du port `CoreSimReader` contre le schéma réel produit par
     `simulateur/`. Connexion via le rôle `solida_lecteur` (lecture seule).
 
     Façade qui délègue chaque sous-domaine (société, crédit, épargne, garantie, groupe,
-    produit) à un lecteur interne dédié — le port reste une interface unique, seule
+    produit) à un composant de lecture interne dédié — le port reste une interface unique, seule
     l'implémentation est scindée (voir docs/backend/01-adapters-core-sim.md).
     """
 
-    def __init__(self, moteur: Engine) -> None:
-        self._societaires = PostgresSocietaireReader(moteur)
-        self._credits = PostgresCreditReader(moteur)
-        self._epargne = PostgresEpargneReader(moteur)
-        self._garanties = PostgresGarantieReader(moteur)
-        self._groupes = PostgresGroupeReader(moteur)
-        self._produits = PostgresProduitReader(moteur)
+    def __init__(self, engine: Engine) -> None:
+        self._societaires = PostgresSocietaireReader(engine)
+        self._credits = PostgresCreditReader(engine)
+        self._epargne = PostgresEpargneReader(engine)
+        self._garanties = PostgresGarantieReader(engine)
+        self._groupes = PostgresGroupeReader(engine)
+        self._produits = PostgresProduitReader(engine)
 
     def rechercher_societaires(
         self, terme: str, limite: int, agence_id: str | None = None

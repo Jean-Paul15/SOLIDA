@@ -4,20 +4,20 @@ from solida.application.use_cases.lire_decision import LireDecision
 from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.infrastructure.dependencies.adapters import (
     audit_log,
+    core_sim_reader,
     decision_repository,
     feature_store,
     fiche_archivee_repository,
     fiche_pdf_generator,
     fiche_repository,
     grille_repository,
-    lecteur,
     scoring_model,
 )
 
 
 def scorer_demande() -> ScorerDemande:
     return ScorerDemande(
-        lecteur=lecteur(),
+        core_sim_reader=core_sim_reader(),
         feature_store=feature_store(),
         scoring_model=scoring_model(),
         grille_repository=grille_repository(),
@@ -31,7 +31,9 @@ def lire_decision() -> LireDecision:
 
 
 def generer_fiche() -> GenererFiche:
-    return GenererFiche(decision_repository=decision_repository(), lecteur=lecteur())
+    return GenererFiche(
+        decision_repository=decision_repository(), core_sim_reader=core_sim_reader()
+    )
 
 
 def archiver_fiche() -> ArchiverFiche:

@@ -5,9 +5,9 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-from solida.adapters.http.auth_dependencies import require_role
 from solida.domain.errors import AccesRefuse
 from solida.infrastructure.application_fastapi import app
+from solida.infrastructure.auth.dependencies import require_role
 
 
 class _UtilisateurFactice:
@@ -300,7 +300,7 @@ def test_une_session_inactive_depuis_plus_de_15_minutes_expire(client: TestClien
 def test_un_compte_bloque_ne_peut_plus_se_connecter(client: TestClient) -> None:
     # Identifiant unique par exécution : chaque tentative sur un compte bloqué journalise
     # un échec, un identifiant fixe finirait par déclencher le verrouillage lui-même.
-    from solida.infrastructure.cli_provisionner_comptes import lock_account, create_account
+    from solida.infrastructure.cli_provisionner_comptes import create_account, lock_account
 
     identifiant = f"compte.blocage.test.{uuid.uuid4().hex[:8]}"
     create_account(

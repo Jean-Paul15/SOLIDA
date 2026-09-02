@@ -38,10 +38,10 @@ def valider_pas_de_credit_en_cours(societaire: Societaire, societaire_id: str) -
 def valider_pas_de_multi_octroi(
     decision_repository: DecisionRepository,
     societaire_id: str,
-    depuis: datetime,
-    entree_brute: dict[str, object],
+    since: datetime,
+    raw_input: dict[str, object],
 ) -> None:
-    if decision_repository.existe_decision_accordee_depuis(societaire_id, depuis, entree_brute):
+    if decision_repository.existe_decision_accordee_depuis(societaire_id, since, raw_input):
         raise SurEndettement(
             f"Le sociétaire {societaire_id} a déjà une décision accordée récente en "
             "attente de reflet dans CORE-SIM : un nouvel octroi ne peut pas être confirmé."
@@ -68,9 +68,7 @@ def valider_montant_sous_plafond(montant_demande: int, plafond_produit: Montant)
 def valider_produit_catalogue(produits: list[ProduitCredit], produit_id: str) -> ProduitCredit:
     catalogue_produit = next((p for p in produits if p.produit_id == produit_id), None)
     if catalogue_produit is None:
-        # Le produit existe dans les plafonds de la grille (vérifié en amont) mais pas dans
-        # le catalogue CORE-SIM, seule source des bornes de durée : sans ce catalogue, aucune
-        # durée ne pourrait être validée. Rejeter plutôt que de calculer sans borne.
+        # CORE-SIM est la seule source des bornes de durée ; sans catalogue, on rejette.
         raise ProduitIntrouvable(
             f"Le produit {produit_id!r} n'a pas de catalogue de durées valide."
         )

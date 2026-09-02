@@ -19,9 +19,7 @@ def _resultat_scoring_commun(
         montant_demande=montant_demande_int,
         mode_calcul=decision.mode_calcul.value,
         motif_mode=decision.motif_mode.value if decision.motif_mode else None,
-        decomposition=_decomposition_to_schema(
-            decision.decomposition, decision.features_utilisees
-        ),
+        decomposition=_decomposition_to_schema(decision.decomposition, decision.features_utilisees),
         points_de_base=decision.points_de_base,
         plafond_progressif=decision.plafond_progressif.valeur,
         trajectoire_progression=[

@@ -7,7 +7,7 @@ Un seul mécanisme d'authentification : cookie `solida_session` (httpOnly, `Same
 à chaque requête par `DatabaseStrategy` — révocable immédiatement (déconnexion, ou blocage d'un
 compte), durée de vie absolue huit heures **et** expiration par inactivité de 15 minutes vérifiée
 côté serveur à chaque requête (`derniere_activite_le` sur `access_token`, mise à jour par
-`current_active_user` dans `infrastructure/auth.py`) — un minuteur uniquement côté client se
+`current_active_user` dans `infrastructure/auth/current_user.py`) — un minuteur uniquement côté client se
 contourne, cf. OWASP Session Management Cheat Sheet. Pas de JWT à part : la simplicité et la
 révocabilité totale priment sur la réduction de charge sur `access_token`, négligeable à l'échelle
 d'une coopérative.

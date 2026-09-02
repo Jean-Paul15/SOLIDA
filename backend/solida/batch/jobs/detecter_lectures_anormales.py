@@ -1,31 +1,7 @@
-"""Alerte sur un volume de lecture hors norme (recherche/dossier) par acteur.
+"""Alerte les pics de lecture sans bloquer automatiquement les comptes.
 
-Ne bloque jamais un compte : écrit une entrée `alerte_volume_lecture` dans `journal_audit`
-pour qu'un superviseur/administrateur la revoie et décide, au cas par cas, d'utiliser le
-blocage déjà existant (`cli_provisionner_comptes bloquer`) si c'est réellement anormal.
-Volontairement pas d'automatisation du blocage lui-même : un seuil fixe qui bloquerait tout
-seul serait lui-même un vecteur de déni de service (faire bloquer un agent légitime exprès),
-et une simple journée chargée peut dépasser un seuil sans qu'il y ait le moindre problème.
-Voir `docs/backend/07-monitoring-securite.md` pour le détail de cet arbitrage.
-
-SEUIL : plus de 100 lectures (`recherche_societaires` + `consultation_dossier` cumulées) par
-acteur sur une fenêtre glissante d'1 heure. Repris tel quel de la recommandation du rapport de
-pentest round 3, pas une valeur inventée pour l'occasion — marqué comme ajustable dans
-`03-MODELE/10-politique-credit-decisions-en-attente.md` : la vraie valeur dépend du volume
-réel observé une fois l'application utilisée en production.
-
-Ce job ne détecte que les pics au-dessus du seuil sur la fenêtre considérée — un vol "lent",
-étalé et systématiquement sous le seuil, ne déclenche rien (limite connue, pas cachée).
-
-Aucun ordonnanceur n'existe dans la pile SOLIDA (même limite que `purger_journal_audit.py`) :
-ce script s'exécute manuellement ou via une tâche planifiée externe, par exemple :
-
-  */15 * * * * docker compose run --rm api python -m solida.batch.jobs.detecter_lectures_anormales
-
-Usage :
-  docker compose run --rm api python -m solida.batch.jobs.detecter_lectures_anormales
-  docker compose run --rm api python -m solida.batch.jobs.detecter_lectures_anormales \
-      --essai-a-blanc
+Le seuil vient du pentest et reste ajustable dans la documentation de sécurité.
+L'ordonnancement relève d'une tâche externe.
 """
 
 import argparse
@@ -52,11 +28,10 @@ class AlertedActor:
     nombre_lectures: int
 
 
-def detect(depuis: datetime | None = None) -> list[AlertedActor]:
-    """Renvoie les acteurs ayant dépassé `SEUIL_LECTURES` lectures depuis `depuis`
-    (par défaut : début de `FENETRE` avant maintenant), sans rien écrire."""
-    seuil_temporel = depuis or (datetime.now(UTC) - FENETRE)
-    instruction = sa.text("""
+def detect(since: datetime | None = None) -> list[AlertedActor]:
+    """Renvoie les acteurs au-dessus du seuil, sans écrire."""
+    time_threshold = since or (datetime.now(UTC) - FENETRE)
+    statement = sa.text("""
         SELECT acteur_id, count(*) AS nb
         FROM journal_audit
         WHERE type = ANY(:types) AND horodatage >= :depuis
@@ -64,59 +39,56 @@ def detect(depuis: datetime | None = None) -> list[AlertedActor]:
         HAVING count(*) > :seuil
         ORDER BY nb DESC
     """)
-    with solida_engine().connect() as connexion:
-        lignes = connexion.execute(
-            instruction,
-            {"types": list(TYPES_LECTURE), "depuis": seuil_temporel, "seuil": SEUIL_LECTURES},
+    with solida_engine().connect() as connection:
+        rows = connection.execute(
+            statement,
+            {"types": list(TYPES_LECTURE), "depuis": time_threshold, "seuil": SEUIL_LECTURES},
         )
-        return [
-            AlertedActor(acteur_id=ligne.acteur_id, nombre_lectures=ligne.nb) for ligne in lignes
-        ]
+        return [AlertedActor(acteur_id=row.acteur_id, nombre_lectures=row.nb) for row in rows]
 
 
-def alert(essai_a_blanc: bool = False) -> list[AlertedActor]:
-    """Détecte puis, sauf essai à blanc, journalise une entrée `alerte_volume_lecture` par
-    acteur en dépassement. Ne touche jamais à `utilisateur` : aucun blocage automatique."""
-    depasses = detect()
-    if essai_a_blanc or not depasses:
-        return depasses
+def alert(dry_run: bool = False) -> list[AlertedActor]:
+    """Journalise les alertes sauf en essai à blanc ; ne bloque jamais de compte."""
+    exceeded_actors = detect()
+    if dry_run or not exceeded_actors:
+        return exceeded_actors
 
-    audit = SqlAuditLog(solida_engine())
-    for acteur in depasses:
-        audit.enregistrer_evenement(
+    audit_log = SqlAuditLog(solida_engine())
+    for actor in exceeded_actors:
+        audit_log.enregistrer_evenement(
             "alerte_volume_lecture",
-            acteur.acteur_id,
-            acteur.acteur_id,
+            actor.acteur_id,
+            actor.acteur_id,
             {
-                "nombre_lectures": acteur.nombre_lectures,
+                "nombre_lectures": actor.nombre_lectures,
                 "fenetre_heures": FENETRE.total_seconds() / 3600,
                 "seuil": SEUIL_LECTURES,
             },
         )
-    return depasses
+    return exceeded_actors
 
 
 def _main() -> None:
-    analyseur = argparse.ArgumentParser(description=__doc__)
-    analyseur.add_argument(
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
         "--essai-a-blanc",
         action="store_true",
         help="Detecte et affiche sans ecrire d'alerte dans journal_audit.",
     )
-    arguments = analyseur.parse_args()
+    args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
-    depasses = alert(arguments.essai_a_blanc)
-    if not depasses:
+    exceeded_actors = alert(args.essai_a_blanc)
+    if not exceeded_actors:
         logger.info("Aucun acteur au-dessus du seuil (%d lectures/%s).", SEUIL_LECTURES, FENETRE)
         return
-    for acteur in depasses:
+    for actor in exceeded_actors:
         logger.warning(
             "acteur=%s nombre_lectures=%d (seuil=%d, fenetre=%s)%s",
-            acteur.acteur_id,
-            acteur.nombre_lectures,
+            actor.acteur_id,
+            actor.nombre_lectures,
             SEUIL_LECTURES,
             FENETRE,
-            " [essai a blanc, rien ecrit]" if arguments.essai_a_blanc else "",
+            " [essai a blanc, rien ecrit]" if args.essai_a_blanc else "",
         )
 
 

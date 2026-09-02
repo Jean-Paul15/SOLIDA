@@ -43,25 +43,17 @@ rôles techniques génériques. Les champs de dataclass qui portent un port
 (`lecteur`, `depot_grille`...) sont renommés en miroir exact du type
 (`reader`, `grille_repository`), dans le même commit que le port.
 
-## Frontière d'authentification adapters ↔ infrastructure
+## Routeurs et authentification
 
-Les 6 routeurs métier (`auth`, `societaires`, `scoring`, `registre`,
-`parametrage`, `produits`) migrent de `infrastructure/routeurs/` vers
-`adapters/http/routeurs/` (aligné sur `health.py`, seul routeur déjà bien
-placé). Comme le contrat `import-linter` interdit à `adapters` d'importer
-`infrastructure`, l'authentification FastAPI traverse cette frontière via le
-pattern `dependency_overrides` :
-
-- `adapters/http/auth_dependencies.py` déclare des fonctions stub stables
-  (`current_active_user`, une fonction par rôle) que les routeurs importent.
-- `infrastructure/application_fastapi.py` (composition root) enregistre les
-  implémentations réelles via `app.dependency_overrides[...]` au moment de
-  l'assemblage de l'application — seul point qui connaît à la fois les stubs
-  et `infrastructure/auth.py`.
+Les routeurs FastAPI restent dans `infrastructure/routers/` : ils dépendent du framework,
+de l’authentification et des fabriques de cas d’usage, donc ne sont pas des adaptateurs purs.
+Les dépendances FastAPI (`current_active_user`, `require_role`, `client_ip_address`) vivent dans
+`infrastructure/auth/dependencies.py` avec leur implémentation de session. Ainsi, aucun adaptateur
+ne dépend de l’infrastructure et la composition de l’application reste directe.
 
 ## Autres décisions
 
-- `adapters/http/routeurs/health.py` reste la référence de placement.
+- Tous les routeurs HTTP sont regroupés dans `infrastructure/routers/`.
 - `adapters/solidaire/` (dossier vide, jamais complété) : supprimé.
 - `adapters/libelles_variables.py` déplacé vers `adapters/http/` (seul
   consommateur : les mappers HTTP).

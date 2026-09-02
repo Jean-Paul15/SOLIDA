@@ -24,10 +24,10 @@ class ArchiverFiche:
         agent_role: str,
         agent_agence_id: str | None,
     ) -> str | None:
-        resultat = self.generer_fiche.execute(decision_id)
-        if resultat is None:
+        fiche_data = self.generer_fiche.execute(decision_id)
+        if fiche_data is None:
             return None
-        decision, entete = resultat
+        decision, entete = fiche_data
         if agent_role == "agent" and decision.agent_agence_id != agent_agence_id:
             raise AccesRefuse("Cette décision ne concerne pas votre agence.")
 

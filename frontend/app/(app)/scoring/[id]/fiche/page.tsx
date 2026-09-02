@@ -15,15 +15,15 @@ interface PageFicheProps {
 
 export default async function PageFiche({ params }: PageFicheProps) {
   const { id: decisionId } = await params;
-  const [reponse, reponseProduits] = await Promise.all([
+  const [ficheResponse, productsResponse] = await Promise.all([
     fetchBackend(`/api/v1/scoring/${decisionId}/fiche`),
     fetchBackend("/api/v1/produits"),
   ]);
-  redirectIfUnauthenticated(reponse);
-  redirectIfAccessDenied(reponse);
-  if (!reponse.ok) notFound();
-  const ficheData: FicheJustification = await reponse.json();
-  const produits: ProduitCreditApi[] = reponseProduits.ok ? await reponseProduits.json() : [];
+  redirectIfUnauthenticated(ficheResponse);
+  redirectIfAccessDenied(ficheResponse);
+  if (!ficheResponse.ok) notFound();
+  const ficheData: FicheJustification = await ficheResponse.json();
+  const produits: ProduitCreditApi[] = productsResponse.ok ? await productsResponse.json() : [];
 
   return (
     <>

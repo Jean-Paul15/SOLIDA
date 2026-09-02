@@ -60,7 +60,7 @@ def _societaire(societaire_id: str, agence: str) -> Societaire:
 
 
 @dataclass
-class _DecisionRepositoryFactice:
+class _FakeDecisionRepository:
     decisions: list[DecisionEnregistree]
 
     def lister(
@@ -73,7 +73,7 @@ class _DecisionRepositoryFactice:
 
 
 @dataclass
-class _LecteurFactice:
+class _FakeCoreSimReader:
     agence_par_societaire: dict[str, str]
 
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
@@ -92,12 +92,12 @@ def test_decision_hors_agence_de_lagent_est_exclue_meme_si_le_depot_la_renvoie()
         _decision("D1", "SOC-1", agent_agence_id="CAI-00"),
         _decision("D2", "SOC-2", agent_agence_id="CAI-00"),
     ]
-    cas_usage = ListerDecisions(
-        decision_repository=_DecisionRepositoryFactice(decisions),
-        lecteur=_LecteurFactice({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
+    use_case = ListerDecisions(
+        decision_repository=_FakeDecisionRepository(decisions),
+        core_sim_reader=_FakeCoreSimReader({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
     )
 
-    affichees, total = cas_usage.execute("CAI-00", limite=20, decalage=0)
+    affichees, total = use_case.execute("CAI-00", limite=20, decalage=0)
 
     assert [a.decision.decision_id for a in affichees] == ["D1"]
     assert total == 2  # le compte brut du dépôt n'est pas corrigé, limite connue (voir commentaire)
@@ -108,11 +108,11 @@ def test_superviseur_sans_filtre_agence_voit_tout() -> None:
         _decision("D1", "SOC-1", agent_agence_id=None),
         _decision("D2", "SOC-2", agent_agence_id=None),
     ]
-    cas_usage = ListerDecisions(
-        decision_repository=_DecisionRepositoryFactice(decisions),
-        lecteur=_LecteurFactice({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
+    use_case = ListerDecisions(
+        decision_repository=_FakeDecisionRepository(decisions),
+        core_sim_reader=_FakeCoreSimReader({"SOC-1": "CAI-00", "SOC-2": "CAI-07"}),
     )
 
-    affichees, _ = cas_usage.execute(None, limite=20, decalage=0)
+    affichees, _ = use_case.execute(None, limite=20, decalage=0)
 
     assert [a.decision.decision_id for a in affichees] == ["D1", "D2"]

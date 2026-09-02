@@ -7,7 +7,7 @@ from solida.application.use_cases.consulter_dossier_mapping import (
     _ratio_epargne_revenu,
     _secteur,
 )
-from solida.domain.ports.core_sim import LecteurCoreSim
+from solida.domain.ports.core_sim import CoreSimReader
 from solida.domain.rules.epargne import tendance_depuis_croissance
 from solida.domain.values.dossier import (
     ActiviteEconomique,
@@ -26,17 +26,17 @@ STATUT_SOCIETAIRE_PAR_DEFAUT = "actif"
 
 @dataclass(frozen=True)
 class ConsulterDossier:
-    lecteur: LecteurCoreSim
+    core_sim_reader: CoreSimReader
 
     def execute(self, societaire_id: str) -> DossierSocietaire | None:
-        societaire = self.lecteur.charger_societaire(societaire_id)
+        societaire = self.core_sim_reader.charger_societaire(societaire_id)
         if societaire is None:
             return None
 
-        credits = self.lecteur.charger_historique_credit(societaire_id)
-        compte = self.lecteur.charger_compte_epargne(societaire_id)
-        groupe = _groupe_affiche(self.lecteur.charger_groupe(societaire_id))
-        mouvements = self.lecteur.charger_mouvements_epargne(
+        credits = self.core_sim_reader.charger_historique_credit(societaire_id)
+        compte = self.core_sim_reader.charger_compte_epargne(societaire_id)
+        groupe = _groupe_affiche(self.core_sim_reader.charger_groupe(societaire_id))
+        mouvements = self.core_sim_reader.charger_mouvements_epargne(
             societaire_id, depuis=date.today() - DUREE_HISTORIQUE_MOUVEMENTS
         )
 
@@ -86,10 +86,7 @@ class ConsulterDossier:
                     compte, societaire.revenu_mensuel_declare
                 ),
                 anciennete_relation_mois=societaire.anciennete_mois,
-                # CORE-SIM n'expose pas de solde mensuel absolu, seulement des agregats
-                # (moyenne 6 mois, croissance 12 mois) : reconstruire une courbe de solde a
-                # partir des seuls mouvements, sans point d'ancrage, serait fabrique, pas
-                # mesure. On affiche donc les mouvements reels tels qu'ils sont observes.
+                # CORE-SIM ne fournit pas de solde mensuel : afficher les mouvements observés.
                 mouvements_recents=[
                     MouvementEpargneAffiche(
                         date_operation=m.date_operation, sens=m.sens, montant=m.montant

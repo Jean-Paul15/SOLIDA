@@ -18,10 +18,7 @@ def _revenu_effectif(demande: DemandeScoring, revenu_declare: int | None) -> int
 def _actualiser_features(
     features: FeaturesIndividuelles, demande: DemandeScoring, revenu_effectif: int
 ) -> FeaturesIndividuelles:
-    """Remplace les ratios qui dépendent du montant/de la durée demandés, ou d'un revenu
-    actualisé par l'agent : `FeatureStore` ne connaît que le profil du sociétaire, pas la
-    demande en cours (voir `FeatureStoreCoreSim`).
-    """
+    """Recalcule les ratios qui dépendent de la demande en cours."""
     charges = demande.actualisation.charges_mensuelles if demande.actualisation else None
     mensualite = calculer_echeance_mensuelle(
         demande.montant_demande, demande.duree_demandee_mois, TAUX_MENSUEL_DEMONSTRATION
@@ -50,7 +47,7 @@ def _features_to_dict(individuelles: FeaturesIndividuelles, en_groupe: bool) -> 
     variables du modèle, pas les champs texte (`segment`, `tendance_epargne_12m`), et une
     valeur `None` (primo-emprunteur) est omise plutôt que remplacée par un zéro trompeur.
     """
-    valeurs: dict[str, float | None] = {
+    values: dict[str, float | None] = {
         "anciennete_societaire_mois": individuelles.anciennete_societaire_mois,
         "solde_epargne_moyen_6m": individuelles.solde_epargne_moyen_6m,
         "nb_mois_avec_depot_12m": individuelles.nb_mois_avec_depot_12m,
@@ -68,4 +65,4 @@ def _features_to_dict(individuelles: FeaturesIndividuelles, en_groupe: bool) -> 
         "nb_personnes_a_charge": individuelles.nb_personnes_a_charge,
         "en_groupe": 1.0 if en_groupe else 0.0,
     }
-    return {code: valeur for code, valeur in valeurs.items() if valeur is not None}
+    return {code: value for code, value in values.items() if value is not None}

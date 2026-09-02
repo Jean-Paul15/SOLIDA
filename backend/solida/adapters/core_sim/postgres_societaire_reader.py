@@ -8,13 +8,13 @@ STATUT_SOCIETAIRE_PAR_DEFAUT = "actif"
 
 
 class PostgresSocietaireReader:
-    def __init__(self, moteur: Engine) -> None:
-        self._moteur = moteur
+    def __init__(self, engine: Engine) -> None:
+        self._engine = engine
 
     def rechercher_societaires(
         self, terme: str, limite: int, agence_id: str | None = None
     ) -> list[SocietaireSearchResult]:
-        requete = text("""
+        query = text("""
             SELECT s.societaire_id, s.nom_complet, s.numero_membre, s.caisse_id, s.zone,
                    EXISTS (
                        SELECT 1 FROM credits c
@@ -26,34 +26,34 @@ class PostgresSocietaireReader:
             ORDER BY similarity(s.nom_complet, :terme) DESC
             LIMIT :limite
         """)
-        with self._moteur.connect() as connexion:
-            lignes = connexion.execute(
-                requete, {"terme": terme, "limite": limite, "agence_id": agence_id}
+        with self._engine.connect() as connection:
+            rows = connection.execute(
+                query, {"terme": terme, "limite": limite, "agence_id": agence_id}
             )
             return [
                 SocietaireSearchResult(
-                    societaire_id=ligne.societaire_id,
-                    nom_complet=ligne.nom_complet,
-                    numero_membre=ligne.numero_membre,
-                    agence=ligne.caisse_id,
-                    zone=ligne.zone,
+                    societaire_id=row.societaire_id,
+                    nom_complet=row.nom_complet,
+                    numero_membre=row.numero_membre,
+                    agence=row.caisse_id,
+                    zone=row.zone,
                     statut=STATUT_SOCIETAIRE_PAR_DEFAUT,
-                    a_credit_en_cours=bool(ligne.a_credit_en_cours),
+                    a_credit_en_cours=bool(row.a_credit_en_cours),
                 )
-                for ligne in lignes
+                for row in rows
             ]
 
     def compter_societaires(self, terme: str, agence_id: str | None = None) -> int:
-        requete = text("""
+        query = text("""
             SELECT count(*) FROM societaires s
             WHERE (s.nom_complet ILIKE '%' || :terme || '%' OR s.numero_membre = :terme)
               AND (CAST(:agence_id AS text) IS NULL OR s.caisse_id = :agence_id)
         """)
-        with self._moteur.connect() as connexion:
-            return connexion.execute(requete, {"terme": terme, "agence_id": agence_id}).scalar_one()
+        with self._engine.connect() as connection:
+            return connection.execute(query, {"terme": terme, "agence_id": agence_id}).scalar_one()
 
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
-        requete = text("""
+        query = text("""
             SELECT s.societaire_id, s.numero_membre, s.nom_complet, s.caisse_id, s.date_adhesion,
                    s.anciennete_societaire_mois, s.segment, s.age, s.zone, s.nb_personnes_a_charge,
                    s.niveau_education, s.parts_sociales, s.revenu_declare, s.gie_id,
@@ -63,26 +63,26 @@ class PostgresSocietaireReader:
                    ) AS a_credit_en_cours
             FROM societaires s WHERE s.societaire_id = :id
         """)
-        with self._moteur.connect() as connexion:
-            ligne = connexion.execute(requete, {"id": societaire_id}).first()
-        if ligne is None:
+        with self._engine.connect() as connection:
+            row = connection.execute(query, {"id": societaire_id}).first()
+        if row is None:
             return None
         return Societaire(
-            societaire_id=ligne.societaire_id,
-            numero_membre=ligne.numero_membre,
-            nom_complet=ligne.nom_complet,
-            agence=ligne.caisse_id,
-            date_adhesion=ligne.date_adhesion,
-            anciennete_mois=ligne.anciennete_societaire_mois,
-            segment=ligne.segment,
-            age=ligne.age,
-            zone=ligne.zone,
-            nb_personnes_a_charge=ligne.nb_personnes_a_charge,
-            niveau_instruction=ligne.niveau_education,
-            parts_sociales_montant=ligne.parts_sociales,
+            societaire_id=row.societaire_id,
+            numero_membre=row.numero_membre,
+            nom_complet=row.nom_complet,
+            agence=row.caisse_id,
+            date_adhesion=row.date_adhesion,
+            anciennete_mois=row.anciennete_societaire_mois,
+            segment=row.segment,
+            age=row.age,
+            zone=row.zone,
+            nb_personnes_a_charge=row.nb_personnes_a_charge,
+            niveau_instruction=row.niveau_education,
+            parts_sociales_montant=row.parts_sociales,
             revenu_mensuel_declare=(
-                None if ligne.revenu_declare is None else round(ligne.revenu_declare)
+                None if row.revenu_declare is None else round(row.revenu_declare)
             ),
-            groupe_id=ligne.gie_id,
-            a_credit_en_cours=bool(ligne.a_credit_en_cours),
+            groupe_id=row.gie_id,
+            a_credit_en_cours=bool(row.a_credit_en_cours),
         )

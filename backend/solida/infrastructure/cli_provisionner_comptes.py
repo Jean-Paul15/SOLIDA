@@ -1,208 +1,78 @@
-"""Gestion des comptes utilisateurs SOLIDA — création et blocage.
+"""Interface CLI d'administration des comptes SOLIDA.
 
-Aucun endpoint HTTP ne permet de créer ou débloquer un compte : c'est un choix de
-sécurité délibéré (surface d'attaque nulle sur la gestion des comptes). Ce script,
-exécuté manuellement dans le conteneur, est l'unique moyen d'y toucher — pour la
-démonstration comme pour une exploitation réelle, sans distinction. Seule différence :
-les comptes de démonstration (`demo`) n'exigent pas de changer leur mot de passe
-partagé à la première connexion, contrairement à tout compte créé via `creer`.
-
-Usage :
-  docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes demo
-  docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes creer \
-      --identifiant agent.lome --nom "Agent Lomé" --role agent --agence CAI-02
-  docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes bloquer \
-      --identifiant agent.lome
-  docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes debloquer \
-      --identifiant agent.lome
-  docker compose run --rm api python -m solida.infrastructure.cli_provisionner_comptes \
-      lister-bloques
+La création, le blocage et le déblocage ne sont jamais exposés par HTTP.
 """
 
 import argparse
-import secrets
-import uuid
-from datetime import UTC, datetime
-
-import sqlalchemy as sa
-from fastapi_users.password import PasswordHelper
 
 from solida.adapters.persistence.orm_models import ROLES_VALIDES
-from solida.infrastructure.database import solida_engine
-from solida.infrastructure.fixtures.comptes_demo import COMPTES_DEMO, MOT_DE_PASSE_DEMO
+from solida.infrastructure.account_provisioning import (
+    create_account,
+    list_locked_accounts,
+    lock_account,
+    provision_demo,
+    unlock_account,
+)
 
-
-def _generate_password() -> str:
-    return secrets.token_urlsafe(12)
-
-
-def create_account(
-    identifiant: str,
-    nom_complet: str,
-    role: str,
-    agence_id: str | None,
-    email: str | None = None,
-    mot_de_passe: str | None = None,
-    doit_changer_mot_de_passe: bool = True,
-) -> str:
-    """Crée le compte, ou met à jour nom/rôle/agence s'il existe déjà (idempotent par
-    `identifiant`). Le mot de passe n'est jamais réémis sur un compte déjà existant —
-    seule une création initiale ou un déblocage explicite en fixe un nouveau. Renvoie
-    le mot de passe en clair (généré si non fourni) pour communication hors-bande.
-    `doit_changer_mot_de_passe=False` réservé aux comptes de démonstration (voir
-    `provision_demo`) : pour un vrai compte, le changement forcé reste la règle."""
-    if role not in ROLES_VALIDES:
-        raise SystemExit(f"Rôle invalide : {role!r}. Attendu : {ROLES_VALIDES}.")
-
-    mot_de_passe_final = mot_de_passe or _generate_password()
-    hachage = PasswordHelper().hash(mot_de_passe_final)
-    instruction = sa.text("""
-        INSERT INTO utilisateur
-            (id, identifiant, nom_complet, role, agence_id, email,
-             hashed_password, is_active, is_superuser, is_verified,
-             doit_changer_mot_de_passe)
-        VALUES
-            (:id, :identifiant, :nom_complet, :role, :agence_id, :email,
-             :hashed_password, true, false, true, :doit_changer_mot_de_passe)
-        ON CONFLICT (identifiant) DO UPDATE SET
-            nom_complet = excluded.nom_complet,
-            role = excluded.role,
-            agence_id = excluded.agence_id,
-            doit_changer_mot_de_passe = excluded.doit_changer_mot_de_passe
-    """)
-    with solida_engine().begin() as connexion:
-        connexion.execute(
-            instruction,
-            {
-                "id": uuid.uuid4(),
-                "identifiant": identifiant,
-                "nom_complet": nom_complet,
-                "role": role,
-                "agence_id": agence_id,
-                "email": email or f"{identifiant}@solida.local",
-                "hashed_password": hachage,
-                "doit_changer_mot_de_passe": doit_changer_mot_de_passe,
-            },
-        )
-    return mot_de_passe_final
-
-
-def provision_demo() -> None:
-    # Comptes de test, jamais de vrais comptes : le changement de mot de passe forcé
-    # ne servirait qu'à ralentir la démonstration, contrairement à un compte réel.
-    for compte in COMPTES_DEMO:
-        create_account(
-            identifiant=compte["identifiant"] or "",
-            nom_complet=compte["nom_complet"] or "",
-            role=compte["role"] or "",
-            agence_id=compte["agence_id"],
-            email=compte["email"],
-            mot_de_passe=MOT_DE_PASSE_DEMO,
-            doit_changer_mot_de_passe=False,
-        )
-    print(f"{len(COMPTES_DEMO)} comptes de démonstration provisionnés (mot de passe partagé).")
-
-
-def lock_account(identifiant: str) -> None:
-    with solida_engine().begin() as connexion:
-        ligne = connexion.execute(
-            sa.text("""
-                UPDATE utilisateur SET is_active = false, desactive_le = :maintenant
-                WHERE identifiant = :identifiant
-                RETURNING id
-            """),
-            {"maintenant": datetime.now(UTC), "identifiant": identifiant},
-        ).first()
-        if ligne is None:
-            raise SystemExit(f"Aucun compte avec l'identifiant '{identifiant}'.")
-        # Un compte bloqué ne doit conserver aucune session déjà ouverte.
-        connexion.execute(sa.text("DELETE FROM access_token WHERE user_id = :id"), {"id": ligne.id})
-    print(f"Compte '{identifiant}' désactivé et ses sessions révoquées.")
-
-
-def list_locked_accounts() -> list[dict[str, object]]:
-    """Lecture seule : comptes désactivés (`is_active = false`), les plus récents d'abord.
-    Un administrateur y décide ensuite, au cas par cas, d'un `debloquer` — cette fonction ne
-    débloque jamais rien elle-même."""
-    with solida_engine().connect() as connexion:
-        lignes = connexion.execute(
-            sa.text("""
-                SELECT identifiant, nom_complet, role, agence_id, desactive_le
-                FROM utilisateur
-                WHERE is_active = false
-                ORDER BY desactive_le DESC NULLS LAST
-            """)
-        )
-        return [dict(ligne._mapping) for ligne in lignes]
-
-
-def unlock_account(identifiant: str) -> None:
-    with solida_engine().begin() as connexion:
-        ligne = connexion.execute(
-            sa.text("""
-                UPDATE utilisateur SET is_active = true, desactive_le = NULL
-                WHERE identifiant = :identifiant
-                RETURNING id
-            """),
-            {"identifiant": identifiant},
-        ).first()
-        if ligne is None:
-            raise SystemExit(f"Aucun compte avec l'identifiant '{identifiant}'.")
-    print(f"Compte '{identifiant}' réactivé.")
+__all__ = [
+    "create_account",
+    "list_locked_accounts",
+    "lock_account",
+    "provision_demo",
+    "unlock_account",
+]
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    analyseur = argparse.ArgumentParser(description=__doc__)
-    sous_commandes = analyseur.add_subparsers(dest="commande", required=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("demo", help="Provisionne les comptes de démonstration.")
 
-    sous_commandes.add_parser("demo", help="Provisionne les comptes de démonstration.")
+    create = subparsers.add_parser("creer", help="Crée ou met à jour un compte.")
+    create.add_argument("--identifiant", required=True)
+    create.add_argument("--nom", required=True, dest="nom_complet")
+    create.add_argument("--role", required=True, choices=ROLES_VALIDES)
+    create.add_argument("--agence", default=None, dest="agence_id")
+    create.add_argument("--email", default=None)
 
-    creer = sous_commandes.add_parser("creer", help="Crée ou met à jour un compte.")
-    creer.add_argument("--identifiant", required=True)
-    creer.add_argument("--nom", required=True, dest="nom_complet")
-    creer.add_argument("--role", required=True, choices=ROLES_VALIDES)
-    creer.add_argument("--agence", default=None, dest="agence_id")
-    creer.add_argument("--email", default=None)
+    lock = subparsers.add_parser("bloquer", help="Désactive un compte existant.")
+    lock.add_argument("--identifiant", required=True)
 
-    bloquer = sous_commandes.add_parser("bloquer", help="Désactive un compte existant.")
-    bloquer.add_argument("--identifiant", required=True)
-
-    debloquer = sous_commandes.add_parser("debloquer", help="Réactive un compte désactivé.")
-    debloquer.add_argument("--identifiant", required=True)
-
-    sous_commandes.add_parser(
-        "lister-bloques", help="Liste les comptes désactivés (lecture seule)."
-    )
-
-    return analyseur
+    unlock = subparsers.add_parser("debloquer", help="Réactive un compte désactivé.")
+    unlock.add_argument("--identifiant", required=True)
+    subparsers.add_parser("lister-bloques", help="Liste les comptes désactivés.")
+    return parser
 
 
 def main() -> None:
-    arguments = _build_parser().parse_args()
-    if arguments.commande == "demo":
+    args = _build_parser().parse_args()
+    if args.command == "demo":
         provision_demo()
-    elif arguments.commande == "creer":
-        mot_de_passe = create_account(
-            identifiant=arguments.identifiant,
-            nom_complet=arguments.nom_complet,
-            role=arguments.role,
-            agence_id=arguments.agence_id,
-            email=arguments.email,
+        print("Comptes de démonstration provisionnés (mot de passe partagé).")
+    elif args.command == "creer":
+        password = create_account(
+            identifiant=args.identifiant,
+            nom_complet=args.nom_complet,
+            role=args.role,
+            agence_id=args.agence_id,
+            email=args.email,
         )
-        print(f"Compte '{arguments.identifiant}' créé. Mot de passe initial : {mot_de_passe}")
+        print(f"Compte '{args.identifiant}' créé. Mot de passe initial : {password}")
         print("À changer obligatoirement à la première connexion.")
-    elif arguments.commande == "bloquer":
-        lock_account(arguments.identifiant)
-    elif arguments.commande == "debloquer":
-        unlock_account(arguments.identifiant)
-    elif arguments.commande == "lister-bloques":
-        comptes = list_locked_accounts()
-        if not comptes:
+    elif args.command == "bloquer":
+        lock_account(args.identifiant)
+        print(f"Compte '{args.identifiant}' désactivé et ses sessions révoquées.")
+    elif args.command == "debloquer":
+        unlock_account(args.identifiant)
+        print(f"Compte '{args.identifiant}' réactivé.")
+    else:
+        accounts = list_locked_accounts()
+        if not accounts:
             print("Aucun compte désactivé.")
-        for compte in comptes:
+        for account in accounts:
             print(
-                f"{compte['identifiant']} — {compte['nom_complet']} ({compte['role']}, "
-                f"{compte['agence_id'] or 'sans agence'}) — désactivé le {compte['desactive_le']}"
+                f"{account.identifiant} — {account.nom_complet} ({account.role}, "
+                f"{account.agence_id or 'sans agence'}) — désactivé le {account.desactive_le}"
             )
 
 

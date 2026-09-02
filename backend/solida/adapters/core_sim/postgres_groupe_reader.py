@@ -6,29 +6,29 @@ from solida.domain.entities.groupe import GroupeCaution, MembreGroupe
 
 
 class PostgresGroupeReader:
-    def __init__(self, moteur: Engine) -> None:
-        self._moteur = moteur
+    def __init__(self, engine: Engine) -> None:
+        self._engine = engine
 
     def charger_groupe(self, societaire_id: str) -> GroupeCaution | None:
-        requete_appartenance = text("""
+        membership_query = text("""
             SELECT gie_id FROM societaires WHERE societaire_id = :id AND gie_id IS NOT NULL
         """)
-        with self._moteur.connect() as connexion:
-            ligne = connexion.execute(requete_appartenance, {"id": societaire_id}).first()
-            if ligne is None:
+        with self._engine.connect() as connection:
+            membership_row = connection.execute(membership_query, {"id": societaire_id}).first()
+            if membership_row is None:
                 return None
-            gie_id = ligne.gie_id
+            gie_id = membership_row.gie_id
 
-            groupe_ligne = connexion.execute(
+            group_row = connection.execute(
                 text(
                     "SELECT gie_id, taille, date_creation FROM groupes_gie WHERE gie_id = :gie_id"
                 ),
                 {"gie_id": gie_id},
             ).first()
-            if groupe_ligne is None:
+            if group_row is None:
                 return None
 
-            membres_lignes = connexion.execute(
+            member_rows = connection.execute(
                 text("""
                     SELECT a.societaire_id, s.nom_complet, a.role, a.date_entree, a.date_sortie
                     FROM appartenances_gie a
@@ -38,38 +38,44 @@ class PostgresGroupeReader:
                 {"gie_id": gie_id},
             ).all()
 
-            statuts_credit = connexion.execute(
+            credit_status_rows = connection.execute(
                 text("""
                     SELECT DISTINCT ON (societaire_id) societaire_id, statut
                     FROM credits
                     WHERE societaire_id = ANY(:ids)
                     ORDER BY societaire_id, date_deblocage DESC
                 """),
-                {"ids": [m.societaire_id for m in membres_lignes]},
+                {"ids": [member.societaire_id for member in member_rows]},
             ).all()
-            statut_par_societaire = {s.societaire_id: s.statut for s in statuts_credit}
+            credit_status_by_societaire = {
+                status.societaire_id: status.statut for status in credit_status_rows
+            }
 
-            cautions_appelees = connexion.execute(
+            called_guarantee_rows = connection.execute(
                 text("""
                     SELECT DISTINCT garant_societaire_id
                     FROM garanties
                     WHERE garant_societaire_id = ANY(:ids) AND garantie_appelee = true
                 """),
-                {"ids": [m.societaire_id for m in membres_lignes]},
+                {"ids": [member.societaire_id for member in member_rows]},
             ).all()
-            garants_appeles = {c.garant_societaire_id for c in cautions_appelees}
+            called_guarantors = {
+                guarantee.garant_societaire_id for guarantee in called_guarantee_rows
+            }
 
-            autres_membres_ids = [
-                m.societaire_id for m in membres_lignes if m.societaire_id != societaire_id
+            other_member_ids = [
+                member.societaire_id
+                for member in member_rows
+                if member.societaire_id != societaire_id
             ]
-            credits_resolus = connexion.execute(
+            resolved_credit_rows = connection.execute(
                 text("""
                     SELECT statut FROM credits
                     WHERE societaire_id = ANY(:ids) AND statut IN ('solde', 'en_souffrance')
                 """),
-                {"ids": autres_membres_ids},
+                {"ids": other_member_ids},
             ).all()
-            nb_sortie_12m = connexion.execute(
+            exit_count = connection.execute(
                 text("""
                     SELECT count(*) AS n FROM appartenances_gie
                     WHERE gie_id = :gie_id AND date_sortie >= :depuis
@@ -77,42 +83,44 @@ class PostgresGroupeReader:
                 {"gie_id": gie_id, "depuis": date.today() - timedelta(days=365)},
             ).scalar_one()
 
-        nb_resolus = len(credits_resolus)
-        nb_soldes = sum(1 for c in credits_resolus if c.statut == "solde")
-        taux_remboursement = (nb_soldes / nb_resolus) if nb_resolus > 0 else None
-        taille_active = sum(1 for m in membres_lignes if m.date_sortie is None)
+        resolved_credit_count = len(resolved_credit_rows)
+        settled_credit_count = sum(1 for credit in resolved_credit_rows if credit.statut == "solde")
+        repayment_rate = (
+            settled_credit_count / resolved_credit_count if resolved_credit_count > 0 else None
+        )
+        active_member_count = sum(1 for member in member_rows if member.date_sortie is None)
 
-        statut_groupe = "actif"
-        if taille_active == 0:
-            statut_groupe = "dissous"
-        elif taux_remboursement is not None and taux_remboursement < 0.5:
-            statut_groupe = "en_difficulte"
+        group_status = "actif"
+        if active_member_count == 0:
+            group_status = "dissous"
+        elif repayment_rate is not None and repayment_rate < 0.5:
+            group_status = "en_difficulte"
 
-        aujourdhui = date.today()
-        membres = [
+        today = date.today()
+        members = [
             MembreGroupe(
-                societaire_id=m.societaire_id,
-                nom_complet=m.nom_complet,
-                role=m.role,
-                anciennete_mois=(aujourdhui.year - m.date_entree.year) * 12
-                + aujourdhui.month
-                - m.date_entree.month,
-                statut_credit=statut_par_societaire.get(m.societaire_id, "aucun_credit"),
-                caution_appelee=m.societaire_id in garants_appeles,
+                societaire_id=member.societaire_id,
+                nom_complet=member.nom_complet,
+                role=member.role,
+                anciennete_mois=(today.year - member.date_entree.year) * 12
+                + today.month
+                - member.date_entree.month,
+                statut_credit=credit_status_by_societaire.get(member.societaire_id, "aucun_credit"),
+                caution_appelee=member.societaire_id in called_guarantors,
             )
-            for m in membres_lignes
-            if m.date_sortie is None
+            for member in member_rows
+            if member.date_sortie is None
         ]
 
         return GroupeCaution(
-            groupe_id=groupe_ligne.gie_id,
-            nom_groupe=f"Groupement {groupe_ligne.gie_id}",
-            taille_actuelle=taille_active,
-            date_creation=groupe_ligne.date_creation,
-            taux_remboursement_groupe=taux_remboursement,
-            nb_cycles_completes=nb_soldes,
-            nb_credits_anterieurs_soldes=nb_soldes,
-            nb_sorties_12m=nb_sortie_12m,
-            statut=statut_groupe,
-            membres=membres,
+            groupe_id=group_row.gie_id,
+            nom_groupe=f"Groupement {group_row.gie_id}",
+            taille_actuelle=active_member_count,
+            date_creation=group_row.date_creation,
+            taux_remboursement_groupe=repayment_rate,
+            nb_cycles_completes=settled_credit_count,
+            nb_credits_anterieurs_soldes=settled_credit_count,
+            nb_sorties_12m=exit_count,
+            statut=group_status,
+            membres=members,
         )

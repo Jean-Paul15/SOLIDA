@@ -30,10 +30,10 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
   const visibles = allVisible ? decomposition : decomposition.slice(0, LIMITE_VISIBLE);
   const masques = decomposition.length - visibles.length;
 
-  const donnees = visibles.map((c) => ({
-    nom: `${c.libelle} : ${c.valeur}`,
-    points: c.points,
-    sens: c.sens,
+  const chartData = visibles.map((contribution) => ({
+    nom: `${contribution.libelle} : ${contribution.valeur}`,
+    points: contribution.points,
+    sens: contribution.sens,
   }));
 
   const amplitude = Math.max(...decomposition.map((c) => Math.abs(c.points)), 1);
@@ -43,7 +43,7 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
       <div style={{ height: visibles.length * 38 + 20 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={donnees}
+            data={chartData}
             layout="vertical"
             margin={{ left: 4, right: 28 }}
             barCategoryGap={14}
@@ -70,13 +70,13 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
               }}
             />
             <Bar dataKey="points" barSize={26} animationDuration={200} isAnimationActive>
-              {donnees.map((d) => (
+              {chartData.map((datum) => (
                 <Cell
-                  key={d.nom}
+                  key={datum.nom}
                   fill={
-                    d.sens === "favorable"
+                    datum.sens === "favorable"
                       ? "var(--color-decision-accord)"
-                      : d.sens === "defavorable"
+                      : datum.sens === "defavorable"
                         ? "var(--color-decision-refus)"
                         : "var(--color-neutre-500)"
                   }

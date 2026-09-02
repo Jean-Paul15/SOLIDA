@@ -1,7 +1,7 @@
 from datetime import date
 
 from solida.domain.entities.credit import Credit
-from solida.domain.ports.core_sim import LecteurCoreSim
+from solida.domain.ports.core_sim import CoreSimReader
 from solida.domain.rules.echeance import TAUX_MENSUEL_DEMONSTRATION, calculer_echeance_mensuelle
 from solida.domain.rules.epargne import tendance_depuis_croissance
 from solida.domain.values.features import FeaturesIndividuelles, FeaturesSolidaires
@@ -12,8 +12,8 @@ def _nb_incidents_anterieurs(credits: list[Credit]) -> int:
 
 
 def _max_jours_retard(credits: list[Credit]) -> int | None:
-    valeurs = [c.jours_retard_max for c in credits if c.jours_retard_max is not None]
-    return max(valeurs) if valeurs else None
+    values = [credit.jours_retard_max for credit in credits if credit.jours_retard_max is not None]
+    return max(values) if values else None
 
 
 def _montant_max_rembourse(credits: list[Credit]) -> int | None:
@@ -25,27 +25,21 @@ def _montant_max_rembourse(credits: list[Credit]) -> int | None:
 
 
 class FeatureStoreCoreSim:
-    """Calcule les features à la demande à partir de CORE-SIM — pas de feature store
-    historisé pour cette passe (voir `docs/backend/03-decisions-provisoires-a-revoir.md`).
+    """Calcule les features de profil à partir de CORE-SIM.
 
-    `ratio_endettement`, `ratio_epargne_montant` et `ratio_epargne_revenu` dépendent du
-    montant et de la durée d'une demande précise, que ce port ne connaît pas (il ne prend
-    que `societaire_id`). Les valeurs renvoyées ici sont un instantané de profil basé sur
-    le dernier crédit connu ; `scorer_demande` les recalcule et les remplace toujours avec
-    les chiffres réels de la demande avant de construire les features envoyées au modèle
-    et avant persistance — ce qui compte pour l'audit et pour le modèle réel à venir.
+    Les ratios liés à une demande sont recalculés par `ScorerDemande` avant le scoring.
     """
 
-    def __init__(self, lecteur: LecteurCoreSim) -> None:
-        self._lecteur = lecteur
+    def __init__(self, core_sim_reader: CoreSimReader) -> None:
+        self._core_sim_reader = core_sim_reader
 
     def lire_individuelles(self, societaire_id: str) -> FeaturesIndividuelles | None:
-        societaire = self._lecteur.charger_societaire(societaire_id)
+        societaire = self._core_sim_reader.charger_societaire(societaire_id)
         if societaire is None:
             return None
 
-        credits = self._lecteur.charger_historique_credit(societaire_id)
-        compte = self._lecteur.charger_compte_epargne(societaire_id)
+        credits = self._core_sim_reader.charger_historique_credit(societaire_id)
+        compte = self._core_sim_reader.charger_compte_epargne(societaire_id)
 
         solde_moyen_6m = compte.solde_moyen_6m if compte else 0
         nb_mois_avec_depot_12m = compte.nb_mois_avec_depot_12m if compte else 0
@@ -89,7 +83,7 @@ class FeatureStoreCoreSim:
         )
 
     def lire_solidaires(self, societaire_id: str) -> FeaturesSolidaires | None:
-        groupe = self._lecteur.charger_groupe(societaire_id)
+        groupe = self._core_sim_reader.charger_groupe(societaire_id)
         if groupe is None:
             return FeaturesSolidaires(
                 en_groupe=False,
@@ -99,7 +93,7 @@ class FeatureStoreCoreSim:
                 deja_secouru_par_groupe=None,
             )
 
-        garanties = self._lecteur.charger_garanties(societaire_id)
+        garanties = self._core_sim_reader.charger_garanties(societaire_id)
         deja_secouru = any(
             g.beneficiaire_societaire_id == societaire_id and g.garantie_appelee for g in garanties
         )
