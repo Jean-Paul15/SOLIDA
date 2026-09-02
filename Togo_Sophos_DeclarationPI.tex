@@ -1,0 +1,341 @@
+% =============================================================================
+%  Togo_Sophos_DeclarationPI.tex
+%  Équipe Sophos, solution SOLIDA
+%  Hackathon National CIF / DigiCoop-WA+, Thématique 02, Scoring Microcrédit (Togo)
+%
+%  DÉCLARATION DE PROPRIÉTÉ INTELLECTUELLE, article 10 de la Charte CIF.
+%  Pièce à signer par chaque membre de l'équipe et à joindre aux livrables.
+%  Elle déclare les éléments créés par l'équipe et la licence libre accordée
+%  (Apache-2.0), ainsi que les composants tiers et logiciels libres intégrés à la
+%  solution, avec leur licence exacte, et garantit leur compatibilité avec la
+%  cession prévue par la Charte.
+%
+%  Sources : Charte de propriété intellectuelle CIF signée ; réponses officielles
+%  au suivi des questions candidats ; fiche de présentation de l'équipe ; état
+%  réel du dépôt SOLIDA au 2026-09-02. Licences des composants tiers vérifiées à
+%  la source (registre npm, PyPI) le 2026-09-02.
+%
+%  Compilation : pdflatex Togo_Sophos_DeclarationPI.tex  (2 passes)
+%  Style : aucun tiret cadratin ; nommage métier en français, technique en anglais.
+%  À figer avant signature : étiquette et empreinte du commit Git (section 1.1),
+%  date de signature.
+% =============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[a4paper,top=1.8cm,bottom=1.6cm,left=2.0cm,right=2.0cm]{geometry}
+\usepackage{tikz}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\setlist[itemize]{label=\textbullet}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[expansion=false]{microtype}
+
+\tcbuselibrary{skins,breakable}
+
+% ---- Palette (identité des documents administratifs de l'équipe) ----
+\definecolor{navy}{HTML}{0B1F3A}
+\definecolor{gold}{HTML}{C9A961}
+\definecolor{lightgold}{HTML}{F5EFE0}
+\definecolor{softgray}{HTML}{4A4A4A}
+
+% ---- En-tetes et pieds ----
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[L]{\footnotesize\color{navy}\textsc{Sophos} : Déclaration PI (article 10)}
+\fancyhead[R]{\footnotesize\color{navy}Hackathon CIF DigiCoop-WA+ (Togo)}
+\fancyfoot[C]{\footnotesize\color{softgray}\thepage}
+
+\newcommand{\hr}{\vspace{2pt}\textcolor{gold}{\rule{\textwidth}{0.4pt}}\vspace{2pt}}
+
+\linespread{0.99}\selectfont
+\begin{document}
+
+% ============ BANDEAU DE TITRE ============
+\begin{center}
+\begin{tikzpicture}
+\node[rectangle, rounded corners=3pt, fill=navy, text=white, minimum width=\textwidth,
+      inner sep=12pt, align=center] (box) {
+  \begin{minipage}{0.93\textwidth}
+    \centering
+    {\Large\bfseries Déclaration de propriété intellectuelle}\\[4pt]
+    {\normalsize\color{gold}\bfseries Article 10 de la Charte de propriété intellectuelle CIF}\\[4pt]
+    {\footnotesize Équipe Sophos $\cdot$ Solution SOLIDA $\cdot$ Thématique 02, Scoring Microcrédit}\\[2pt]
+    {\footnotesize Hackathon National d'Innovation CIF / DigiCoop-WA+, Lomé, 13 au 15 septembre 2026}
+  \end{minipage}
+};
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.6em}
+
+\section*{Objet}
+
+La présente déclaration répond à l'article 10 de la Charte de propriété intellectuelle de la CIF.
+Elle identifie les éléments créés par l'équipe Sophos et la licence libre que l'équipe leur
+applique, puis les composants tiers et logiciels libres intégrés à la solution SOLIDA, avec leur
+licence exacte, et garantit leur compatibilité avec la cession et l'exploitation prévues par la
+Charte. Elle est signée par chaque membre de l'équipe et jointe aux livrables.
+
+\section*{1. Éléments préexistants de l'équipe et licence accordée}
+
+\subsection*{1.1 Périmètre concerné}
+
+Le présent article porte sur le \textbf{périmètre préexistant} : l'état du dépôt Git de la solution
+SOLIDA à la date de signature de la présente déclaration. Ce périmètre est figé par une étiquette
+Git dédiée. \textit{[Étiquette et empreinte du commit à reporter ici avant signature.]} Les
+développements réalisés pendant le hackathon n'en font pas partie (voir 1.4).
+
+\subsection*{1.2 Contenu du périmètre préexistant}
+
+Éléments conçus et développés par l'équipe Sophos avant l'épreuve des 72 heures, présents dans le
+dépôt. Ils constituent sa création propre au sens de l'article 9 de la Charte.
+
+\begin{center}
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{3.9cm} p{8.6cm} p{2.3cm}@{}}
+\toprule
+\textbf{Élément} & \textbf{Description} & \textbf{Licence} \\
+\midrule
+Interface agent SOLIDA & Application web Next.js : connexion, recherche, dossier du sociétaire, nouvelle demande, résultat de scoring, fiche de justification, registre des décisions, paramétrage de la grille & Apache-2.0 \\
+Backend applicatif SOLIDA & API FastAPI : lecture du simulateur, scoring, moteur de décision, authentification, registre, génération et archivage de la fiche PDF & Apache-2.0 \\
+Simulateur de données synthétiques & Générateur Python de données fictives d'une coopérative et chargement PostgreSQL & Apache-2.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{1.3 Licence accordée}
+
+L'équipe Sophos place ce périmètre préexistant, code source et documentation qui l'accompagne,
+sous \textbf{Apache License 2.0} (fichier \texttt{LICENSE} du dépôt). Cette licence accorde à la
+CIF, comme à tout tiers, le droit mondial, gratuit et pérenne d'utiliser, reproduire, modifier,
+distribuer et exploiter ces éléments, y compris commercialement, avec la concession de brevet
+qu'elle prévoit. Conformément à l'article 10 de la Charte, la CIF bénéficie en outre d'une licence
+non exclusive, mondiale, transférable et gratuite, pour toute la durée de protection, sur ces
+mêmes éléments dans le cadre de la Solution. Les fichiers \texttt{LICENSE} et \texttt{NOTICE} sont
+présents dans le dépôt. En signant la présente déclaration, chaque membre de l'équipe confirme
+cette concession de licence.
+
+\textbf{Nom \og SOLIDA \fg{}.} La dénomination et la charte graphique ont été retenues par
+l'équipe pour identifier la solution. L'équipe ne revendique aucune marque déposée et en concède
+l'usage libre et gratuit à la CIF. L'article 5.4 de la Charte prévoyant que les signes créés pour
+identifier la Solution sont cédés à la CIF, l'équipe ne s'y oppose pas.
+
+\subsection*{1.4 Articulation avec les développements du hackathon}
+
+Les développements réalisés pendant l'épreuve des 72 heures et pendant le suivi post-hackathon du
+lauréat \textbf{appartiennent définitivement à la CIF}, par cession exclusive et définitive
+(articles 4 à 6 de la Charte). L'équipe n'en conserve aucun droit d'exploitation autonome
+(article 14). La licence libre décrite au 1.3 ne couvre \textbf{que} le périmètre préexistant
+défini au 1.1 ; elle ne s'étend pas à ces développements et n'en affecte pas la cession.
+
+\section*{2. Composants tiers et logiciels libres intégrés}
+
+Dépendances de \textbf{premier niveau}, avec version épinglée et licence vérifiée à la source le
+2026-09-02. L'inventaire complet des dépendances directes et transitives figure au dépôt :
+\texttt{THIRD\_PARTY\_NOTICES.md}, \texttt{docs/livrables/sbom-frontend.txt} (855 paquets),
+\texttt{docs/livrables/sbom-backend.txt} (81 paquets), \texttt{frontend/package-lock.json} et
+\texttt{backend/uv.lock}.
+
+{\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\begin{longtable}{@{}p{4.7cm} p{2.0cm} p{3.1cm} p{5.5cm}@{}}
+\toprule
+\textbf{Composant} & \textbf{Version} & \textbf{Licence} & \textbf{Usage dans la solution} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Composant} & \textbf{Version} & \textbf{Licence} & \textbf{Usage dans la solution} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\multicolumn{4}{@{}l}{\textbf{Frontend, exécution}} \\
+\addlinespace[2pt]
+next & 16.3.0 & MIT & Framework React, rendu serveur et routage \\
+react & 19.2.8 & MIT & Composants d'interface \\
+react-dom & 19.2.8 & MIT & Rendu DOM de React \\
+radix-ui & 1.6.7 & MIT & Primitives d'interface accessibles \\
+recharts & 3.10.1 & MIT & Graphiques d'épargne et de simulation \\
+framer-motion & 12.43.0 & MIT & Animations d'interface \\
+lucide-react & 1.28.0 & ISC & Jeu d'icônes \\
+cmdk & 1.1.1 & MIT & Palette de commandes et recherche \\
+sonner & 2.0.7 & MIT & Notifications transitoires \\
+clsx & 2.1.1 & MIT & Concaténation conditionnelle de classes CSS \\
+tailwind-merge & 3.6.0 & MIT & Fusion des classes utilitaires \\
+class-variance-authority & 0.7.1 & Apache-2.0 & Composition des variantes de style \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textbf{Frontend, outillage de développement et de test (hors exécution)}} \\
+\addlinespace[2pt]
+tailwindcss & 4.3.3 & MIT & Feuilles de style utilitaires \\
+@tailwindcss/postcss & 4.3.3 & MIT & Intégration PostCSS \\
+tw-animate-css & 1.4.0 & MIT & Utilitaires d'animation \\
+typescript & 5.9.3 & Apache-2.0 & Typage statique \\
+eslint & 9.39.5 & MIT & Analyse statique \\
+eslint-config-next & 16.3.0 & MIT & Règles ESLint Next.js \\
+prettier & 3.9.6 & MIT & Formatage du code \\
+husky & 9.1.7 & MIT & Hooks Git \\
+lint-staged & 17.3.0 & MIT & Vérifications de pré-commit \\
+shadcn & 4.16.1 & MIT & CLI de génération de composants (copiés dans le dépôt sous MIT) \\
+vitest & 4.1.10 & MIT & Tests unitaires \\
+@types/node & 22.20.1 & MIT & Déclarations de types \\
+@types/react & 19.2.18 & MIT & Déclarations de types \\
+@types/react-dom & 19.2.4 & MIT & Déclarations de types \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textbf{Backend et API, exécution}} \\
+\addlinespace[2pt]
+fastapi & 0.141.1 & MIT & Framework de l'API de scoring \\
+pydantic & 2.13.4 & MIT & Validation des schémas de données \\
+pydantic-settings & 2.14.2 & MIT & Chargement de la configuration \\
+sqlalchemy & 2.0.51 & MIT & Accès relationnel (ORM et Core) \\
+alembic & 1.18.5 & MIT & Migrations de la base SOLIDA \\
+psycopg[binary] & 3.3.4 & LGPL-3.0-only & Pilote PostgreSQL (voir section 3) \\
+fastapi-users[sqlalchemy] & 15.0.5 & MIT & Authentification et comptes agents \\
+argon2-cffi & 25.1.0 & MIT & Hachage des mots de passe (Argon2) \\
+uvicorn[standard] & 0.52.1 & BSD-3-Clause & Serveur ASGI \\
+weasyprint & 69.0 & BSD-3-Clause & Rendu PDF de la fiche de justification \\
+jinja2 & 3.1.6 & BSD-3-Clause & Gabarit HTML de la fiche \\
+minio & 7.2.20 & Apache-2.0 & Client S3 des fiches archivées \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textbf{Backend, outillage de développement et de test (hors exécution)}} \\
+\addlinespace[2pt]
+ruff & 0.16.1 & MIT & Lint \\
+mypy & 2.3.0 & MIT & Vérification de types \\
+pytest & 9.1.1 & MIT & Tests \\
+pytest-cov & 7.1.0 & MIT & Couverture de tests \\
+httpx & 0.28.1 & BSD-3-Clause & Client HTTP de test \\
+import-linter & 2.13 & BSD-2-Clause & Contrôle des couches (Clean Architecture) \\
+hatchling & 1.x & MIT & Construction du paquet \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textbf{Simulateur de données synthétiques, exécution}} \\
+\addlinespace[2pt]
+numpy & 2.5.1 & BSD-3-Clause & Calcul numérique \\
+pandas & 3.0.5 & BSD-3-Clause & Manipulation des jeux de données \\
+pyyaml & 6.0.3 & MIT & Lecture de la configuration du générateur \\
+sqlalchemy & 2.0.51 & MIT & Chargement vers PostgreSQL \\
+psycopg2-binary & 2.9.12 & LGPL-3.0-or-later & Pilote PostgreSQL du chargement (voir section 3) \\
+pyarrow & 25.0.0 & Apache-2.0 & Lecture et écriture au format Parquet \\
+\addlinespace[3pt]
+\multicolumn{4}{@{}l}{\textbf{Infrastructure, images Docker de base}} \\
+\addlinespace[2pt]
+node:22-slim & 22 & MIT (Node.js), base Debian & Image d'exécution du frontend \\
+python:3.12-slim & 3.12 & Python-2.0 (PSF), base Debian & Image d'exécution du simulateur \\
+ghcr.io/astral-sh/uv & python3.12-trixie-slim & MIT OR Apache-2.0, base Debian & Image du backend \\
+postgres & 16.14 & PostgreSQL License, base Debian & Bases SOLIDA et CORE-SIM \\
+nginx & 1.30.4-alpine & BSD-2-Clause (nginx), base Alpine & Reverse proxy, point d'entrée réseau \\
+chrislusf/seaweedfs & 4.40 & Apache-2.0 & Stockage objet compatible S3 \\
+\end{longtable}
+}
+
+\noindent \textbf{Noms complets des licences citées} (identifiant SPDX, puis intitulé officiel) :
+
+\begin{center}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}p{3.6cm} p{12.2cm}@{}}
+\toprule
+\textbf{Identifiant SPDX} & \textbf{Intitulé officiel} \\
+\midrule
+\texttt{MIT} & MIT License \\
+\texttt{Apache-2.0} & Apache License 2.0 \\
+\texttt{BSD-3-Clause} & BSD 3-Clause \og New \fg{} or \og Revised \fg{} License \\
+\texttt{BSD-2-Clause} & BSD 2-Clause \og Simplified \fg{} License \\
+\texttt{ISC} & ISC License \\
+\texttt{LGPL-3.0-only} & GNU Lesser General Public License version 3.0 only \\
+\texttt{LGPL-3.0-or-later} & GNU Lesser General Public License version 3.0 or later \\
+\texttt{Python-2.0} & Python Software Foundation License 2.0 \\
+\texttt{PostgreSQL} & The PostgreSQL License (permissive, type BSD) \\
+\texttt{MIT OR Apache-2.0} & double licence : MIT License ou Apache License 2.0, au choix \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent \textbf{Dépendances transitives.} Elles relèvent des mêmes familles de licences
+permissives : MIT License, BSD 2-Clause, BSD 3-Clause, Apache License 2.0, ISC License, BSD Zero
+Clause License (\texttt{0BSD}), zlib License, Python Software Foundation License 2.0. Aucune
+dépendance applicative, directe ou transitive, n'est sous copyleft fort (GNU GPL, GNU AGPL).
+
+\noindent \textbf{Images Docker de base.} Ce sont des distributions système standard (Debian,
+Alpine), utilisées sans modification. Leur contenu inclut, comme toute distribution Linux, des
+paquets sous copyleft dont la GNU GPL ; ils forment l'environnement d'exécution et ne sont ni liés
+ni incorporés au code de la Solution.
+
+\section*{3. Note sur la licence LGPL (pilotes PostgreSQL)}
+
+\texttt{psycopg} est sous \textbf{GNU Lesser General Public License version 3.0 seule}
+(\texttt{LGPL-3.0-only}) ; \texttt{psycopg2-binary} sous \textbf{GNU LGPL version 3.0 ou
+ultérieure} avec exceptions de compilation (\texttt{LGPL-3.0-or-later}). Cette licence
+\textbf{accorde} : l'usage commercial et privé sans redevance ; l'intégration dans un logiciel
+propriétaire ou fermé \textbf{sans obligation d'en publier le code} ; la modification et la
+redistribution de la bibliothèque. Elle \textbf{impose} : en cas de modification des fichiers
+internes de la bibliothèque, la publication de ces modifications sous LGPL ; la conservation des
+mentions de copyright et de licence. Le logiciel est fourni sans garantie.
+
+Dans SOLIDA, les deux pilotes sont utilisés \textbf{tels quels} (installés par gestionnaire de
+paquets, importés sans modification) et liés dynamiquement. Aucune obligation de diffusion du code
+de SOLIDA n'en découle. La cession et l'exploitation prévues par la Charte, y compris pour une
+solution dont la propriété serait transférée à la CIF, restent possibles : il suffit que le pilote
+demeure non modifié et remplaçable, ce que garantit l'accès à la base via SQLAlchemy.
+
+\section*{4. Garantie de compatibilité (articles 9 et 10)}
+
+L'équipe Sophos garantit que la Solution est sa création propre et ne porte pas atteinte aux
+droits de tiers. Les travaux ont porté exclusivement sur des données synthétiques ; l'usage
+d'assistants de génération de code (Claude Code, Codex) a respecté la Charte, l'originalité de la
+création revenant à l'équipe, et n'a transmis aucune donnée personnelle réelle à un service tiers. Les composants tiers listés relèvent de licences
+permissives (MIT, BSD 2-Clause, BSD 3-Clause, Apache License 2.0, ISC) ou de copyleft faible
+(GNU LGPL 3.0, limité aux pilotes PostgreSQL, employés sans modification), toutes compatibles avec
+la cession et l'exploitation prévues par la Charte. Tout composant sous licence incompatible qui
+serait identifié avant ou après la remise des livrables sera remplacé et la présente déclaration
+mise à jour.
+
+\section*{5. Livrables associés (article 11)}
+
+Seront remis avec la Solution : le code source et objet, les identifiants et accès techniques, les
+fichiers \texttt{LICENSE} et \texttt{NOTICE}, le fichier \texttt{THIRD\_PARTY\_NOTICES.md} et les
+inventaires de dépendances \texttt{sbom-frontend.txt} et \texttt{sbom-backend.txt} (dossier
+\texttt{docs/livrables/}).
+
+\section*{6. Signatures}
+
+Fait à Lomé, le \rule{2.2cm}{0.4pt} septembre 2026.
+
+\smallskip
+\noindent Chaque membre reconnaît la présente déclaration et confirme, pour ce qui le concerne, la
+concession de licence décrite à la section 1. Signature précédée de la mention \og lu et approuvé \fg{}.
+
+\smallskip
+\begin{center}
+\footnotesize
+\renewcommand{\arraystretch}{1.7}
+\begin{tabular}{@{}p{0.6cm} p{4.7cm} p{4.6cm} p{4.0cm}@{}}
+\toprule
+\textbf{N\textsuperscript{o}} & \textbf{Nom et prénom} & \textbf{Rôle} & \textbf{Signature} \\
+\midrule
+1 & ADOGLI Jean-Paul & Chef d'équipe, Data Science / Modèle & \\
+2 & DJIMEDO Yao-Junior Samuel & Data Engineering & \\
+3 & POULI Epiphane-Gédéon & Backend / API et authentification & \\
+4 & AKAKPO Charlie & DevOps / Infrastructure et intégration & \\
+5 & TIGUE Essozolim Victoire & Produit et métier microfinance, UX/UI & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+{\footnotesize\color{softgray}Équipe Sophos $\cdot$ Déclaration de propriété intellectuelle
+(article 10) $\cdot$ Hackathon National CIF / DigiCoop-WA+, Lomé 2026}
+\end{center}
+
+\end{document}

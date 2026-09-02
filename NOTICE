@@ -1,0 +1,15 @@
+SOLIDA
+Copyright 2026 Équipe Sophos
+
+Ce produit inclut du logiciel développé par l'Équipe Sophos dans le cadre de sa
+participation au Hackathon National d'Innovation CIF / DigiCoop-WA+ (Thématique 02,
+Scoring Microcrédit, Togo, 2026).
+
+Le périmètre préexistant (interface agent, backend applicatif, simulateur de
+données synthétiques et documentation associée) est distribué sous Apache
+License 2.0 (voir le fichier LICENSE).
+
+Composants tiers et logiciels libres integres : voir THIRD_PARTY_NOTICES.md.
+Inventaire complet des dependances (directes et transitives) : voir
+docs/livrables/sbom-frontend.txt, docs/livrables/sbom-backend.txt, ainsi que
+frontend/package-lock.json et backend/uv.lock.
