@@ -1,64 +1,64 @@
-# Graph Report - SOLIDA  (2026-08-21)
+# Graph Report - SOLIDA  (2026-09-02)
 
 ## Corpus Check
-- 352 files · ~151,240 words
+- 360 files · ~151,875 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1978 nodes · 3961 edges · 282 communities (113 shown, 169 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 233 edges (avg confidence: 0.92)
+- 2041 nodes · 3791 edges · 285 communities (124 shown, 161 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 193 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `05dc855d`
+- Built from commit: `ce600ef8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- routers/produits.py
+- lister
 - test_consulter_dossier_mapping.py
 - test_scorecard.py
 - test_scorer_demande_validations.py
 - test_auth.py
-- utils.ts
+- FeatureStoreCoreSim
 - Montant
 - societaires/[id]/page.tsx
-- test_scorer_demande.py
+- _build_use_case
 - contracts.ts
 - cn
 - adapters.py
 - RefreshFields.tsx
 - formatAmount
 - Monitoring sécurité — applicatif et infrastructure
-- FeatureStoreCoreSim
+- FeatureStore
 - test_scoring.py
 - FicheApercu.tsx
 - compilerOptions
-- LecteurCoreSim
-- parametrage.py
+- CoreSimReader
+- grille_repository
 - skeleton.tsx
-- ParametresGrille
+- test_grille.py
 - dependencies
 - ListerDecisions
-- GroupeCautionDialog.tsx
-- ConfigurationGrille
+- CreditHistoryTable.tsx
+- SqlGrilleRepository
 - devDependencies
 - test_registre_et_grille.py
 - Connectivité faible et connecteur de données réel
 - components.json
-- test_scorer_demande_features.py
+- auth/__init__.py
 - CoreSimPostgresReader
 - routers/scoring.py
-- .charger_produits
+- GroupeCautionDialog.tsx
 - Garantie
 - NouvelleDemandeSheet.tsx
 - ProduitCredit
 - mappers/__init__.py
 - FicheRepository
 - PolitiqueCredit.tsx
-- ProduitCredit
+- core_sim_postgres_reader.py
 - values/decision.py
-- command.tsx
+- Composants tiers et logiciels libres
 - demarrer.sh
 - pipeline.py
 - LoginForm.tsx
@@ -71,10 +71,10 @@
 - AuditLog
 - Utilisateur
 - demande.py
-- schemas/scoring.py
+- alert
 - Formule cible du crédit progressif — à activer quand le modèle EBM réel existe
 - Engine
-- EnTeteFiche
+- app/layout.tsx
 - SyntheseGroupe
 - connexion/page.tsx
 - ProduitCredit
@@ -100,11 +100,11 @@
 - charger_postgres.py
 - demo_recherche.py
 - solida-backend
-- Credit
+- PostgresCreditReader
 - LireGrilleActive
 - valider_mot_de_passe
 - _inserer_evenement_test
-- feature_store_core_sim.py
+- ListerProduits
 - Request
 - lint-staged
 - AsyncSession
@@ -130,30 +130,30 @@
 - get
 - Request
 - FicheArchiveeRepository
-- User
+- datetime
 - GrilleRepository
 - Response
-- _ligne_to_decision
-- ConfigurationGrille
+- Any
+- PostgresEpargneReader
 - SeaweedfsFicheRepository
 - ArchiverFiche
 - GenererFiche
-- LireDecision
+- PostgresSocietaireReader
 - ListerProduits
 - SqlAuditLog
 - ResultatRechercheSocietaire
-- fiche_to_schema
+- .__init__
 - Societaire
 - RegistreDecisions.tsx
 - Protocol
 - ResultatRechercheSocietaire
-- ._calculer
+- errors.py
 - ScorerDemande
-- WeasyPrintFichePdfGenerator
+- Authentification
 - ConsulterDossier
 - ListerSocietairesRecents
 - RechercherSocietaire
-- DossierSocietaire
+- Convention de nommage technique (refactor SOLID / anglicisation)
 - modifier
 - ParametresScorecard
 - Utilisateur
@@ -163,37 +163,35 @@
 - ListerDecisions
 - Utilisateur
 - DecisionEnregistree
-- _Definition
+- UserManager
 - Utilisateur
 - Utilisateur
 - RecommendationPanel.tsx
-- _ScoringModelFactice
+- ProbabiliteDefaut
 - post-commit
 - AccessToken
 - ArchiverFiche
 - AsyncSession
-- Credit
+- lister
 - ResultatScoring
 - test_consulter_dossier.py
 - MembreGroupe
-- MouvementEpargne
-- MouvementEpargne
+- current_active_user
+- .charger_mouvements_epargne
 - ResultatRechercheSocietaire
 - ConfigurationGrille
-- LireGrilleActive
+- LireDecision
 - ListerDecisions
 - ListerProduits
 - ListerSocietairesRecents
-- ModifierGrille
+- .charger_mouvements_epargne
 - RechercherSocietaire
-- WeasyPrintFichePdfGenerator
 - fixture
 - LecteurCoreSimPostgres
 - DossierSocietaire
 - ConfigurationGrille
-- .execute
-- Credit
-- MouvementEpargne
+- EnTeteFiche
+- GuaranteePanel.tsx
 - LireGrilleActive
 - ModifierGrille
 - ListerProduits
@@ -204,16 +202,16 @@
 - ResultatScoring
 - ResultatRechercheSocietaire
 - ResultatRechercheSocietaire
-- LireDecision
-- DossierSocietaire
-- ConfigurationGrille
+- .charger_groupe
+- routers/societaires.py
+- garantie.py
 - post-checkout
 - DecisionAEnregistrer
 - DecisionRegistre
 - DemandeScoring
 - Engine
 - EntreeScoring
-- FicheJustification
+- mouvement_epargne.py
 - ResultatRechercheSocietaire
 - ResultatScoring
 - ScorerDemande
@@ -221,33 +219,32 @@
 - ConsulterDossier
 - ListerSocietairesRecents
 - RechercherSocietaire
-- ConfigurationGrille
-- User
-- User
-- User
-- User
-- User
-- BaseModel
+- societaire_search_result.py
+- Request
+- PointsVariable
+- DecisionRegistreAffichee
+- AsyncSession
+- DatabaseStrategy
+- routers/auth.py
 - CompteEpargne
 - ConfigurationGrille
 - ConsulterDossier
 - Credit
 - DatabaseStrategy
 - date
-- DecisionRegistreAffichee
+- Request
 - DossierSocietaire
 - FeaturesIndividuelles
 - GenererFiche
 - get
 - GroupeCaution
 - LireDecision
-- MembreGroupe
+- UUID
 - MouvementEpargne
-- NouvelleConfigurationGrille
-- PageRegistre
-- PointsVariable
+- SqlAuditLog
+- BaseModel
+- SqlAuditLog
 - post
-- ProbabiliteDefaut
 - Request
 - Response
 - Societaire
@@ -258,62 +255,67 @@
 - User
 - UserManager
 - WeasyPrintFichePdfGenerator
-- .rechercher_societaires
-- .enregistrer
+- FicheJustification
+- SqlAuditLog
 - proxy.ts
+- FeaturesSolidaires
+- FeatureStoreCoreSim
+- SQLAlchemyAccessTokenDatabase
+- SQLAlchemyUserDatabase
+- SqlFicheArchiveeRepository
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 101 edges
-2. `User` - 39 edges
-3. `LecteurCoreSim` - 32 edges
-4. `Montant` - 32 edges
-5. `_cas_usage()` - 31 edges
-6. `CoreSimPostgresReader` - 28 edges
-7. `ProbabiliteDefaut` - 27 edges
-8. `AccesRefuse` - 24 edges
-9. `formatAmount()` - 24 edges
-10. `ProduitCredit` - 21 edges
+2. `Montant` - 32 edges
+3. `_build_use_case()` - 30 edges
+4. `CoreSimReader` - 29 edges
+5. `CoreSimPostgresReader` - 29 edges
+6. `ProbabiliteDefaut` - 27 edges
+7. `formatAmount()` - 24 edges
+8. `solida_engine()` - 18 edges
+9. `SqlAuditLog` - 17 edges
+10. `_demande()` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `test_executer_compose_le_dossier_complet()` --calls--> `MouvementEpargne`  [EXTRACTED]
-  backend/tests/application/test_consulter_dossier.py → frontend/lib/contracts.ts
-- `_membre()` --calls--> `MembreGroupe`  [EXTRACTED]
-  backend/tests/application/test_consulter_dossier.py → frontend/lib/contracts.ts
-- `_actualiser_features()` --calls--> `calculer_taux_endettement()`  [INFERRED]
-  backend/solida/application/use_cases/scorer_demande_features.py → backend/solida/domain/rules/echeance.py
-- `choisirProduit()` --calls--> `findProduit()`  [EXTRACTED]
-  frontend/components/solida/useNewRequest.ts → frontend/lib/produits.ts
-- `ListerProduits` --uses--> `ProduitCredit`  [INFERRED]
-  backend/solida/application/use_cases/lister_produits.py → backend/solida/domain/entities/produit_credit.py
+- `CoreSimPostgresReader` --uses--> `PostgresCreditReader`  [INFERRED]
+  backend/solida/adapters/core_sim/core_sim_postgres_reader.py → backend/solida/adapters/core_sim/postgres_credit_reader.py
+- `GrilleRepository` --uses--> `ConfigurationGrille`  [INFERRED]
+  backend/solida/domain/ports/grille.py → backend/solida/adapters/http/schemas/grille.py
+- `CoreSimPostgresReader` --uses--> `PostgresEpargneReader`  [INFERRED]
+  backend/solida/adapters/core_sim/core_sim_postgres_reader.py → backend/solida/adapters/core_sim/postgres_epargne_reader.py
+- `CoreSimPostgresReader` --uses--> `PostgresSocietaireReader`  [INFERRED]
+  backend/solida/adapters/core_sim/core_sim_postgres_reader.py → backend/solida/adapters/core_sim/postgres_societaire_reader.py
+- `change_password()` --uses--> `SqlAuditLog`  [INFERRED]
+  backend/solida/infrastructure/routers/auth.py → backend/solida/adapters/persistence/audit_log_sql.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (282 total, 169 thin omitted)
+## Communities (285 total, 161 thin omitted)
 
-### Community 0 - "routers/produits.py"
-Cohesion: 0.22
-Nodes (9): ProduitCredit, BaseModel, ListerProduits, ProduitCredit, Fusionne l'identité du catalogue (CORE-SIM, référentiel) avec le plafond…, lister_produits(), lister(), get (+1 more)
+### Community 0 - "lister"
+Cohesion: 0.50
+Nodes (4): lister(), get, ProduitCredit, User
 
 ### Community 1 - "test_consulter_dossier_mapping.py"
-Cohesion: 0.05
-Nodes (58): Engine, PostgresEpargneReader, date, Engine, MouvementEpargne, PostgresGarantieReader, Engine, PostgresGroupeReader (+50 more)
+Cohesion: 0.08
+Nodes (47): CreditResume, BaseModel, DossierSocietaire, BaseModel, MouvementEpargne, BaseModel, SyntheseEpargne, MembreGroupe (+39 more)
 
 ### Community 2 - "test_scorecard.py"
 Cohesion: 0.17
 Nodes (18): InvariantScoreViole, La décomposition en points ne somme pas au score : le scoring est rejeté., calculer_score(), decomposer_en_points(), PointsVariable, ProbabiliteDefaut, Transforme une probabilité de défaut en score. Convention bancaire : score…, Répartit un log-odds en points de base et contributions par variable. Suppose… (+10 more)
 
 ### Community 3 - "test_scorer_demande_validations.py"
-Cohesion: 0.11
-Nodes (38): datetime, Societaire, valider_acces_agence(), valider_montant_sous_plafond(), valider_pas_de_credit_en_cours(), valider_pas_de_multi_octroi(), valider_plafond_produit(), valider_societaire_trouve() (+30 more)
+Cohesion: 0.06
+Nodes (62): _actualiser_features(), _features_to_dict(), DemandeScoring, FeaturesIndividuelles, Recalcule les ratios qui dépendent de la demande en cours., Ne garde que les champs numériques : `predire()`/`contributions()` attendent…, _revenu_effectif(), DecisionAEnregistrer (+54 more)
 
 ### Community 4 - "test_auth.py"
-Cohesion: 0.05
-Nodes (67): ArgumentParser, Dépendance FastAPI qui vérifie le rôle à l'endpoint. Ne remplace pas la…, require_role(), alert(), AlertedActor, detect(), _main(), datetime (+59 more)
+Cohesion: 0.06
+Nodes (56): ArgumentParser, _main(), purge(), Purge les journaux d'audit âgés de plus d'un an. Le rôle dédié `solida_purge`…, Supprime les journaux expirés, ou les compte sans écriture en essai à blanc., create_account(), _generate_password(), list_locked_accounts() (+48 more)
 
-### Community 5 - "utils.ts"
-Cohesion: 0.18
-Nodes (9): Section(), SectionProps, SimulationTab(), SimulationTabProps, Preregl, ThresholdsTabProps, Separator(), Slider() (+1 more)
+### Community 5 - "FeatureStoreCoreSim"
+Cohesion: 0.14
+Nodes (12): FeatureStoreCoreSim, _max_jours_retard(), _montant_max_rembourse(), _nb_incidents_anterieurs(), Credit, date, FeaturesIndividuelles, FeaturesSolidaires (+4 more)
 
 ### Community 6 - "Montant"
 Cohesion: 0.07
@@ -323,77 +325,77 @@ Nodes (42): ConstantScoringModel, Décomposition heuristique, PAS un modèle app
 Cohesion: 0.14
 Nodes (25): AppLayout(), PageGrille(), PageRegistre(), PageFiche(), PageFicheProps, PageResultatScoring(), PageResultatScoringProps, LIBELLE_SEGMENT (+17 more)
 
-### Community 8 - "test_scorer_demande.py"
-Cohesion: 0.12
-Nodes (29): _AuditLogFactice, _cas_usage(), _configuration(), _DecisionRepositoryFactice, _demande(), _features_individuelles(), _features_solidaires(), _FeatureStoreFactice (+21 more)
+### Community 8 - "_build_use_case"
+Cohesion: 0.09
+Nodes (35): _build_use_case(), _configuration(), _demande(), _FakeAuditLog, _FakeCoreSimReader, _FakeDecisionRepository, _FakeFeatureStore, _FakeGrilleRepository (+27 more)
 
 ### Community 9 - "contracts.ts"
-Cohesion: 0.09
-Nodes (24): ContributionsChart(), FactorsPanel(), FactorsPanelProps, ScoringResultView(), ScoringResultViewProps, useConfigurationGrille(), ActualisationSituation, ApiErrorBody (+16 more)
+Cohesion: 0.08
+Nodes (26): ContributionsChart(), FactorsPanel(), FactorsPanelProps, ActualisationSituation, ApiErrorBody, CalculationMode, ContributionVariable, FamilleContribution (+18 more)
 
 ### Community 10 - "cn"
-Cohesion: 0.11
-Nodes (25): Avatar(), AvatarBadge(), AvatarFallback(), AvatarGroup(), AvatarGroupCount(), AvatarImage(), Card(), CardAction() (+17 more)
+Cohesion: 0.10
+Nodes (27): Alert(), AlertAction(), AlertDescription(), AlertTitle(), alertVariants, Avatar(), AvatarBadge(), AvatarFallback() (+19 more)
 
 ### Community 11 - "adapters.py"
-Cohesion: 0.24
-Nodes (15): audit_log(), decision_repository(), feature_store(), lecteur(), SqlAuditLog, Fabriques des adaptateurs concrets, partagées entre les modules…, scoring_model(), Racine de composition, scindée par sous-domaine (voir `adapters.py` pour les… (+7 more)
+Cohesion: 0.21
+Nodes (19): audit_log(), _client_seaweedfs(), decision_repository(), feature_store(), fiche_archivee_repository(), fiche_pdf_generator(), fiche_repository(), WeasyPrintFichePdfGenerator (+11 more)
 
 ### Community 12 - "RefreshFields.tsx"
-Cohesion: 0.16
-Nodes (18): LoanFields(), OBJETS, RefreshFields(), RefreshFieldsProps, PERIODES, RegistryFiltersProps, Label(), Select() (+10 more)
+Cohesion: 0.18
+Nodes (17): OBJETS, RefreshFieldsProps, PERIODES, RegistryFiltersProps, HORIZONS, TREND_LABEL, Select(), SelectContent() (+9 more)
 
 ### Community 13 - "formatAmount"
-Cohesion: 0.12
-Nodes (20): EconomicActivityPanel(), EconomicActivityPanelProps, GuaranteePanel(), GuaranteePanelProps, LoanSummary(), LoanSummaryProps, LIBELLE_NIVEAU_INSTRUCTION, ProfilePanel() (+12 more)
+Cohesion: 0.11
+Nodes (22): EconomicActivityPanel(), EconomicActivityPanelProps, LoanFields(), LoanSummary(), LoanSummaryProps, ProductsTab(), ProductsTabProps, LIBELLE_NIVEAU_INSTRUCTION (+14 more)
 
 ### Community 14 - "Monitoring sécurité — applicatif et infrastructure"
 Cohesion: 0.25
 Nodes (7): Ancrage réglementaire, Ce qui est explicitement laissé de côté (et pourquoi), Ce qui est surveillé aujourd'hui, Comptes bloqués — visibilité admin, Détection d'un volume de lecture hors norme, Intégrité du journal d'audit, Monitoring sécurité — applicatif et infrastructure
 
-### Community 15 - "FeatureStoreCoreSim"
-Cohesion: 0.16
-Nodes (10): FeatureStoreCoreSim, date, Calcule les features à la demande à partir de CORE-SIM — pas de feature store…, FeatureStore, date, Protocol, Simplification assumée pour cette passe, sans pipeline batch : `ecrire_lot`…, FeaturesIndividuelles (+2 more)
+### Community 15 - "FeatureStore"
+Cohesion: 0.26
+Nodes (7): FeatureStore, date, Protocol, Simplification assumée pour cette passe, sans pipeline batch : `ecrire_lot`…, FeaturesIndividuelles, FeaturesSolidaires, `None` pour un sociétaire hors segment de groupe.
 
 ### Community 16 - "test_scoring.py"
 Cohesion: 0.17
 Nodes (28): client_agent(), client_auditeur(), client_superviseur(), _demande(), fixture, TestClient, societaire_agence_agent(), societaire_autre_agence() (+20 more)
 
 ### Community 17 - "FicheApercu.tsx"
-Cohesion: 0.36
-Nodes (5): CreditHistoryTable(), FicheApercu(), FicheApercuProps, FicheJustification, findProduit()
+Cohesion: 0.27
+Nodes (7): FicheApercu(), FicheApercuProps, LoanFieldsProps, FicheJustification, ProduitCreditApi, LABEL_OBJET_CREDIT, TRANCHE_COLOR
 
 ### Community 18 - "compilerOptions"
 Cohesion: 0.07
 Nodes (28): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+20 more)
 
-### Community 19 - "LecteurCoreSim"
-Cohesion: 0.08
-Nodes (19): PostgresSocietaireReader, Engine, Societaire, SocietaireSearchResult, ListerSocietairesRecents, SocietaireSearchResult, Sociétés distinctes les plus récemment consultées par l'agent — construit à…, SocietaireSearchResult (+11 more)
+### Community 19 - "CoreSimReader"
+Cohesion: 0.07
+Nodes (22): ListerSocietairesRecents, SocietaireSearchResult, Réutilise le journal d'audit plutôt qu'une table de récents dédiée., SocietaireSearchResult, RechercherSocietaire, CoreSimReader, CompteEpargne, Credit (+14 more)
 
-### Community 20 - "parametrage.py"
-Cohesion: 0.29
-Nodes (10): LireGrilleActive, ModifierGrille, La validation des seuils (marge/LGD positives, multiplicateurs croissants) est…, pdo/score_reference/odds_reference ne se modifient plus par ce canal…, ScorecardImmuable, grille_repository(), lire_grille_active(), modifier_grille() (+2 more)
+### Community 20 - "grille_repository"
+Cohesion: 0.17
+Nodes (16): grille_to_schema(), ConfigurationGrille, NouvelleConfigurationGrille, ParametresGrille, ParametresProgressif, ParametresScorecard, BaseModel, Sans `date_activation` ni `active` : imposés par le dépôt, pas choisis par… (+8 more)
 
-### Community 22 - "ParametresGrille"
+### Community 22 - "test_grille.py"
 Cohesion: 0.18
-Nodes (13): decider(), ParametresGrille, ProbabiliteDefaut, Seuils de la grille, fondés sur la matrice de coûts — voir docs/formules/., Détermine la tranche à partir du seuil économique marge / (marge + LGD). Le…, test_a_la_frontiere_exacte_la_zone_superieure_est_retenue(), test_des_multiplicateurs_non_croissants_levent_grille_invalide(), test_une_marge_ou_une_lgd_non_positive_leve_grille_invalide() (+5 more)
+Nodes (15): GrilleInvalide, Les paramètres de la grille de décision sont incohérents., decider(), ParametresGrille, ProbabiliteDefaut, Seuils de la grille, fondés sur la matrice de coûts — voir docs/formules/., Détermine la tranche à partir du seuil économique marge / (marge + LGD). Le…, test_a_la_frontiere_exacte_la_zone_superieure_est_retenue() (+7 more)
 
 ### Community 23 - "dependencies"
 Cohesion: 0.08
 Nodes (25): class-variance-authority, clsx, cmdk, framer-motion, dependencies, class-variance-authority, clsx, cmdk (+17 more)
 
 ### Community 24 - "ListerDecisions"
-Cohesion: 0.22
-Nodes (10): ListerDecisions, DecisionRegistreAffichee, _decision(), _DecisionRepositoryFactice, _LecteurFactice, DecisionEnregistree, `DecisionRepository.lister` filtre par l'agence de l'AGENT (seule donnée…, _societaire() (+2 more)
+Cohesion: 0.20
+Nodes (11): ListerDecisions, lister_decisions(), _decision(), _FakeCoreSimReader, _FakeDecisionRepository, DecisionEnregistree, `DecisionRepository.lister` filtre par l'agence de l'AGENT (seule donnée…, _societaire() (+3 more)
 
-### Community 25 - "GroupeCautionDialog.tsx"
-Cohesion: 0.18
-Nodes (18): DecisionsTableProps, GroupeCautionDialogProps, LABEL_ROLE, Badge(), badgeVariants, Table(), TableBody(), TableCaption() (+10 more)
+### Community 25 - "CreditHistoryTable.tsx"
+Cohesion: 0.14
+Nodes (23): CreditHistoryTableProps, DecisionsTableProps, GroupMembersTable(), GroupMembersTableProps, SimulationTab(), SimulationTabProps, Badge(), badgeVariants (+15 more)
 
-### Community 26 - "ConfigurationGrille"
-Cohesion: 0.24
-Nodes (8): ConfigurationGrille, _configuration_to_seuils(), _ligne_to_configuration(), Any, Engine, Implémente `GrilleRepository` contre `grille_decision` (schéma `solida`)., SqlGrilleRepository, _GrilleRepositoryFactice
+### Community 26 - "SqlGrilleRepository"
+Cohesion: 0.31
+Nodes (7): _configuration_to_thresholds(), Any, ConfigurationGrille, Engine, Implémente `GrilleRepository` contre `grille_decision` (schéma `solida`)., _row_to_configuration(), SqlGrilleRepository
 
 ### Community 27 - "devDependencies"
 Cohesion: 0.09
@@ -411,45 +413,49 @@ Nodes (39): Après le pilote, Architecture de déploiement retenue, Ce que signi
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 31 - "test_scorer_demande_features.py"
-Cohesion: 0.20
-Nodes (19): ActualisationSituation, _actualiser_features(), _features_to_dict(), DemandeScoring, FeaturesIndividuelles, Remplace les ratios qui dépendent du montant/de la durée demandés, ou d'un…, Ne garde que les champs numériques : `predire()`/`contributions()` attendent…, _revenu_effectif() (+11 more)
+### Community 31 - "auth/__init__.py"
+Cohesion: 0.15
+Nodes (19): AccessTokenDatabase, get_strategy(), AccessToken, DatabaseStrategy, User, UUID, get_user_manager(), load_common_passwords() (+11 more)
 
 ### Community 32 - "CoreSimPostgresReader"
 Cohesion: 0.10
-Nodes (18): CoreSimPostgresReader, CompteEpargne, date, Garantie, GroupeCaution, ProduitCredit, Societaire, SocietaireSearchResult (+10 more)
+Nodes (17): CoreSimPostgresReader, CompteEpargne, Credit, Garantie, ProduitCredit, Societaire, SocietaireSearchResult, Implémentation du port `CoreSimReader` contre le schéma réel produit par… (+9 more)
 
 ### Community 33 - "routers/scoring.py"
-Cohesion: 0.15
-Nodes (24): ArchiverFiche, GenererFiche, LireDecision, DecisionEnregistree, fiche_archivee_repository(), fiche_pdf_generator(), fiche_repository(), archiver_fiche() (+16 more)
+Cohesion: 0.14
+Nodes (26): ArchiverFiche, GenererFiche, DecisionEnregistree, archive(), confirm(), fiche(), fiche_pdf(), lire() (+18 more)
+
+### Community 34 - "GroupeCautionDialog.tsx"
+Cohesion: 0.11
+Nodes (20): GroupeCautionDialogProps, RequestState, SocietaireSearch(), Command(), CommandDialog(), CommandEmpty(), CommandGroup(), CommandInput() (+12 more)
 
 ### Community 36 - "NouvelleDemandeSheet.tsx"
-Cohesion: 0.16
-Nodes (14): NouvelleDemandeSheetProps, Alert(), AlertAction(), AlertDescription(), AlertTitle(), alertVariants, Sheet(), SheetContent() (+6 more)
+Cohesion: 0.22
+Nodes (10): NouvelleDemandeSheetProps, RefreshFields(), Sheet(), SheetContent(), SheetDescription(), SheetFooter(), SheetHeader(), SheetOverlay() (+2 more)
 
 ### Community 38 - "mappers/__init__.py"
-Cohesion: 0.14
-Nodes (21): explication(), famille(), formater_valeur(), libelle(), Traduction des codes de variables du modèle vers ce qu'un agent doit lire à…, sens(), _decomposition_to_schema(), PointsVariable (+13 more)
+Cohesion: 0.06
+Nodes (48): _Definition, explication(), famille(), formater_valeur(), libelle(), Traduction des codes de variables du modèle vers ce qu'un agent doit lire à…, sens(), _decomposition_to_schema() (+40 more)
 
 ### Community 39 - "FicheRepository"
 Cohesion: 0.40
 Nodes (3): FicheRepository, Protocol, Stockage objet des fiches PDF archivées — jamais en base (`solida` reste léger).
 
 ### Community 40 - "PolitiqueCredit.tsx"
-Cohesion: 0.18
-Nodes (15): CreditHistoryTableProps, LoanFieldsProps, PolitiqueCredit(), PolitiqueCreditProps, Preregl, ProductsTab(), ProductsTabProps, useSavePolicy() (+7 more)
+Cohesion: 0.17
+Nodes (16): PolicyPreset, PolitiqueCredit(), PolitiqueCreditProps, PolicyParameters, useSavePolicy(), save(), Tabs(), TabsContent() (+8 more)
 
-### Community 41 - "ProduitCredit"
-Cohesion: 0.13
-Nodes (17): PostgresProduitReader, Engine, ProduitCredit, Référentiel des produits de crédit — table CORE-SIM, pas les plafonds appliqués…, produit_to_schema(), ProduitCredit, ProduitCredit, valider_duree_dans_bornes() (+9 more)
+### Community 41 - "core_sim_postgres_reader.py"
+Cohesion: 0.16
+Nodes (7): PostgresGarantieReader, Engine, Garantie, PostgresProduitReader, Engine, ProduitCredit, Lit le catalogue CORE-SIM, distinct des plafonds de la grille SOLIDA.
 
 ### Community 42 - "values/decision.py"
-Cohesion: 0.07
-Nodes (41): DecisionRepository, datetime, Protocol, Une décision `accord`/`accord_sous_condition` existe déjà pour ce sociétaire…, `decision_scoring` est en insertion seule : ce port n'expose donc aucune…, FichePdfGenerator, Protocol, ContexteCascade (+33 more)
+Cohesion: 0.05
+Nodes (56): datetime, DecisionAEnregistrer, DecisionEnregistree, Engine, Implémente `DecisionRepository` contre `decision_scoring` (schéma `solida`).…, SqlDecisionRepository, decomposition_from_json(), decomposition_to_json() (+48 more)
 
-### Community 43 - "command.tsx"
-Cohesion: 0.12
-Nodes (19): RequestState, Command(), CommandDialog(), CommandEmpty(), CommandGroup(), CommandInput(), CommandItem(), CommandList() (+11 more)
+### Community 43 - "Composants tiers et logiciels libres"
+Cohesion: 0.22
+Nodes (8): Backend (développement, test, construction ; hors chemin d'exécution), Backend et API (exécution), Composants tiers et logiciels libres, Frontend (développement, construction, test ; hors chemin d'exécution), Frontend (exécution), Infrastructure, images Docker de base, Note sur la LGPL (psycopg et psycopg2-binary), Simulateur, générateur de données synthétiques (exécution)
 
 ### Community 44 - "demarrer.sh"
 Cohesion: 0.32
@@ -460,16 +466,16 @@ Cohesion: 0.15
 Nodes (8): choc_at(), gen_credits(), gen_epargne(), gen_membres(), noms(), SOLIDA -- Generateur CORE-SIM v3 (logique COOPEC / CIF). Modele reel des…, sigmoid(), z()
 
 ### Community 46 - "LoginForm.tsx"
-Cohesion: 0.15
-Nodes (16): LoginForm(), onSubmit(), Button(), buttonVariants, InputGroup(), InputGroupAddon(), inputGroupAddonVariants, InputGroupButton() (+8 more)
+Cohesion: 0.14
+Nodes (16): ChangePasswordForm(), LoginForm(), onSubmit(), Button(), buttonVariants, InputGroup(), InputGroupAddon(), inputGroupAddonVariants (+8 more)
 
 ### Community 48 - "demarrer.ps1"
 Cohesion: 0.30
 Nodes (12): Build-Images(), Initialize-Donnees(), Invoke-Etape(), New-Secret(), Set-Configuration(), Show-Etape(), Show-Info(), Show-Ok() (+4 more)
 
 ### Community 50 - "useNewRequest.ts"
-Cohesion: 0.05
-Nodes (47): PagePrevisualisationScoring(), handleConfirm(), ibmPlexMono, ibmPlexSans, sourceSerif4, metadata, ChangePasswordForm(), onSubmit() (+39 more)
+Cohesion: 0.08
+Nodes (31): PagePrevisualisationScoring(), handleConfirm(), onSubmit(), CreditHistoryTable(), FicheActions(), handleArchive(), FicheActionsProps, NouvelleDemandeSheet() (+23 more)
 
 ### Community 51 - "test_societaires.py"
 Cohesion: 0.24
@@ -479,13 +485,17 @@ Nodes (14): client_agent(), fixture, TestClient, societaire_agence_agent(), soci
 Cohesion: 0.33
 Nodes (3): AuditLog, Protocol, Chaque entrée : acteur, action, objet, horodatage. Jamais de mot de passe,…
 
-### Community 56 - "schemas/scoring.py"
-Cohesion: 0.19
-Nodes (19): FicheJustification, BaseModel, DecisionRegistre, PageRegistre, BaseModel, ContributionVariable, PalierProgression, BaseModel (+11 more)
+### Community 56 - "alert"
+Cohesion: 0.24
+Nodes (14): alert(), AlertedActor, detect(), _main(), datetime, Alerte les pics de lecture sans bloquer automatiquement les comptes. Le seuil…, Renvoie les acteurs au-dessus du seuil, sans écrire., Journalise les alertes sauf en essai à blanc ; ne bloque jamais de compte. (+6 more)
 
 ### Community 57 - "Formule cible du crédit progressif — à activer quand le modèle EBM réel existe"
 Cohesion: 0.12
 Nodes (16): 10. Corrections apportées — résumé, 1. Formule maîtresse, 2. L'ancre de capacité prouvée ($M$), 3. Le taux de variation lissé ($\delta_N$), 4. Les garde-fous, 5. Amorçage — premier prêt ($N=1$, pas d'historique), 6. Projection au prochain cycle — remplace `calculer_trajectoire`, 7. Paramètres — aucun n'est calibré, tous à trancher par rétro-test (+8 more)
+
+### Community 59 - "app/layout.tsx"
+Cohesion: 0.29
+Nodes (6): ibmPlexMono, ibmPlexSans, sourceSerif4, metadata, Toaster(), TooltipProvider()
 
 ### Community 62 - "connexion/page.tsx"
 Cohesion: 0.32
@@ -504,8 +514,8 @@ Cohesion: 0.33
 Nodes (5): engines, node, name, private, version
 
 ### Community 69 - "application_fastapi.py"
-Cohesion: 0.08
-Nodes (26): current_active_user(), Dépendances FastAPI d'authentification exposées aux routers HTTP…, Stub remplacé par `infrastructure.auth.current_active_user` à l'assemblage de…, DomainError, DureeDemandeeInvalide, ModeleIndisponible, Racine commune à toutes les exceptions du domaine SOLIDA., Aucun modèle de scoring (ni enrichi, ni socle) n'a pu produire une probabilité. (+18 more)
+Cohesion: 0.17
+Nodes (9): AccessLoggingMiddleware, Request, Response, Remplace le journal d'accès en texte brut d'uvicorn (désactivé via `--no-…, create_application(), get, read_health(), BaseHTTPMiddleware (+1 more)
 
 ### Community 70 - "lint-staged"
 Cohesion: 0.50
@@ -519,9 +529,9 @@ Nodes (4): printWidth, semi, singleQuote, trailingComma
 Cohesion: 0.18
 Nodes (10): 1. Règle zéro : ne jamais inventer une décision, 2. Protocole de recherche obligatoire avant décision technique, 3. Périmètre et frontières, 4. Ordre de travail imposé, 5. Interdits absolus, 6. Style de production attendu, 7. Communication, 8. Rappel du contexte produit (+2 more)
 
-### Community 121 - "Credit"
-Cohesion: 0.23
-Nodes (8): _capital_restant_du(), _ligne_to_credit(), PostgresCreditReader, Any, date, Engine, Approxime le capital restant dû. Le générateur produit des crédits bruts…, Credit
+### Community 121 - "PostgresCreditReader"
+Cohesion: 0.25
+Nodes (8): _capital_restant_du(), PostgresCreditReader, Any, Credit, date, Engine, Approxime le capital restant dû. CORE-SIM ne fournit pas d'échéancier : la…, _row_to_credit()
 
 ### Community 123 - "valider_mot_de_passe"
 Cohesion: 0.40
@@ -531,93 +541,125 @@ Nodes (9): MotDePasseInvalide, Le mot de passe proposé ne respecte pas la polit
 Cohesion: 0.53
 Nodes (5): _inserer_evenement_test(), Connection, UUID, test_solida_app_ne_peut_ni_modifier_ni_supprimer_journal_audit(), test_solida_purge_sans_le_flag_de_session_ne_peut_pas_supprimer()
 
-### Community 125 - "feature_store_core_sim.py"
-Cohesion: 0.23
-Nodes (9): _max_jours_retard(), _montant_max_rembourse(), _nb_incidents_anterieurs(), Base historique de la progression : le plus gros montant déjà accordé, quel…, calculer_echeance_mensuelle(), calculer_taux_endettement(), Amortissement à annuité constante (méthode actuarielle) : c'est la méthode que…, `hausse` | `stable` | `erosion`, à partir de la croissance de l'épargne sur 12… (+1 more)
+### Community 125 - "ListerProduits"
+Cohesion: 0.38
+Nodes (4): ListerProduits, ProduitCredit, Applique les plafonds de la grille active au catalogue CORE-SIM., lister_produits()
 
 ### Community 150 - "FicheArchiveeRepository"
 Cohesion: 0.40
 Nodes (3): FicheArchiveeRepository, Protocol, Métadonnées de l'archivage (le PDF lui-même est dans `FicheRepository`).
 
-### Community 151 - "User"
-Cohesion: 0.06
-Nodes (71): AccessTokenDatabase, run_migrations_offline(), run_migrations_online(), url_migration(), client_ip_address(), Request, `X-Real-IP` : posé par nginx sur toute requête proxifiée vers l'API (seul point…, AuditEvent (+63 more)
+### Community 151 - "datetime"
+Cohesion: 0.12
+Nodes (23): run_migrations_offline(), run_migrations_online(), url_migration(), AuditEvent, AccessToken, User, Base, DecisionScoring (+15 more)
 
 ### Community 152 - "GrilleRepository"
 Cohesion: 0.40
 Nodes (4): GrilleRepository, ConfigurationGrille, Protocol, La grille est versionnée, jamais modifiée en place :…
 
-### Community 154 - "_ligne_to_decision"
-Cohesion: 0.19
-Nodes (12): _decomposition_depuis_json(), _decomposition_to_json(), _ligne_to_decision(), Any, datetime, DecisionAEnregistrer, DecisionEnregistree, Engine (+4 more)
+### Community 155 - "PostgresEpargneReader"
+Cohesion: 0.22
+Nodes (5): PostgresEpargneReader, CompteEpargne, date, Engine, MouvementEpargne
 
-### Community 156 - "SeaweedfsFicheRepository"
-Cohesion: 0.29
-Nodes (4): Implémente `FicheRepository` contre la passerelle S3 de SeaweedFS — pas MinIO,…, SeaweedfsFicheRepository, _client_seaweedfs(), Minio
+### Community 159 - "PostgresSocietaireReader"
+Cohesion: 0.22
+Nodes (4): PostgresSocietaireReader, Engine, Societaire, SocietaireSearchResult
 
 ### Community 161 - "SqlAuditLog"
 Cohesion: 0.22
-Nodes (5): datetime, Engine, `objet` distincts les plus récemment journalisés pour cet acteur, du plus…, Implémente `AuditLog` contre `journal_audit` (schéma `solida`)., SqlAuditLog
+Nodes (5): datetime, Engine, Renvoie les objets distincts récents pour alimenter les sociétaires récents., Implémente `AuditLog` contre `journal_audit` (schéma `solida`)., SqlAuditLog
 
-### Community 163 - "fiche_to_schema"
-Cohesion: 0.22
-Nodes (8): fiche_to_schema(), DecisionEnregistree, EnTeteFiche, FicheJustification, DecisionEnregistree, EnTeteFiche, Implémente `FichePdfGenerator` : rend le même contenu que la fiche JSON/HTML du…, WeasyPrintFichePdfGenerator
+### Community 163 - ".__init__"
+Cohesion: 0.25
+Nodes (4): Engine, PostgresGroupeReader, Engine, GroupeCaution
 
 ### Community 165 - "RegistreDecisions.tsx"
-Cohesion: 0.27
-Nodes (7): DecisionsTable(), DecisionRegistreVue, RegistreDecisions(), RegistreDecisionsProps, RegistryFilters(), TOUS, useRegistryFilters()
+Cohesion: 0.16
+Nodes (13): DecisionsTable(), DecisionRegistreVue, RegistreDecisions(), RegistreDecisionsProps, RegistryFilters(), TOUS, useRegistryFilters(), ScoringInput (+5 more)
 
-### Community 168 - "._calculer"
-Cohesion: 0.29
-Nodes (8): DecisionAEnregistrer, DecisionEnregistree, DemandeScoring, Calcule le score sans l'enregistrer — l'agent doit encore confirm avant que…, Recalcule à l'identique (les features CORE-SIM peuvent avoir changé entre la…, ScorerDemande, DonneesInsuffisantes, Les données disponibles ne permettent pas de calculer un score.
+### Community 168 - "errors.py"
+Cohesion: 0.13
+Nodes (21): DomainError, DonneesInsuffisantes, DureeDemandeeInvalide, ModeleIndisponible, MontantDemandeInvalide, ProduitIntrouvable, Aucun sociétaire ne correspond à l'identifiant fourni., Les données disponibles ne permettent pas de calculer un score. (+13 more)
+
+### Community 170 - "Authentification"
+Cohesion: 0.25
+Nodes (7): Authentification, Endpoints, FastAPI-Users, session révocable unique, Politique de mot de passe, Provisioning et cycle de vie des comptes, Rôles et cloisonnement, Simplification à noter
+
+### Community 174 - "Convention de nommage technique (refactor SOLID / anglicisation)"
+Cohesion: 0.25
+Nodes (7): Adaptateurs concrets, Autres décisions, Ce qui ne change pas, Convention de nommage technique (refactor SOLID / anglicisation), Décision, Ports (`domain/ports/`), Routeurs et authentification
 
 ### Community 175 - "modifier"
-Cohesion: 0.33
-Nodes (9): grille_to_schema(), NouvelleConfigurationGrille, ParametresGrille, ParametresProgressif, ParametresScorecard, BaseModel, Sans `date_activation` ni `active` : imposés par le dépôt, pas choisis par…, modifier() (+1 more)
+Cohesion: 0.25
+Nodes (9): lire(), modifier(), ConfigurationGrille, get, post, User, LireGrilleActive, ModifierGrille (+1 more)
 
 ### Community 176 - "ParametresScorecard"
 Cohesion: 0.36
 Nodes (4): ParametresScorecard, Mise à l'échelle probabilité de défaut -> score, par transformation PDO — voir…, ConfigurationGrille, Une version complète de la grille : ce qui est chargé depuis `grille_decision`…
 
+### Community 184 - "UserManager"
+Cohesion: 0.43
+Nodes (4): User, Authentifie par identifiant sans révéler son existence par le temps de réponse., UserManager, UUIDIDMixin
+
 ### Community 187 - "RecommendationPanel.tsx"
-Cohesion: 0.14
-Nodes (22): NumberTicker(), RecommendationPanel(), RecommendationPanelProps, ThresholdsTab(), Tooltip(), TooltipContent(), TooltipTrigger(), GridParametersApi (+14 more)
+Cohesion: 0.18
+Nodes (17): NumberTicker(), RecommendationPanel(), RecommendationPanelProps, ScoringResultView(), ScoringResultViewProps, ThresholdsTab(), useConfigurationGrille(), FOND_TRANCHE_JAUGE (+9 more)
 
 ### Community 189 - "post-commit"
 Cohesion: 0.40
 Nodes (4): post-commit script, GRAPHIFY_CHANGED, GRAPHIFY_REBUILD_LOG, PYTHONHASHSEED
 
+### Community 193 - "lister"
+Cohesion: 0.50
+Nodes (4): lister(), get, User, PageRegistre
+
 ### Community 195 - "test_consulter_dossier.py"
-Cohesion: 0.22
-Nodes (11): ConsulterDossier, _credit(), _groupe(), _LecteurFactice, _membre(), CompteEpargne, date, GroupeCaution (+3 more)
+Cohesion: 0.21
+Nodes (12): _credit(), _FakeCoreSimReader, _groupe(), _membre(), CompteEpargne, date, GroupeCaution, MouvementEpargne (+4 more)
+
+### Community 197 - "current_active_user"
+Cohesion: 0.40
+Nodes (5): current_active_user(), Request, SQLAlchemyAccessTokenDatabase, User, Ajoute une expiration serveur par inactivité à l'authentification fastapi-users.
+
+### Community 214 - "GuaranteePanel.tsx"
+Cohesion: 0.19
+Nodes (11): GroupeCautionDialog(), handleOpenChange(), load(), GuaranteePanel(), GuaranteePanelProps, SavingsMovements(), SyntheseEpargne, SyntheseGroupe (+3 more)
+
+### Community 226 - "routers/societaires.py"
+Cohesion: 0.24
+Nodes (16): ConsulterDossier, AccesRefuse, L'acteur courant n'a pas les droits nécessaires pour cette action., _agence_agent(), dossier(), groupe(), DossierSocietaire, get (+8 more)
 
 ### Community 228 - "post-checkout"
 Cohesion: 0.50
 Nodes (3): post-checkout script, GRAPHIFY_REBUILD_LOG, PYTHONHASHSEED
+
+### Community 248 - "routers/auth.py"
+Cohesion: 0.19
+Nodes (21): client_ip_address(), Request, Privilégie l’adresse validée par nginx, avec repli pour le développement local., change_password(), ChangePasswordRequest, login(), LoginRequest, LoginResponse (+13 more)
 
 ### Community 281 - "proxy.ts"
 Cohesion: 0.40
 Nodes (5): SESSION_COOKIE, config, proxy(), ROUTES_PROTEGEES, toLogin()
 
 ## Knowledge Gaps
-- **210 isolated node(s):** `FicheActionsProps`, `LABEL_ROLE`, `GroupeCautionDialogProps`, `RequestState`, `DUREES_STANDARD` (+205 more)
+- **235 isolated node(s):** `Frontend (exécution)`, `Frontend (développement, construction, test ; hors chemin d'exécution)`, `Backend et API (exécution)`, `Backend (développement, test, construction ; hors chemin d'exécution)`, `Simulateur, générateur de données synthétiques (exécution)` (+230 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **169 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **161 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `ConsulterDossier` connect `test_consulter_dossier.py` to `adapters.py`, `test_consulter_dossier_mapping.py`, `LecteurCoreSim`, `User`?**
-  _High betweenness centrality (0.164) - this node is a cross-community bridge._
-- **Why does `DossierSocietaire` connect `test_consulter_dossier_mapping.py` to `contracts.ts`, `societaires/[id]/page.tsx`?**
-  _High betweenness centrality (0.110) - this node is a cross-community bridge._
-- **Why does `MouvementEpargne` connect `contracts.ts` to `test_consulter_dossier.py`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
-- **Are the 11 inferred relationships involving `LecteurCoreSim` (e.g. with `FeatureStoreCoreSim` and `ConsulterDossier`) actually correct?**
-  _`LecteurCoreSim` has 11 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `ScorerDemande` connect `test_scorer_demande_validations.py` to `adapters.py`, `routers/scoring.py`, `CoreSimReader`, `_build_use_case`?**
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `CoreSimReader` connect `CoreSimReader` to `routers/scoring.py`, `routers/societaires.py`, `test_scorer_demande_validations.py`, `FeatureStoreCoreSim`, `.charger_mouvements_epargne`, `ListerDecisions`, `ListerProduits`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `ConsulterDossier` connect `routers/societaires.py` to `test_consulter_dossier_mapping.py`, `CoreSimReader`, `test_consulter_dossier.py`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `Montant` (e.g. with `ParametresProgressif` and `SituationReexamen`) actually correct?**
   _`Montant` has 4 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 2 inferred relationships involving `_cas_usage()` (e.g. with `ConfigurationGrille` and `ProduitCredit`) actually correct?**
-  _`_cas_usage()` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `FicheActionsProps`, `LABEL_ROLE`, `GroupeCautionDialogProps` to the rest of the system?**
-  _210 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Are the 8 inferred relationships involving `CoreSimReader` (e.g. with `FeatureStoreCoreSim` and `ConsulterDossier`) actually correct?**
+  _`CoreSimReader` has 8 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 13 inferred relationships involving `CoreSimPostgresReader` (e.g. with `PostgresCreditReader` and `PostgresEpargneReader`) actually correct?**
+  _`CoreSimPostgresReader` has 13 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Frontend (exécution)`, `Frontend (développement, construction, test ; hors chemin d'exécution)`, `Backend et API (exécution)` to the rest of the system?**
+  _235 weakly-connected nodes found - possible documentation gaps or missing edges._
