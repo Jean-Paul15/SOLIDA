@@ -74,9 +74,12 @@ graphify-out/graph.html
 # --- Sorties générées ---
 exports/
 *.pdf
-!assets/*.pdf
 !docs/formules/formules.pdf
 reports/
+
+# --- Documents internes, hors code (non versionnés) ---
+PLAN 72H/
+.agents/
 
 # --- Éditeurs et OS ---
 .vscode/
