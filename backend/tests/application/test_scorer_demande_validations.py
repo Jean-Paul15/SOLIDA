@@ -3,12 +3,12 @@ from datetime import UTC, datetime
 import pytest
 
 from solida.application.use_cases.scorer_demande_validations import (
+    PLAFOND_INSTITUTIONNEL_FCFA,
     valider_acces_agence,
     valider_duree_dans_bornes,
-    valider_montant_sous_plafond,
+    valider_montant_sous_plafond_institutionnel,
     valider_pas_de_credit_en_cours,
     valider_pas_de_multi_octroi,
-    valider_plafond_produit,
     valider_produit_catalogue,
     valider_societaire_trouve,
 )
@@ -22,7 +22,6 @@ from solida.domain.errors import (
     SocietaireIntrouvable,
     SurEndettement,
 )
-from solida.domain.values.montant import Montant
 
 
 def _societaire(**overrides: object) -> Societaire:
@@ -118,24 +117,13 @@ def test_valider_pas_de_multi_octroi_leve_si_decision_recente() -> None:
         )
 
 
-def test_valider_plafond_produit_renvoie_le_montant() -> None:
-    plafond = valider_plafond_produit({"PROD-1": Montant(500000)}, "PROD-1")
-
-    assert plafond == Montant(500000)
+def test_valider_montant_sous_plafond_institutionnel_accepte_la_limite() -> None:
+    valider_montant_sous_plafond_institutionnel(PLAFOND_INSTITUTIONNEL_FCFA)
 
 
-def test_valider_plafond_produit_leve_si_absent_de_la_grille() -> None:
-    with pytest.raises(ProduitIntrouvable):
-        valider_plafond_produit({}, "PROD-1")
-
-
-def test_valider_montant_sous_plafond_ok_si_dans_la_limite() -> None:
-    valider_montant_sous_plafond(200000, Montant(500000))
-
-
-def test_valider_montant_sous_plafond_leve_si_depasse() -> None:
+def test_valider_montant_sous_plafond_institutionnel_leve_si_depasse() -> None:
     with pytest.raises(MontantDemandeInvalide):
-        valider_montant_sous_plafond(600000, Montant(500000))
+        valider_montant_sous_plafond_institutionnel(PLAFOND_INSTITUTIONNEL_FCFA + 1)
 
 
 def test_valider_produit_catalogue_renvoie_le_produit() -> None:

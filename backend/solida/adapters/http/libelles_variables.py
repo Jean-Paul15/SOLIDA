@@ -24,6 +24,9 @@ _DEFINITIONS: dict[str, _Definition] = {
     "anciennete_societaire_mois": _Definition(
         "Ancienneté en tant que sociétaire", "profil", "mois"
     ),
+    "zone_residence": _Definition("Zone de résidence", "profil", "texte"),
+    "revenu_mensuel_declare": _Definition("Revenu mensuel déclaré", "profil", "fcfa"),
+    "duree_demandee_mois": _Definition("Durée demandée", "demande", "mois"),
     "solde_epargne_moyen_6m": _Definition("Solde d'épargne moyen (6 mois)", "epargne", "fcfa"),
     "nb_mois_avec_depot_12m": _Definition(
         "Régularité des dépôts (12 mois)", "epargne", "mois_sur_12"
@@ -44,6 +47,9 @@ _DEFINITIONS: dict[str, _Definition] = {
     "max_jours_retard_historique": _Definition("Retard maximal observé", "historique", "jours"),
     "montant_max_rembourse": _Definition("Plus gros montant déjà remboursé", "historique", "fcfa"),
     "numero_cycle": _Definition("Cycle de crédit", "historique", "entier"),
+    "ratio_montant_historique": _Definition(
+        "Montant demandé rapporté au meilleur remboursement", "demande", "pourcentage"
+    ),
     "parts_sociales_montant": _Definition("Montant des parts sociales", "profil", "fcfa"),
     "nb_personnes_a_charge": _Definition("Personnes à charge", "profil", "entier"),
     "en_groupe": _Definition("Appartenance à un groupe de caution", "solidaire", "booleen"),
@@ -60,8 +66,16 @@ def famille(code_variable: str) -> Famille:
     return _DEFINITIONS.get(code_variable, _DEFINITION_INCONNUE).famille
 
 
-def formater_valeur(code_variable: str, valeur: float) -> str:
+def formater_valeur(code_variable: str, valeur: float | int | str | bool | None) -> str:
+    if valeur is None:
+        return "Non renseigné"
     format_ = _DEFINITIONS.get(code_variable, _DEFINITION_INCONNUE).format
+    if format_ in {"texte", "brut"}:
+        return str(valeur)
+    if format_ == "booleen":
+        return "Oui" if bool(valeur) else "Non"
+    if not isinstance(valeur, (float, int)):
+        return str(valeur)
     if format_ == "fcfa":
         return f"{int(valeur):,} FCFA".replace(",", " ")
     if format_ == "pourcentage":
@@ -74,8 +88,6 @@ def formater_valeur(code_variable: str, valeur: float) -> str:
         return f"{int(valeur)} jours"
     if format_ == "entier":
         return str(int(valeur))
-    if format_ == "booleen":
-        return "Oui" if valeur >= 0.5 else "Non"
     return str(valeur)
 
 

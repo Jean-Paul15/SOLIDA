@@ -62,7 +62,8 @@ services:
   # les tests d'integration en cascade avec des 401.
   api-dev:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       SOLIDA_DATABASE_URL: ${SOLIDA_DATABASE_URL}
       SOLIDA_DATABASE_URL_ASYNC: ${SOLIDA_DATABASE_URL_ASYNC}
@@ -74,9 +75,16 @@ services:
       SEAWEEDFS_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY}
       SEAWEEDFS_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY}
       SEAWEEDFS_BUCKET: solida-fiches
+      MODELE_SOCLE_PATH: /app/modeles/bundle_socle
+      MODELE_SOCLE_CACHE_PATH: /var/cache/solida-modele
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+      MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-solida-socle}
+      MLFLOW_MODEL_ALIAS: ${MLFLOW_MODEL_ALIAS:-champion-demo}
     volumes:
-      - ./backend:/app
-      - back_venv:/app/.venv
+      - ./backend:/app/backend
+      - ./modelisation/data/modeles/bundle_socle:/app/modeles/bundle_socle:ro
+      - back_venv:/app/backend/.venv
+      - modele_socle_cache:/var/cache/solida-modele
     networks:
       - solida
     depends_on:
@@ -161,7 +169,8 @@ services:
 
   api:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       SOLIDA_DATABASE_URL: ${SOLIDA_DATABASE_URL}
       SOLIDA_DATABASE_URL_ASYNC: ${SOLIDA_DATABASE_URL_ASYNC}
@@ -173,6 +182,14 @@ services:
       SEAWEEDFS_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY}
       SEAWEEDFS_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY}
       SEAWEEDFS_BUCKET: solida-fiches
+      MODELE_SOCLE_PATH: /app/modeles/bundle_socle
+      MODELE_SOCLE_CACHE_PATH: /var/cache/solida-modele
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+      MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-solida-socle}
+      MLFLOW_MODEL_ALIAS: ${MLFLOW_MODEL_ALIAS:-champion-demo}
+    volumes:
+      - ./modelisation/data/modeles/bundle_socle:/app/modeles/bundle_socle:ro
+      - modele_socle_cache:/var/cache/solida-modele
     networks:
       - solida
     depends_on:
@@ -232,7 +249,86 @@ services:
     profiles:
       - tools
 
-# Reserve a l'API (backend) a mesure qu'elle existe : mlflow. Aucun n'est invente ici.
+  # Services MLOps explicites : ils restent éteints hors profil `mlops` et ne modifient ni
+  # CORE-SIM ni la base applicative SOLIDA. Les métadonnées MLflow vivent dans leur propre
+  # PostgreSQL, les artefacts et cache DVC dans SeaweedFS.
+  postgres-mlflow:
+    image: postgres:16.14
+    command: postgres -c timezone=UTC
+    environment:
+      POSTGRES_DB: mlflow
+      POSTGRES_USER: ${MLFLOW_DB_USER}
+      POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD}
+    volumes:
+      - pgdata_mlflow:/var/lib/postgresql/data
+    networks:
+      - solida
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles:
+      - mlops
+
+  mlops-init:
+    build:
+      context: .
+      dockerfile: modelisation/Dockerfile
+    entrypoint: ["python"]
+    command:
+      - -c
+      - |
+        import os
+        import boto3
+        from botocore.exceptions import ClientError
+        client = boto3.client(
+            "s3",
+            endpoint_url="http://seaweedfs:8333",
+            aws_access_key_id=os.environ["SEAWEEDFS_ACCESS_KEY"],
+            aws_secret_access_key=os.environ["SEAWEEDFS_SECRET_KEY"],
+        )
+        for bucket in ("dvc-cache", "mlflow"):
+            try:
+                client.head_bucket(Bucket=bucket)
+            except ClientError:
+                client.create_bucket(Bucket=bucket)
+    environment:
+      SEAWEEDFS_ACCESS_KEY: ${SEAWEEDFS_ACCESS_KEY}
+      SEAWEEDFS_SECRET_KEY: ${SEAWEEDFS_SECRET_KEY}
+    networks:
+      - solida
+    depends_on:
+      seaweedfs:
+        condition: service_started
+    profiles:
+      - mlops
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: modelisation/Dockerfile
+    entrypoint: ["sh", "-ec"]
+    command:
+      - >-
+        mlflow server --host 0.0.0.0 --port 5000
+        --backend-store-uri "$${MLFLOW_BACKEND_STORE_URI}"
+        --default-artifact-root s3://mlflow
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_PASSWORD}@postgres-mlflow:5432/mlflow
+      MLFLOW_S3_ENDPOINT_URL: http://seaweedfs:8333
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY}
+    networks:
+      - solida
+    depends_on:
+      postgres-mlflow:
+        condition: service_healthy
+      mlops-init:
+        condition: service_completed_successfully
+    profiles:
+      - mlops
+
 # Seul nginx publie un port sur l'hote (80) : front et api ne sont joignables que par le
 # reseau interne "solida", pareil pour postgres et seaweedfs. Pas de TLS ici (usage LAN/demo
 # de hackathon assume) : a ajouter (certificat + Strict-Transport-Security) avant tout
@@ -244,7 +340,9 @@ volumes:
   back_venv:
   pgdata_coresim:
   pgdata_solida:
+  pgdata_mlflow:
   seaweedfs_data:
+  modele_socle_cache:
 
 networks:
   solida:

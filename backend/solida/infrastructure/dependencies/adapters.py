@@ -4,12 +4,13 @@ connaître à la fois les ports du domaine et leurs implémentations concrètes.
 """
 
 from functools import lru_cache
+from pathlib import Path
 
 from minio import Minio
 
 from solida.adapters.core_sim.core_sim_postgres_reader import CoreSimPostgresReader
 from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
-from solida.adapters.ml.scoring_model_constant import ConstantScoringModel
+from solida.adapters.ml.scoring_model_ebm import EBMScoringModel
 from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
 from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
@@ -31,8 +32,15 @@ def feature_store() -> FeatureStoreCoreSim:
 
 
 @lru_cache
-def scoring_model() -> ConstantScoringModel:
-    return ConstantScoringModel()
+def scoring_model() -> EBMScoringModel:
+    configuration = Configuration()
+    return EBMScoringModel(
+        fallback_path=Path(configuration.modele_socle_path),
+        cache_path=Path(configuration.modele_socle_cache_path),
+        tracking_uri=configuration.mlflow_tracking_uri,
+        model_name=configuration.mlflow_model_name,
+        model_alias=configuration.mlflow_model_alias,
+    )
 
 
 @lru_cache

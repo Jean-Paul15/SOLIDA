@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProductsTab } from "@/components/solida/ProductsTab";
 import { ThresholdsTab } from "@/components/solida/ThresholdsTab";
 import { SimulationTab } from "@/components/solida/SimulationTab";
 import { useSavePolicy } from "@/components/solida/useSavePolicy";
-import type { ConfigurationGrilleApi, ProduitCreditApi } from "@/lib/contracts";
+import type { ConfigurationGrilleApi } from "@/lib/contracts";
 import { canEditGrille } from "@/lib/roles";
 import { probabiliteDepuisScore, seuilEconomique, trancheDepuisProbabilite } from "@/lib/scorecard";
 
@@ -14,7 +13,6 @@ interface PolitiqueCreditProps {
   historicalScores: number[];
   initialConfiguration: ConfigurationGrilleApi;
   role: string | undefined;
-  products: ProduitCreditApi[];
 }
 
 type PolicyPreset = "prudent" | "equilibre" | "expansion";
@@ -23,12 +21,8 @@ export function PolitiqueCredit({
   historicalScores,
   initialConfiguration,
   role,
-  products,
 }: PolitiqueCreditProps) {
   const canEdit = canEditGrille(role);
-  const [productCaps, setProductCaps] = useState<Record<string, number>>(
-    initialConfiguration.progressif.plafonds_produits
-  );
   // PDO, score de référence et rapport de référence ne sont plus édités depuis cet écran
   // (administration du modèle hors périmètre SOLIDA) : ils sont retransmis inchangés à
   // l'enregistrement.
@@ -56,7 +50,7 @@ export function PolitiqueCredit({
   };
   const threshold = seuilEconomique(gridParameters);
 
-  const { version, isSaving, save } = useSavePolicy(initialConfiguration, canEdit);
+  const { isSaving, save } = useSavePolicy(initialConfiguration, canEdit);
 
   const distribution = useMemo(() => {
     const counts: Record<string, number> = {
@@ -84,7 +78,6 @@ export function PolitiqueCredit({
     <Tabs defaultValue="seuils" className="gap-6">
       <TabsList>
         <TabsTrigger value="seuils">Seuils</TabsTrigger>
-        <TabsTrigger value="produits">Produits</TabsTrigger>
         <TabsTrigger value="simulation">Simulation d&rsquo;impact</TabsTrigger>
       </TabsList>
 
@@ -108,23 +101,11 @@ export function PolitiqueCredit({
               lgd,
               approvalMultiplier,
               reviewMultiplier,
-              productCaps,
+              productCaps: initialConfiguration.progressif.plafonds_produits,
             })
           }
           isSaving={isSaving}
           canEdit={canEdit}
-        />
-      </TabsContent>
-
-      <TabsContent value="produits">
-        <ProductsTab
-          products={products}
-          productCaps={productCaps}
-          onProductCapChange={(produitId, value) =>
-            setProductCaps((previous) => ({ ...previous, [produitId]: value }))
-          }
-          canEdit={canEdit}
-          version={version}
         />
       </TabsContent>
 

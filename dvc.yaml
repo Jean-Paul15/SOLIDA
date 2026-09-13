@@ -1,0 +1,25 @@
+stages:
+  generation:
+    cmd: uv run --project modelisation python modelisation/scripts/generer_donnees.py --sortie simulateur/sorties
+    deps:
+      - simulateur/config/config.yaml
+      - simulateur/simulateur/pipeline.py
+      - modelisation/scripts/generer_donnees.py
+    outs:
+      - simulateur/sorties
+  features_socle:
+    cmd: uv run --project modelisation solida-modele construire-features --source simulateur/sorties --sortie modelisation/data/processed/jeu_socle.parquet --date-fin 2026-08-01
+    deps:
+      - simulateur/sorties
+      - modelisation/config/modeles.yaml
+      - modelisation/src/solida_modelisation
+    outs:
+      - modelisation/data/processed/jeu_socle.parquet
+  entrainement_socle:
+    cmd: uv run --project modelisation solida-modele entrainer --dataset modelisation/data/processed/jeu_socle.parquet --sortie modelisation/data/modeles --modele tous
+    deps:
+      - modelisation/data/processed/jeu_socle.parquet
+      - modelisation/config/modeles.yaml
+      - modelisation/src/solida_modelisation
+    outs:
+      - modelisation/data/modeles

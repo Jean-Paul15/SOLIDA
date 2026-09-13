@@ -164,7 +164,9 @@ class _FakeFeatureStore:
     individuelles: FeaturesIndividuelles | None
     solidaires: FeaturesSolidaires | None
 
-    def lire_individuelles(self, societaire_id: str) -> FeaturesIndividuelles | None:
+    def lire_individuelles(
+        self, societaire_id: str, date_reference: date
+    ) -> FeaturesIndividuelles | None:
         return self.individuelles
 
     def lire_solidaires(self, societaire_id: str) -> FeaturesSolidaires | None:
@@ -176,10 +178,12 @@ class _FakeScoringModel:
     probabilite: float = 0.05
     version_str: str = "v-test"
 
-    def predire(self, features: dict[str, float]) -> ProbabiliteDefaut:
+    def predire(self, features: dict[str, float | int | str | bool | None]) -> ProbabiliteDefaut:
         return ProbabiliteDefaut(self.probabilite)
 
-    def contributions(self, features: dict[str, float]) -> list[tuple[str, float]]:
+    def contributions(
+        self, features: dict[str, float | int | str | bool | None]
+    ) -> list[tuple[str, float]]:
         return [(code, 0.01) for code in features]
 
     def version(self) -> str:
@@ -298,7 +302,7 @@ def test_previsualiser_refuse_des_donnees_insuffisantes() -> None:
         use_case.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
 
-def test_previsualiser_refuse_un_produit_absent_de_la_grille() -> None:
+def test_previsualiser_accepte_une_grille_legacy_sans_plafond_par_produit() -> None:
     configuration = _configuration(
         progressif=ParametresProgressif(
             coefficient_progression=1.5,
@@ -309,15 +313,18 @@ def test_previsualiser_refuse_un_produit_absent_de_la_grille() -> None:
     )
     use_case, _, _ = _build_use_case(configuration=configuration)
 
-    with pytest.raises(ProduitIntrouvable):
-        use_case.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
+    decision = use_case.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
+
+    assert decision.montant_recommande.valeur == 200000
+    assert decision.plafond_progressif.valeur == 100000000
+    assert decision.trajectoire_progression == []
 
 
-def test_previsualiser_refuse_un_montant_au_dela_du_plafond() -> None:
+def test_previsualiser_refuse_un_montant_au_dela_du_plafond_institutionnel() -> None:
     use_case, _, _ = _build_use_case()
 
-    with pytest.raises(MontantDemandeInvalide):
-        use_case.preview(_demande(montant_demande=600000), {}, "agent-1", "Agent", "CAI-00")
+    with pytest.raises(MontantDemandeInvalide, match="institutionnel"):
+        use_case.preview(_demande(montant_demande=100000001), {}, "agent-1", "Agent", "CAI-00")
 
 
 def test_previsualiser_refuse_un_produit_absent_du_catalogue() -> None:

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from solida.domain.values.features import ValeurFeature
 from solida.domain.values.mode_calcul import ModeCalcul
 from solida.domain.values.montant import Montant
 from solida.domain.values.motif_bascule import MotifBascule
@@ -25,7 +26,7 @@ class DecisionAEnregistrer:
     agent_agence_id: str | None
     societaire_id: str
     entree: dict[str, object]
-    features_utilisees: dict[str, float]
+    features_utilisees: dict[str, ValeurFeature]
     probabilite: float
     score: Score
     tranche: TrancheDecision

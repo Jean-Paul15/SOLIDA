@@ -11,7 +11,9 @@ from solida.domain.errors import (
     SurEndettement,
 )
 from solida.domain.ports.decisions import DecisionRepository
-from solida.domain.values.montant import Montant
+
+PLAFOND_INSTITUTIONNEL_FCFA = 100_000_000
+"""Décision terrain : aucun plafond par produit, maximum institutionnel unique."""
 
 
 def valider_societaire_trouve(societaire: Societaire | None, societaire_id: str) -> Societaire:
@@ -48,20 +50,11 @@ def valider_pas_de_multi_octroi(
         )
 
 
-def valider_plafond_produit(plafonds_produits: dict[str, Montant], produit_id: str) -> Montant:
-    plafond = plafonds_produits.get(produit_id)
-    if plafond is None:
-        raise ProduitIntrouvable(
-            f"Aucun produit de crédit ne correspond à l'identifiant {produit_id!r}."
-        )
-    return plafond
-
-
-def valider_montant_sous_plafond(montant_demande: int, plafond_produit: Montant) -> None:
-    if montant_demande > plafond_produit.valeur:
+def valider_montant_sous_plafond_institutionnel(montant_demande: int) -> None:
+    if montant_demande > PLAFOND_INSTITUTIONNEL_FCFA:
         raise MontantDemandeInvalide(
-            f"Le montant demandé ({montant_demande:,} FCFA) dépasse le plafond "
-            f"de ce produit ({plafond_produit.valeur:,} FCFA)."
+            f"Le montant demandé ({montant_demande:,} FCFA) dépasse le plafond institutionnel "
+            f"de {PLAFOND_INSTITUTIONNEL_FCFA:,} FCFA."
         )
 
 

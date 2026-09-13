@@ -1,0 +1,7 @@
+# Partage optionnel du stockage DVC/MLflow vers un autre poste du LAN ou du VPN.
+# Par défaut, l'interface S3 reste locale. Choisir explicitement une adresse VPN/LAN et
+# protéger le réseau avant de modifier SEAWEEDFS_BIND_ADDRESS dans le fichier .env local.
+services:
+  seaweedfs:
+    ports:
+      - "${SEAWEEDFS_BIND_ADDRESS:-127.0.0.1}:8333:8333"

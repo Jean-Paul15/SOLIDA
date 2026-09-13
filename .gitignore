@@ -46,6 +46,11 @@ data/
 *.db
 *.sqlite3
 !data/README.md
+!modelisation/
+!modelisation/data/
+!modelisation/data/README.md
+modelisation/data/*
+!modelisation/data/README.md
 
 # --- Modèles et artefacts ML ---
 mlruns/

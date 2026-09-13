@@ -33,7 +33,8 @@ class PostgresEpargneReader:
         self, societaire_id: str, depuis: date
     ) -> list[MouvementEpargne]:
         query = text("""
-            SELECT m.mouvement_id, m.compte_id, m.date_operation, m.sens, m.montant
+            SELECT m.mouvement_id, m.compte_id, m.date_operation, m.sens, m.montant,
+                   m.type_operation
             FROM mouvements_epargne m
             JOIN comptes_epargne c ON c.compte_id = m.compte_id
             WHERE c.societaire_id = :id AND m.date_operation >= :depuis
@@ -48,6 +49,7 @@ class PostgresEpargneReader:
                     date_operation=row.date_operation,
                     sens=row.sens,
                     montant=round(row.montant),
+                    type_operation=row.type_operation,
                 )
                 for row in rows
             ]

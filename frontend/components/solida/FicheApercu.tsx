@@ -91,18 +91,20 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
         )}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="text-[11px] font-medium text-neutre-500 uppercase">
-          Trajectoire de progression
-        </span>
-        <div className="flex gap-4 text-[11px]">
-          {result.trajectoire_progression.map((p) => (
-            <span key={p.cycle}>
-              Cycle +{p.cycle} : {formatAmount(p.plafond_accessible)}
-            </span>
-          ))}
+      {result.trajectoire_progression.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] font-medium text-neutre-500 uppercase">
+            Trajectoire de progression
+          </span>
+          <div className="flex gap-4 text-[11px]">
+            {result.trajectoire_progression.map((p) => (
+              <span key={p.cycle}>
+                Cycle +{p.cycle} : {formatAmount(p.plafond_accessible)}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex gap-6 border-t border-neutre-200 pt-3">
         <FactorsBlock title="Éléments favorables" factors={fiche.facteurs_favorables} />

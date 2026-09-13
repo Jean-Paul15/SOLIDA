@@ -129,19 +129,21 @@ export function RecommendationPanel({ result, zones }: RecommendationPanelProps)
         </Alert>
       ))}
 
-      <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
-        <span className="text-xs font-medium text-neutre-500">Palier suivant accessible</span>
-        {result.trajectoire_progression.map((p) => (
-          <div key={p.cycle} className="flex justify-between text-sm">
-            <span className="text-neutre-700">Prochain cycle</span>
-            <span className="font-mono text-neutre-950">{formatAmount(p.plafond_accessible)}</span>
-          </div>
-        ))}
-        <span className="text-xs text-neutre-500 italic">
-          Estimation à profil de risque inchangé, non contractuelle : réévaluée au moment du
-          renouvellement.
-        </span>
-      </div>
+      {result.trajectoire_progression.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
+          <span className="text-xs font-medium text-neutre-500">Palier suivant accessible</span>
+          {result.trajectoire_progression.map((p) => (
+            <div key={p.cycle} className="flex justify-between text-sm">
+              <span className="text-neutre-700">Prochain cycle</span>
+              <span className="font-mono text-neutre-950">{formatAmount(p.plafond_accessible)}</span>
+            </div>
+          ))}
+          <span className="text-xs text-neutre-500 italic">
+            Estimation à profil de risque inchangé, non contractuelle : réévaluée au moment du
+            renouvellement.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

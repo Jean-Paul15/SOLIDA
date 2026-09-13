@@ -60,8 +60,8 @@ def test_revenu_effectif_retombe_sur_le_revenu_declare_sans_actualisation() -> N
     assert _revenu_effectif(_demande(actualisation=None), 100000) == 100000
 
 
-def test_revenu_effectif_est_nul_si_aucun_revenu_connu() -> None:
-    assert _revenu_effectif(_demande(actualisation=None), None) == 0
+def test_revenu_effectif_reste_manquant_si_aucun_revenu_connu() -> None:
+    assert _revenu_effectif(_demande(actualisation=None), None) is None
 
 
 # --- _actualiser_features ---
@@ -71,20 +71,24 @@ def test_actualiser_features_recalcule_les_ratios_dependant_de_la_demande() -> N
     features = _features_individuelles(solde_epargne_moyen_6m=100000)
     demande = _demande(montant_demande=200000, duree_demandee_mois=12)
 
-    actualisees = _actualiser_features(features, demande, revenu_effectif=150000)
+    actualisees = _actualiser_features(
+        features, demande, revenu_effectif=150000, taux_annuel_moyen=0.18
+    )
 
     assert actualisees.ratio_epargne_montant == pytest.approx(min(100000 / 200000, 3.0))
     assert actualisees.ratio_epargne_revenu == pytest.approx(min(100000 / 150000, 5.0))
     assert actualisees.ratio_endettement > 0
 
 
-def test_actualiser_features_utilise_les_charges_et_personnes_a_charge_actualisees() -> None:
+def test_actualiser_features_utilise_les_personnes_a_charge_actualisees() -> None:
     features = _features_individuelles(nb_personnes_a_charge=1)
     demande = _demande(
         actualisation=ActualisationSituation(charges_mensuelles=20000, nb_personnes_a_charge=4)
     )
 
-    actualisees = _actualiser_features(features, demande, revenu_effectif=150000)
+    actualisees = _actualiser_features(
+        features, demande, revenu_effectif=150000, taux_annuel_moyen=0.18
+    )
 
     assert actualisees.nb_personnes_a_charge == 4
 
@@ -92,17 +96,18 @@ def test_actualiser_features_utilise_les_charges_et_personnes_a_charge_actualise
 # --- _features_to_dict ---
 
 
-def test_features_to_dict_omet_les_champs_none() -> None:
+def test_features_to_dict_preserve_les_champs_none() -> None:
     features = _features_individuelles(max_jours_retard_historique=None, montant_max_rembourse=None)
 
-    valeurs = _features_to_dict(features, en_groupe=False)
+    valeurs = _features_to_dict(features, _demande())
 
-    assert "max_jours_retard_historique" not in valeurs
-    assert "montant_max_rembourse" not in valeurs
-    assert valeurs["en_groupe"] == 0.0
+    assert valeurs["max_jours_retard_historique"] is None
+    assert valeurs["montant_max_rembourse"] is None
+    assert "en_groupe" not in valeurs
 
 
-def test_features_to_dict_marque_en_groupe() -> None:
-    valeurs = _features_to_dict(_features_individuelles(), en_groupe=True)
+def test_features_to_dict_exclut_segment_et_gie() -> None:
+    valeurs = _features_to_dict(_features_individuelles(segment="femme_gie"), _demande())
 
-    assert valeurs["en_groupe"] == 1.0
+    assert "segment" not in valeurs
+    assert "gie_id" not in valeurs

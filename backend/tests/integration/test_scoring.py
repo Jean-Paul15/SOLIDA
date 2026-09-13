@@ -169,7 +169,7 @@ def test_confirmer_un_societaire_introuvable_renvoie_404(client_agent: TestClien
     assert reponse.status_code == 404
 
 
-def test_montant_au_dela_du_plafond_produit_est_rejete(
+def test_montant_au_dela_du_plafond_institutionnel_est_rejete(
     client_agent: TestClient, societaire_agence_agent: str
 ) -> None:
     moteur = create_engine(os.environ["SOLIDA_DATABASE_URL"])
@@ -177,7 +177,7 @@ def test_montant_au_dela_du_plafond_produit_est_rejete(
         avant = connexion.execute(text("SELECT count(*) FROM decision_scoring")).scalar_one()
 
     demande = _demande(societaire_agence_agent)
-    demande["montant_demande"] = 999_000_000
+    demande["montant_demande"] = 100_000_001
     reponse = client_agent.post("/api/v1/scoring/preview", json=demande)
     assert reponse.status_code == 422
     assert reponse.json()["code"] == "montant_invalide"

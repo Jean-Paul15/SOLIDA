@@ -16,3 +16,8 @@ class Configuration(BaseSettings):
     seaweedfs_access_key: str = ""
     seaweedfs_secret_key: str = ""
     seaweedfs_bucket: str = "solida-fiches"
+    modele_socle_path: str = "/app/modeles/bundle_socle"
+    modele_socle_cache_path: str = "/var/cache/solida-modele"
+    mlflow_tracking_uri: str = ""
+    mlflow_model_name: str = "solida-socle"
+    mlflow_model_alias: str = "champion-demo"

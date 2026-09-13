@@ -9,12 +9,12 @@ from solida.application.use_cases.scorer_demande_features import (
     _revenu_effectif,
 )
 from solida.application.use_cases.scorer_demande_validations import (
+    PLAFOND_INSTITUTIONNEL_FCFA,
     valider_acces_agence,
     valider_duree_dans_bornes,
-    valider_montant_sous_plafond,
+    valider_montant_sous_plafond_institutionnel,
     valider_pas_de_credit_en_cours,
     valider_pas_de_multi_octroi,
-    valider_plafond_produit,
     valider_produit_catalogue,
     valider_societaire_trouve,
 )
@@ -25,15 +25,12 @@ from solida.domain.ports.decisions import DecisionRepository
 from solida.domain.ports.feature_store import FeatureStore
 from solida.domain.ports.grille import GrilleRepository
 from solida.domain.ports.modele import ScoringModel
-from solida.domain.rules.cascade import ContexteCascade, ParametresCascade, determiner_mode
 from solida.domain.rules.grille import decider
-from solida.domain.rules.progressif_plafond import calculer_plafond
 from solida.domain.rules.progressif_reexamen import (
     ParametresReexamen,
     SituationReexamen,
     lister_conditions_reexamen,
 )
-from solida.domain.rules.progressif_trajectoire import calculer_trajectoire
 from solida.domain.rules.scorecard import (
     calculer_score,
     decomposer_en_points,
@@ -41,11 +38,16 @@ from solida.domain.rules.scorecard import (
 )
 from solida.domain.values.decision import DecisionAEnregistrer, DecisionEnregistree
 from solida.domain.values.demande import DemandeScoring
+from solida.domain.values.mode_calcul import ModeCalcul
 from solida.domain.values.montant import Montant
 
-AVERTISSEMENT_MODELE_SUBSTITUT = (
-    "Score calculé avec un modèle de substitution (probabilité fixe), pas le modèle "
-    "réel entraîné : à recalibrer entièrement dès qu'il existe."
+AVERTISSEMENT_MODELE_SYNTHESE = (
+    "Modèle entraîné sur données synthétiques : recommandation de démonstration à recalibrer "
+    "sur l'historique de la coopérative avant tout usage réel."
+)
+AVERTISSEMENT_REVENU_MANQUANT = (
+    "Le revenu mensuel est absent : les ratios associés ont été traités comme informations "
+    "manquantes par le modèle."
 )
 
 # Alignée sur la durée de session pour bloquer un multi-octroi avant le reflet CORE-SIM.
@@ -113,42 +115,29 @@ class ScorerDemande:
             self.decision_repository, demande.societaire_id, since, raw_input
         )
 
-        groupe = self.core_sim_reader.charger_groupe(demande.societaire_id)
-        features_individuelles = self.feature_store.lire_individuelles(demande.societaire_id)
-        features_solidaires = self.feature_store.lire_solidaires(demande.societaire_id)
-        if features_individuelles is None or features_solidaires is None:
+        configuration = self.grille_repository.lire_active()
+        valider_montant_sous_plafond_institutionnel(demande.montant_demande)
+        catalogue_produit = valider_produit_catalogue(
+            self.core_sim_reader.charger_produits(), demande.produit_id
+        )
+        valider_duree_dans_bornes(demande.duree_demandee_mois, catalogue_produit)
+
+        features_individuelles = self.feature_store.lire_individuelles(
+            demande.societaire_id, datetime.now(UTC).date()
+        )
+        if features_individuelles is None:
             raise DonneesInsuffisantes(
                 f"Les données de {demande.societaire_id} ne permettent pas de calculer un score."
             )
 
         revenu_effectif = _revenu_effectif(demande, societaire.revenu_mensuel_declare)
         features_actualisees = _actualiser_features(
-            features_individuelles, demande, revenu_effectif
+            features_individuelles, demande, revenu_effectif, catalogue_produit.taux_annuel
         )
 
-        contexte_cascade = ContexteCascade(
-            appartient_a_un_groupe=groupe is not None,
-            taille_groupe=groupe.taille_actuelle if groupe else 0,
-            nb_credits_anterieurs_groupe_soldes=(
-                groupe.nb_credits_anterieurs_soldes if groupe else 0
-            ),
-            fraicheur_features_jours=0,
-        )
-        resultat_cascade = determiner_mode(contexte_cascade, ParametresCascade())
-
-        features_dict = _features_to_dict(features_actualisees, features_solidaires.en_groupe)
+        features_dict = _features_to_dict(features_actualisees, demande)
         probabilite = self.scoring_model.predire(features_dict)
         contributions_log_odds = self.scoring_model.contributions(features_dict)
-
-        configuration = self.grille_repository.lire_active()
-        plafond_produit_montant = valider_plafond_produit(
-            configuration.progressif.plafonds_produits, demande.produit_id
-        )
-        valider_montant_sous_plafond(demande.montant_demande, plafond_produit_montant)
-        catalogue_produit = valider_produit_catalogue(
-            self.core_sim_reader.charger_produits(), demande.produit_id
-        )
-        valider_duree_dans_bornes(demande.duree_demandee_mois, catalogue_produit)
 
         score = calculer_score(probabilite, configuration.scorecard)
         beta_0 = math.log((1 - probabilite.valeur) / probabilite.valeur) - sum(
@@ -161,29 +150,16 @@ class ScorerDemande:
 
         tranche = decider(probabilite, configuration.grille)
 
-        montant_max_rembourse = (
-            Montant(valeur=features_actualisees.montant_max_rembourse)
-            if features_actualisees.montant_max_rembourse is not None
-            else None
-        )
         montant_demande_v = Montant(valeur=demande.montant_demande)
-        plafond = calculer_plafond(
-            montant_max_rembourse,
-            montant_demande_v,
-            probabilite,
-            configuration.progressif,
-            plafond_produit_montant,
-        )
-        trajectoire = calculer_trajectoire(
-            plafond, probabilite, configuration.progressif, plafond_produit_montant
-        )
+        plafond_institutionnel = Montant(valeur=PLAFOND_INSTITUTIONNEL_FCFA)
 
         situation = SituationReexamen(
             regularite_epargne=features_actualisees.nb_mois_avec_depot_12m / 12,
             ratio_garantie=features_actualisees.ratio_epargne_montant,
             endettement=features_actualisees.ratio_endettement,
             tendance_epargne_baissiere=features_actualisees.tendance_epargne_12m == "erosion",
-            caution_deja_appelee=bool(features_solidaires.deja_secouru_par_groupe),
+            # La caution solidaire est une information du modèle enrichi, pas du SOCLE.
+            caution_deja_appelee=False,
             montant_demande=montant_demande_v,
         )
         conditions = lister_conditions_reexamen(situation, ParametresReexamen())
@@ -199,15 +175,19 @@ class ScorerDemande:
             probabilite=probabilite.valeur,
             score=score,
             tranche=tranche,
-            montant_recommande=plafond,
-            mode_calcul=resultat_cascade.mode,
-            motif_mode=resultat_cascade.motif,
+            montant_recommande=montant_demande_v,
+            mode_calcul=ModeCalcul.SOCLE_SEUL,
+            motif_mode=None,
             points_de_base=points_de_base,
             decomposition=points,
-            plafond_progressif=plafond,
-            trajectoire_progression=trajectoire,
+            # Contrat conservé : le champ historique ne porte plus une progression.
+            plafond_progressif=plafond_institutionnel,
+            trajectoire_progression=[],
             conditions_reexamen=conditions,
-            avertissements=[AVERTISSEMENT_MODELE_SUBSTITUT],
+            avertissements=[
+                AVERTISSEMENT_MODELE_SYNTHESE,
+                *([AVERTISSEMENT_REVENU_MANQUANT] if revenu_effectif is None else []),
+            ],
             version_modele=self.scoring_model.version(),
             version_grille=configuration.version_grille,
         )

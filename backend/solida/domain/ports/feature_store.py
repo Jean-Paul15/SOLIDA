@@ -12,7 +12,9 @@ class FeatureStore(Protocol):
     batch planifié.
     """
 
-    def lire_individuelles(self, societaire_id: str) -> FeaturesIndividuelles | None: ...
+    def lire_individuelles(
+        self, societaire_id: str, date_reference: date
+    ) -> FeaturesIndividuelles | None: ...
 
     def lire_solidaires(self, societaire_id: str) -> FeaturesSolidaires | None: ...
 

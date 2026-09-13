@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-09-13",
+  "purpose": "Contexte de reprise SOLIDA sur un autre PC ou par un autre agent.",
+  "authority": "Les decisions terrain utilisateur listées ici remplacent les hypothèses contradictoires antérieures.",
+  "generator": {
+    "scope": "J1-05 a J1-13",
+    "risk_exclusions": [
+      "defaut_du_credit_evalue",
+      "statut_du_credit_evalue",
+      "retards_du_credit_evalue",
+      "paiements_du_credit_evalue",
+      "visites",
+      "relances",
+      "age"
+    ],
+    "institutional_maximum_fcfa": 100000000,
+    "product_fixed_amount": false,
+    "previous_credit_progression": false,
+    "synthetic_amount_range_fcfa": [20000, 5500000],
+    "allowed_periodicities": [
+      "hebdomadaire",
+      "mensuelle",
+      "trimestrielle",
+      "semestrielle",
+      "annuelle"
+    ],
+    "group_repayment_level": "groupe",
+    "age_rule": "age fourni mais exclu du risque; aucun refus automatique apres 73 ans",
+    "unresolved": [
+      "frais",
+      "assurance",
+      "annulation",
+      "regularisation",
+      "interets_epargne"
+    ]
+  },
+  "socle_model": {
+    "scope": "J1-14 a J1-21",
+    "model": "ExplainableBoostingClassifier interpret-core==0.7.8",
+    "reference_date": "date_deblocage",
+    "target": {
+      "good_max_delay_days": 14,
+      "indeterminate_delay_days": [15, 29],
+      "default_min_delay_days": 30,
+      "maturity_days": 90
+    },
+    "dataset": {
+      "trainable_total": 9818,
+      "good": 8990,
+      "default": 828,
+      "indeterminate": 215,
+      "ongoing": 2657,
+      "splits": {
+        "train_until_2022": 8030,
+        "validation_2023": 794,
+        "test_from_2024": 994
+      }
+    },
+    "ebm_preprocessing": "Types pandas explicites; missing separate; pas de dummies, imputation ni standardisation.",
+    "imbalance_strategy": "Comparer non pondere et sample_weight balanced sur plis temporels; non pondere retenu.",
+    "test_metrics": {
+      "auc": 0.8984503037,
+      "auprc": 0.6947052942,
+      "log_loss": 0.1786878069,
+      "brier": 0.0463912187,
+      "ece": 0.0113961188,
+      "max_decile_calibration_gap": 0.0552565187
+    },
+    "promotion": "AUC > 0.88 declenche audit humain; ne pas promouvoir automatiquement champion-demo.",
+    "decision_threshold": "non defini; attendre couts metier et capacite de revue"
+  },
+  "enriched_model": {
+    "available": [
+      "appartenances_gie datees",
+      "echeances groupe datees",
+      "garanties datees",
+      "historique epargne",
+      "credits et produits"
+    ],
+    "blocked": [
+      "regle caution solidaire",
+      "usage nantissement enrichi",
+      "signaux sectoriels dates",
+      "objet divisible_indivisible",
+      "couts et seuils de decision",
+      "politique derive et reentrainement"
+    ]
+  },
+  "continuity_files": [
+    "docs/continuite/README.md",
+    "docs/continuite/2026-09-13-transmission-complete.md",
+    "docs/continuite/2026-09-13-constat-claude-plafonds.md",
+    "docs/continuite/2026-09-13-journal-discussion.md",
+    "modelisation/docs/questionnaire-modele-enrichi.md"
+  ],
+  "data_recovery": "Configurer les identifiants SeaweedFS localement puis executer dvc pull. Aucun secret n'est versionne dans Git."
+}

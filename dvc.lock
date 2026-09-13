@@ -1,0 +1,77 @@
+schema: '2.0'
+stages:
+  generation:
+    cmd: uv run --project modelisation python
+      modelisation/scripts/generer_donnees.py --sortie simulateur/sorties
+    deps:
+    - path: modelisation/scripts/generer_donnees.py
+      hash: md5
+      md5: d895a7fc624cb53b87c1f730d3a9864a
+      size: 699
+      isexec: true
+    - path: simulateur/config/config.yaml
+      hash: md5
+      md5: 416decc0a468850c2c2379ed3daa8777
+      size: 3626
+      isexec: true
+    - path: simulateur/simulateur/pipeline.py
+      hash: md5
+      md5: abf1c2fb943b4f77282c1c3cdc8959a8
+      size: 40752
+      isexec: true
+    outs:
+    - path: simulateur/sorties
+      hash: md5
+      md5: 7f8b54cd0bbd4177d6090f20799970fd.dir
+      size: 35467597
+      nfiles: 13
+  features_socle:
+    cmd: uv run --project modelisation solida-modele construire-features
+      --source simulateur/sorties --sortie
+      modelisation/data/processed/jeu_socle.parquet --date-fin 2026-08-01
+    deps:
+    - path: modelisation/config/modeles.yaml
+      hash: md5
+      md5: 5d1297867429a034d4f3eb23988feff4
+      size: 313
+      isexec: true
+    - path: modelisation/src/solida_modelisation
+      hash: md5
+      md5: 7cc14da8825f368e8b6371e46bcda735.dir
+      size: 132899
+      nfiles: 30
+    - path: simulateur/sorties
+      hash: md5
+      md5: 7f8b54cd0bbd4177d6090f20799970fd.dir
+      size: 35467597
+      nfiles: 13
+    outs:
+    - path: modelisation/data/processed/jeu_socle.parquet
+      hash: md5
+      md5: 1752406091fdfdebc5792c9078b5dae7
+      size: 991133
+  entrainement_socle:
+    cmd: uv run --project modelisation solida-modele entrainer --dataset
+      modelisation/data/processed/jeu_socle.parquet --sortie
+      modelisation/data/modeles --modele tous
+    deps:
+    - path: modelisation/config/modeles.yaml
+      hash: md5
+      md5: 5d1297867429a034d4f3eb23988feff4
+      size: 313
+      isexec: true
+    - path: modelisation/data/processed/jeu_socle.parquet
+      hash: md5
+      md5: 1752406091fdfdebc5792c9078b5dae7
+      size: 991133
+    - path: modelisation/src/solida_modelisation
+      hash: md5
+      md5: 7cc14da8825f368e8b6371e46bcda735.dir
+      size: 132899
+      nfiles: 30
+    outs:
+    - path: modelisation/data/modeles
+      hash: md5
+      md5: df0de8b4584c84f640a72ecbfe1f4783.dir
+      size: 524297
+      nfiles: 25

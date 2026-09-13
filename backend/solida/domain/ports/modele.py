@@ -1,13 +1,11 @@
 from typing import Protocol
 
+from solida.domain.values.features import ValeurFeature
 from solida.domain.values.probabilite import ProbabiliteDefaut
 
 
 class ScoringModel(Protocol):
-    """`ConstantScoringModel` (adapters/ml) est la seule implémentation existante pour
-    l'instant : ce port est ce qui permet au modèle réel (EBM entraîné) de
-    remplacer `ConstantScoringModel` sans qu'aucun code au-dessus n'en soit informé.
-    """
+    """Contrat d'un modèle explicable, indépendant de son stockage ou de MLflow."""
 
     def identifiant(self) -> str: ...
 
@@ -15,9 +13,9 @@ class ScoringModel(Protocol):
 
     def variables_attendues(self) -> list[str]: ...
 
-    def predire(self, features: dict[str, float]) -> ProbabiliteDefaut: ...
+    def predire(self, features: dict[str, ValeurFeature]) -> ProbabiliteDefaut: ...
 
-    def contributions(self, features: dict[str, float]) -> list[tuple[str, float]]:
+    def contributions(self, features: dict[str, ValeurFeature]) -> list[tuple[str, float]]:
         """Retourne `(code_variable, contribution_log_odds)` pour chaque variable.
 
         Liste vide acceptée pour un modèle qui n'a pas de décomposition par variable :

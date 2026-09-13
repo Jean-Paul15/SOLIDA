@@ -1,0 +1,14 @@
+graine: 42
+date_fin_donnees: "2026-08-01"
+cible:
+  bon_retard_max_jours: 14
+  indetermine_retard_min_jours: 15
+  indetermine_retard_max_jours: 29
+  defaut_retard_min_jours: 30
+  fenetre_performance_jours: 90
+calibration:
+  ece_max: 0.03
+  ecart_decile_max: 0.05
+selection:
+  n_iter: 40
+  ecart_type_auc_max: 0.03

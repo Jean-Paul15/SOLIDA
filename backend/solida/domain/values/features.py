@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+type ValeurFeature = float | int | str | bool | None
+
 
 @dataclass(frozen=True)
 class FeaturesIndividuelles:
@@ -10,10 +12,10 @@ class FeaturesIndividuelles:
     tendance_epargne_12m: str
     """`hausse` | `stable` | `erosion`."""
     volatilite_epargne: float
-    ratio_epargne_revenu: float
+    ratio_epargne_revenu: float | None
     ratio_epargne_montant: float
     anciennete_epargne_mois: int
-    ratio_endettement: float
+    ratio_endettement: float | None
     nb_credits_anterieurs: int
     nb_incidents_anterieurs: int
     max_jours_retard_historique: int | None
@@ -22,6 +24,9 @@ class FeaturesIndividuelles:
     numero_cycle: int
     parts_sociales_montant: int
     nb_personnes_a_charge: int
+    zone_residence: str = "inconnue"
+    revenu_mensuel_declare: int | None = None
+    ratio_montant_historique: float | None = None
 
 
 @dataclass(frozen=True)

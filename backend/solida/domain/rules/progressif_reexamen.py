@@ -9,7 +9,7 @@ class SituationReexamen:
 
     regularite_epargne: float
     ratio_garantie: float
-    endettement: float
+    endettement: float | None
     tendance_epargne_baissiere: bool
     caution_deja_appelee: bool
     montant_demande: Montant
@@ -51,7 +51,10 @@ def lister_conditions_reexamen(
             "la garantie."
         )
 
-    if situation.endettement > parametres.endettement_seuil:
+    if (
+        situation.endettement is not None
+        and situation.endettement > parametres.endettement_seuil
+    ):
         conditions.append(
             "Réduire le montant demandé ou allonger la durée : la charge de remboursement "
             f"dépasse {parametres.endettement_seuil * 100:.0f}% du revenu estimé."

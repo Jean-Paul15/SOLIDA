@@ -12,21 +12,22 @@ RUN apt-get update \
     libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 \
  && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /app/backend
 
 ENV PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
-COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock ./
+COPY modelisation /app/modelisation
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 
-COPY . .
+COPY backend .
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/backend/.venv/bin:$PATH"
 ENTRYPOINT []
 RUN chown -R solida:solida /app
 USER solida
