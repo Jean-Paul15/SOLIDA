@@ -10,3 +10,5 @@ class MouvementEpargne:
     sens: str
     """`depot` | `retrait`."""
     montant: int
+    type_operation: str
+    """depot | retrait | transfert_nantie | restitution_nantie (plus fin que sens)."""

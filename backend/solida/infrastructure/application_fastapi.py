@@ -6,6 +6,7 @@ from solida.domain.errors import (
     DomainError,
     DonneesInsuffisantes,
     DureeDemandeeInvalide,
+    IdentiteSocietaireInvalide,
     MontantDemandeInvalide,
     ProduitIntrouvable,
     ScorecardImmuable,
@@ -18,7 +19,9 @@ from solida.infrastructure.logging_config import configure_logging
 from solida.infrastructure.routers import (
     auth,
     health,
+    notifications,
     parametrage,
+    portail,
     produits,
     registre,
     scoring,
@@ -37,6 +40,7 @@ _ERROR_STATUSES: list[tuple[type[DomainError], int, str]] = [
     (SurEndettement, 422, "sur_endettement"),
     (VersionGrilleDejaExistante, 409, "version_deja_existante"),
     (ScorecardImmuable, 422, "scorecard_immuable"),
+    (IdentiteSocietaireInvalide, 401, "identite_invalide"),
     (DomainError, 400, "regle_metier"),
 ]
 
@@ -52,6 +56,8 @@ def create_application() -> FastAPI:
     application.include_router(registre.router)
     application.include_router(parametrage.router)
     application.include_router(produits.router)
+    application.include_router(portail.router)
+    application.include_router(notifications.router)
 
     for error_class, status, code in _ERROR_STATUSES:
 

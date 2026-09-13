@@ -136,6 +136,7 @@ def test_executer_compose_le_dossier_complet() -> None:
                     date_operation=date(2024, 1, 1),
                     sens="depot",
                     montant=10000,
+                    type_operation="depot",
                 )
             ],
         )

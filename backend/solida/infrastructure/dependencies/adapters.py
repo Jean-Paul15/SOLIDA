@@ -10,9 +10,13 @@ from minio import Minio
 from solida.adapters.core_sim.core_sim_postgres_reader import CoreSimPostgresReader
 from solida.adapters.core_sim.feature_store_core_sim import FeatureStoreCoreSim
 from solida.adapters.ml.scoring_model_constant import ConstantScoringModel
+from solida.adapters.notifications.noop_notification_sender import NoopNotificationSender
 from solida.adapters.pdf.fiche_pdf_generator_weasyprint import WeasyPrintFichePdfGenerator
 from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.adapters.persistence.decision_repository_sql import SqlDecisionRepository
+from solida.adapters.persistence.demande_societaire_repository_sql import (
+    SqlDemandeSocietaireRepository,
+)
 from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
 from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
 from solida.adapters.storage.fiche_repository_seaweedfs import SeaweedfsFicheRepository
@@ -75,3 +79,18 @@ def fiche_archivee_repository() -> SqlFicheArchiveeRepository:
 @lru_cache
 def fiche_pdf_generator() -> WeasyPrintFichePdfGenerator:
     return WeasyPrintFichePdfGenerator()
+
+
+@lru_cache
+def demande_societaire_repository() -> SqlDemandeSocietaireRepository:
+    return SqlDemandeSocietaireRepository(solida_engine())
+
+
+@lru_cache
+def notification_sender() -> NoopNotificationSender:
+    return NoopNotificationSender()
+
+
+@lru_cache
+def secret_auth() -> str:
+    return Configuration().secret_auth
