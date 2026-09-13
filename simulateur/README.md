@@ -1,81 +1,103 @@
-# SOLIDA -- Generateur CORE-SIM v3 (logique COOPEC / CIF)
+# SOLIDA -- Generateur CORE-SIM v4
 
-Donnees synthetiques pour un systeme de scoring de microcredit, cale sur la
-realite des reseaux mutualistes de la CIF (FUCEC, RCPB, PAMECAS, FECECAM,
-Kafo Jiginew, Nyesigiso). Hackathon CIF / DigiCoop-WA+ 2026, Thematique 02.
+Le generateur produit les donnees brutes d'une cooperative d'epargne et de credit.
+Il est reproductible avec une graine unique et conserve une separation stricte entre
+les informations connues a l'octroi et les issues observees apres decaissement.
 
-## Le principe : suivre la logique COOPEC
+## Decisions terrain J1-05 a J1-13
 
-Les reseaux CIF sont d'abord des **caisses d'epargne** : on epargne, puis on
-emprunte. Le generateur reproduit ce modele reel :
+- Tous les produits exigent trois mois d'epargne avant le premier credit.
+- Le catalogue n'impose aucun minimum metier et porte un plafond institutionnel de
+  100 000 000 FCFA. Les montants synthetiques suivent une loi log-uniforme entre
+  20 000 et 5 500 000 FCFA, sans progression automatique entre les cycles.
+- La faisabilite d'un credit individuel depend de l'epargne libre disponible pour
+  nantir entre 10 % et un tiers du montant. Si aucune combinaison n'est possible,
+  le credit n'est pas genere.
+- Le seuil d'endettement est configurable a 33 %. La pente du risque est conservee
+  sous le seuil et double sur la portion qui le depasse. L'endettement vaut exactement
+  `charge_mensualisee / revenu_declare`.
+- Les periodicites hebdomadaire, mensuelle, trimestrielle, semestrielle et annuelle
+  ont chacune un poids initial de 20 %. Elles sont filtrees selon la duree : trimestre,
+  semestre et annee exigent respectivement un multiple de 3, 6 et 12 mois.
+- Les echeances sont constantes. A chaque periode, les interets sont calcules sur le
+  capital restant du ; leur part diminue donc au fil du remboursement.
+- Une alerte operationnelle apparait des J+1. Le defaut commence a 30 jours de retard.
+- Les paiements, retards, statuts et defauts sont des issues post-decaissement. Ils ne
+  participent jamais au mecanisme de risque a l'octroi, pas plus que l'age, les visites
+  ou les relances. Toutes les anciennetes sont calculees a la date du credit.
+- `age` reste renseigne pour chaque societaire. Aucune `date_naissance` n'est ajoutee
+  et aucun refus automatique n'est applique apres 73 ans.
+- L'historique d'epargne commence a l'ouverture du compte : 15 % des societaires ont
+  3 a 5 mois, 25 % en ont 6 a 11 et 60 % au moins 12, jusqu'a 14 ans.
+- Le solde initial est nul. Les depots, retraits, transferts et restitutions de nantie
+  sont journalises. Le type `interet` est reserve, mais aucun interet d'epargne n'est
+  genere tant que son taux et sa frequence ne sont pas confirmes.
+- La nantie est retiree de l'epargne libre au deblocage. Elle est restituee si le credit
+  est solde et reste bloquee si le credit est en cours ou en souffrance. Elle demeure
+  dans `garanties`, sans creer de second compte.
+- Un remboursement de credit GIE est enregistre au niveau `groupe`, jamais sur chacun
+  des membres.
 
-- **tout le monde epargne** ; l'epargne est la porte d'entree du credit et le
-  signal central du score ;
-- **~25% des membres empruntent** (bilan social FUCEC : 70 646 emprunteurs pour
-  287 643 societaires) ;
-- **credit individuel dominant, adosse a l'epargne (epargne nantie)** ; la
-  **caution solidaire est un SEGMENT** (GIE femmes), pas le coeur ;
-- **defaut = creance en souffrance (PAR 90j)**, calibre ~9% (secteur Togo ~11%,
-  norme prudentielle 3%).
+Les frais, assurances, annulations, regularisations et interets d'epargne restent hors
+generation faute de regles chiffrees confirmees. La part des credits de groupe, les
+demandes refusees, les objets de credit et la saisonnalite ne sont pas modifies ici.
 
-La performance du modele **emerge** des donnees ; on ne cible jamais une AUC.
+## Produits et taux annuels
 
-## Deux couches strictement separees
+| Segment | Produit | Taux |
+|---|---|---:|
+| `jeune` | Youth Espoir | 7 a 7,5 % |
+| `individuel` | Credit PME/PMI | 14 % |
+| `salarie` | Virement salaire | 9 a 12 % |
+| `femme_gie` | Credit Epargne avec Education (CEE) | 16 % |
+| `agricole` | Credit agricole | 14 % |
 
-**Generateur (`pipeline.py`)** = uniquement les tables BRUTES du SIG : membres,
-comptes et mouvements d'epargne, credits (echeancier, jours de retard, statut),
-GIE et appartenances, garanties (epargne nantie OU caution solidaire GIE),
-produits de credit (referentiel). Rien de pre-calcule. Il encode la structure
-reelle, dont la contagion GIE (documentee).
+Un taux variable est tire uniformement dans sa fourchette et stocke sur le credit.
+Le catalogue expose `taux_annuel_min`, `taux_annuel_max` et conserve `taux_annuel`
+a la moyenne de la fourchette pour les lecteurs existants.
 
-**Referentiel `produits_credit`** : un produit par segment (correspondance 1:1,
-confirmee par la typologie publique de FUCEC-Togo/RCPB/PAMECAS -- credit sur
-salaire domicilie, individuel, YouthStart jeunes, Credit Epargne avec Education
-pour les GIE femmes, agricole). Aucune de ces institutions ne publie de plafond/
-duree/taux precis par produit (donnee interne non publique) : les valeurs de
-`config/config.yaml` sont un point de depart calibre et ajustable, pas une
-verite mesuree -- meme statut que les autres parametres de ce fichier. Chaque
-credit genere porte le `produit_id` de son segment ; `montant_octroye` et
-`duree_mois` sont bornes par les valeurs du produit plutot que par un plafond
-global unique.
+## Sorties
 
-**Feature engineering** : la specification (trois blocs SOCLE / SOLIDAIRE / SECTORIEL,
-regle "leak-free a la date de deblocage") vit desormais dans
-`03-MODELE/02-feature-engineering.md`, pas dans ce depot. Le prototype qui vivait ici
-(`features.py`) a ete retire -- voir `03-MODELE/09-lecons-prototype-simulateur.md`.
+- `societaires.parquet`
+- `credits.parquet`
+- `echeances.parquet`
+- `produits_credit.parquet`
+- `comptes_epargne.parquet`
+- `mouvements_epargne.parquet`
+- `solde_mensuel_epargne.parquet`
+- `groupes_gie.parquet`, `appartenances_gie.parquet`, `garanties.parquet`
+- `choc_secteur.parquet`
 
-## Reproductible, dates bornees
+`solde_mensuel_epargne.parquet` est reconstruit par accumulation chronologique. Le
+dernier solde mensuel correspond a `comptes_epargne.solde_actuel`; les anciens agregats
+6/12 mois restent presents et sont derives de cette trajectoire pour compatibilite.
+Les dates de paiement reelles et les mouvements ne depassent jamais `date_fin`. Les
+dates d'echeance futures d'un credit en cours restent naturellement dans le calendrier
+contractuel. Pour l'entrainement, un credit n'est etiquete comme resolu que si sa maturite
+et la fenetre d'observation de 30 jours sont toutes deux anterieures a `date_fin`.
 
-Une seule graine gouverne tout. Aucun evenement ne depasse `date_fin` (2026-08-01) :
-le controle `evenements_apres_date_fin` vaut 0. Les credits encore en cours a cette
-date ne sont pas etiquetes (exclus de la modelisation).
-
-## Utilisation
+## Utilisation et validation
 
 ```bash
-python3 simulateur/pipeline.py        # genere sorties/*.parquet + rapport coherence
-python3 simulateur/demo_recherche.py "MENSAH"   # dossier 360 d'un membre (demo agent)
-DATABASE_URL=postgresql://... python3 simulateur/charger_postgres.py
+python simulateur/simulateur/pipeline.py
+python -m unittest discover -s simulateur/tests -v
+python simulateur/simulateur/demo_recherche.py "MENSAH"
 ```
 
-Passer a l'echelle : `n_membres: 25000` dans `config/config.yaml`.
+Le fichier `config/config.yaml` fixe par defaut 27 000 societaires afin d'obtenir environ
+10 000 credits resolus pour l'entrainement. Pour l'entrainement,
+l'unite statistique est le credit resolu (`defaut` egal a 0 ou 1), pas le societaire ni
+chaque mouvement. La taille exacte du dataset d'entrainement est donc publiee par le
+rapport de generation et non imposee artificiellement.
 
-## Feature engineering, entrainement, decision : plus ici
+La formule d'annuite suit la definition de PMT : taux et nombre de periodes utilisent
+la meme unite, sans frais ni assurance. Les offsets calendaires pandas construisent les
+dates mensuelles, trimestrielles, semestrielles et annuelles.
 
-Ce depot ne contient plus que le generateur de donnees brutes. Le prototype jetable qui
-demontrait la faisabilite (feature engineering, entrainement d'un classifieur de
-validation, moteur de decision) a ete retire : son role etait de prouver que les donnees
-synthetiques produisent un signal plausible avant que le vrai modele et le vrai backend
-n'existent, et il comportait des ecarts (fuite temporelle, coefficient non cable) qui le
-rendaient trompeur s'il restait dans le depot sans etre maintenu. Le contenu correct est
-deja specifie, en mieux, dans `03-MODELE/` (feature engineering, scorecard et grille,
-evaluation et metriques) et implemente reellement dans `backend/solida/domain/rules/`
-(`progressif.py`, `grille.py`, `scorecard.py`). Le detail de ce qui a ete retire et pourquoi
-est dans `03-MODELE/09-lecons-prototype-simulateur.md`.
+## Frontiere avec le modele
 
-## Honnetete pour le jury
-
-Donnees synthetiques calibrees sur la litterature et sur les chiffres reels des
-reseaux CIF (sans donnees reelles, les modeles appris type GAN sont hors de portee).
-Le coeur du score est l'epargne et le comportement de remboursement -- ce qui existe
-dans CHAQUE SIG COOPEC. Le solidaire n'est active que la ou la donnee de groupe existe.
+Le feature engineering, l'entrainement et le moteur de decision ne sont pas implementes
+dans ce dossier. Leur specification vit dans `03-MODELE/`. Le generateur ne cible aucune
+AUC : il calibre seulement la marginale globale des credits resolus autour de 9 % de
+defaut, puis expose les donnees brutes necessaires a un modele explicable et temporellement
+valide.

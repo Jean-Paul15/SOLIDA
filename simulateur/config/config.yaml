@@ -1,135 +1,132 @@
-# ============================================================
-# SOLIDA -- Generateur CORE-SIM v3 (logique COOPEC / CIF)
-# Modele reel : caisse d'epargne d'abord. Tout le monde epargne,
-# ~25% des membres empruntent. L'epargne est la PORTE d'ENTREE du
-# credit et le signal central. La caution solidaire est un SEGMENT
-# (GIE femmes, agricole), pas le coeur.
-# Performance EMERGENTE, jamais ciblee. Reproductible. Dates <= 08/2026.
-# ============================================================
-
+# SOLIDA -- Generateur CORE-SIM v4 (decisions terrain J1-05 a J1-13)
 graine: 42
 
 # --- Volumetrie et temps ---
-n_membres: 12000
-part_emprunteurs: 0.25          # ~25% des membres empruntent (bilan social FUCEC)
+n_membres: 27000
+part_emprunteurs: 0.25
 date_fin: "2026-08-01"
-annees_credit_observe: 5
 anciennete_max_annees: 14
-epargne_min_mois_avant_credit: 6   # il faut avoir epargne >= 6 mois pour emprunter
+epargne_min_mois_avant_credit: 3
+repartition_anciennete_epargne:
+  mois_3_a_5: 0.15
+  mois_6_a_11: 0.25
+  mois_12_et_plus: 0.60
 
 # --- Referentiels ---
 n_caisses: 8
 zones: [urbain, semi_urbain, rural]
 zones_poids: [0.34, 0.30, 0.36]
 
-# --- Segments de produit (parts de la population emprunteuse) ---
 segments:
-  salarie:      0.20    # revenus domicilies -> tres faible risque
-  individuel:   0.32    # petits metiers, commerce (individuel, epargne nantie)
-  jeune:        0.12    # YouthStart, primo, thin-file
-  femme_gie:    0.18    # groupement d'interet economique -> caution solidaire
-  agricole:     0.18    # agriculture, expose au choc sectoriel
+  salarie: 0.20
+  individuel: 0.32
+  jeune: 0.12
+  femme_gie: 0.18
+  agricole: 0.18
 
-# --- Marginale REELLE : taux de "creances en souffrance" (PAR 90j) ~9% ---
+# Calibration d'une marginale de defaut, jamais d'une performance de modele.
 taux_defaut_cible: 0.09
 
-# --- Coefficients du log-odds (log des odds ratios, litterature) ---
-# Protecteurs (signe negatif dans le code)
-coef_epargne_regularite: 0.85   # regularite d'epargne : signal central COOPEC (fort)
-coef_epargne_anciennete: 0.40   # duree d'epargne avant credit (protecteur)
-coef_ratio_garantie:     0.55   # ratio epargne nantie / credit (protecteur)
-coef_salarie:            1.10   # revenus domicilies : tres protecteur
-coef_cycle:              0.30   # progression de cycle
-coef_anciennete:         0.20   # anciennete de membre
-coef_qualite_groupe:     0.90   # GIE : monitoring pairs / sort partage (segment)
-# Risque (signe positif)
-coef_endettement:        0.75   # charge de remboursement / revenu
-coef_incidents:          0.95   # impayes anterieurs (tres fort)
-coef_dependants:         0.15
-coef_rural:              0.25
-coef_jeune:              0.35    # primo jeune, thin-file (risque modere)
-coef_agricole_choc:      1.00    # exposition au choc sectoriel agricole
+# Variables disponibles a la date d'octroi uniquement. Age, visites, relances,
+# paiements, retards, statut et defaut n'entrent jamais dans ce mecanisme.
+coef_epargne_regularite: 0.85
+coef_epargne_anciennete: 0.40
+coef_ratio_garantie: 0.55
+coef_salarie: 1.10
+coef_cycle: 0.30
+coef_anciennete: 0.20
+coef_qualite_groupe: 0.90
+coef_endettement: 0.75
+seuil_endettement: 0.33
+coef_dependants: 0.15
+coef_rural: 0.25
+coef_jeune: 0.35
+coef_agricole_choc: 1.00
+ecart_idiosyncratique: 1.15
 
-# --- Contagion GIE (documentee) : defauts recents des pairs -> risque focal ---
-coef_contagion_gie:      0.80
-fenetre_contagion_mois:  12
-
-# --- Part d'imprevu reel (chocs non captes) : fixee par raisonnement metier ---
-ecart_idiosyncratique:   1.15
-
-# --- Choc sectoriel latent (agriculture surtout) ---
+# --- Choc sectoriel latent ---
 secteur_autocorrelation: 0.88
-secteur_choc_ecart:      0.70
+secteur_choc_ecart: 0.70
 secteur_episode_degradation_proba: 0.05
 
-# --- Groupes GIE (segment femme_gie seulement) ---
+# --- Groupes GIE ---
 taille_gie_min: 4
 taille_gie_max: 15
 taux_sortie_gie_annuel: 0.05
 
-# --- Credit ---
-montant_median_primo: 100000
-coefficient_progression: 1.5
+# --- Credits synthetiques ---
+# Ces bornes pilotent le tirage, pas les limites metier du catalogue.
+montant_synthetique_min: 20000
+montant_synthetique_max: 5500000
 duree_mois_choix: [3, 6, 9, 12, 18, 24]
-taux_interet_annuel: 0.16       # 16% degressif (FUCEC)
+periodicites_remboursement:
+  hebdomadaire: 0.20
+  mensuelle: 0.20
+  trimestrielle: 0.20
+  semestrielle: 0.20
+  annuelle: 0.20
+nantissement_taux_min: 0.10
+nantissement_taux_max: 0.3333333333333333
 
-# --- Catalogue de produits (un par segment, cf. simulateur/README.md) ---
-# Typologie confirmee sur les sites officiels FUCEC-Togo/RCPB/PAMECAS (CIF-AO) : credit sur
-# salaire domicilie, credit individuel, YouthStart (jeunes), Credit Epargne avec Education
-# (GIE femmes), credit agricole. Aucune de ces institutions ne publie de plafond/duree/taux
-# precis par produit (donnee interne, non publique) : valeurs ci-dessous calibrees comme point
-# de depart ajustable par la cooperative, meme statut que les autres parametres de ce fichier.
-# Plafond reglementaire de reference : 24% TAEG pour les SFD de l'UEMOA (Decision
-# n19/29-12-2025/CM/UMOA, applicable au 1er juin 2026) -- tous les taux ci-dessous sont en-dessous.
+# Le catalogue exprime l'absence de minimum metier et le plafond institutionnel.
 produits:
   salarie:
     produit_id: prod-salarie
-    libelle: "Credit sur salaire domicilie"
+    libelle: "Virement salaire"
     type_garantie: epargne_nantie
-    montant_min: 50000
-    montant_max: 2000000
+    montant_min: 0
+    montant_max: 100000000
     duree_min_mois: 3
     duree_max_mois: 24
-    taux_annuel: 0.14
+    taux_annuel_min: 0.09
+    taux_annuel_max: 0.12
   individuel:
     produit_id: prod-individuel
-    libelle: "Credit individuel commerce/activite"
+    libelle: "Credit PME/PMI"
     type_garantie: epargne_nantie
-    montant_min: 50000
-    montant_max: 2000000
+    montant_min: 0
+    montant_max: 100000000
     duree_min_mois: 3
-    duree_max_mois: 18
-    taux_annuel: 0.16
+    duree_max_mois: 24
+    taux_annuel_min: 0.14
+    taux_annuel_max: 0.14
   jeune:
     produit_id: prod-jeune
-    libelle: "YouthStart -- jeunes entrepreneurs"
+    libelle: "Youth Espoir"
     type_garantie: epargne_nantie
-    montant_min: 50000
-    montant_max: 750000
+    montant_min: 0
+    montant_max: 100000000
     duree_min_mois: 3
-    duree_max_mois: 12
-    taux_annuel: 0.16
+    duree_max_mois: 24
+    taux_annuel_min: 0.07
+    taux_annuel_max: 0.075
   femme_gie:
     produit_id: prod-femme-gie
-    libelle: "Credit Epargne avec Education (GIE femmes)"
+    libelle: "Credit Epargne avec Education (CEE)"
     type_garantie: solidaire
-    montant_min: 50000
-    montant_max: 1500000
+    montant_min: 0
+    montant_max: 100000000
     duree_min_mois: 3
-    duree_max_mois: 12
-    taux_annuel: 0.16
+    duree_max_mois: 24
+    taux_annuel_min: 0.16
+    taux_annuel_max: 0.16
   agricole:
     produit_id: prod-agricole
-    libelle: "Credit agricole (campagne)"
+    libelle: "Credit agricole"
     type_garantie: epargne_nantie
-    montant_min: 50000
-    montant_max: 1500000
-    duree_min_mois: 6
-    duree_max_mois: 18
-    taux_annuel: 0.16
+    montant_min: 0
+    montant_max: 100000000
+    duree_min_mois: 3
+    duree_max_mois: 24
+    taux_annuel_min: 0.14
+    taux_annuel_max: 0.14
 
-# --- Epargne ---
+# --- Epargne libre ---
 depot_mensuel_median: 10000
+probabilite_retrait_mensuel: 0.28
+types_operation_supportes: [depot, retrait, transfert_nantie, restitution_nantie, interet]
+# Aucun interet n'est genere tant que son taux et sa frequence ne sont pas confirmes.
+generer_interets_epargne: false
 
 # --- Valeurs manquantes ---
 manquant_revenu_rural: 0.35
