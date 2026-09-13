@@ -1,0 +1,137 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Mêmes tokens que frontend/app/globals.css : identité visuelle commune entre le
+   site agence et le portail sociétaire. Ne pas diverger sans raison — si une valeur
+   doit changer ici, la faire évoluer aussi côté frontend/. */
+@theme {
+  --color-solida-teal-900: #0b3040;
+  --color-solida-teal-800: #0f4457;
+  --color-solida-teal-700: #14607a;
+  --color-solida-teal-600: #1a7b93;
+  --color-solida-teal-100: #dcebf0;
+  --color-solida-teal-50: #f0f6f8;
+
+  --color-solida-gold-600: #c9821f;
+  --color-solida-gold-500: #f5a43b;
+  --color-solida-gold-100: #fdf0dc;
+
+  --color-neutre-950: #1a1a18;
+  --color-neutre-700: #4a4a46;
+  --color-neutre-500: #7a7a74;
+  --color-neutre-300: #c9c9c3;
+  --color-neutre-200: #e2e2dd;
+  --color-neutre-100: #f2f2ee;
+  --color-neutre-50: #f9f9f7;
+  --color-blanc: #ffffff;
+
+  --color-decision-accord: #1f7a5c;
+  --color-decision-accord-fond: #e8f2ee;
+  --color-decision-conditionnel: #a97814;
+  --color-decision-conditionnel-fond: #faf1de;
+  --color-decision-comite: #b85c24;
+  --color-decision-comite-fond: #fbede3;
+  --color-decision-refus: #a63a31;
+  --color-decision-refus-fond: #f7e9e7;
+
+  --color-info: #14607a;
+  --color-succes: #1f7a5c;
+  --color-alerte: #a97814;
+  --color-erreur: #a63a31;
+
+  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-serif-title: var(--font-source-serif-4), serif;
+
+  /* Échelle relevée par rapport au frontend agent : parcours grand public, corps de
+     texte 18 px minimum exigé par la conception (SOLIDA_Flux_Societaire.md section 5). */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1.125rem;
+  --text-base--line-height: 1.75rem;
+  --text-lg: 1.375rem;
+  --text-lg--line-height: 1.875rem;
+  --text-xl: 1.75rem;
+  --text-xl--line-height: 2.25rem;
+  --text-2xl: 2.25rem;
+  --text-2xl--line-height: 2.5rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --shadow-1: 0 2px 6px rgba(26, 26, 24, 0.07);
+  --shadow-2: 0 8px 24px rgba(26, 26, 24, 0.12);
+
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+@theme inline {
+  --color-background: var(--color-neutre-50);
+  --color-foreground: var(--color-neutre-950);
+  --color-card: var(--color-blanc);
+  --color-card-foreground: var(--color-neutre-950);
+  --color-popover: var(--color-blanc);
+  --color-popover-foreground: var(--color-neutre-950);
+  --color-primary: var(--color-solida-teal-800);
+  --color-primary-foreground: var(--color-blanc);
+  --color-secondary: var(--color-neutre-100);
+  --color-secondary-foreground: var(--color-neutre-950);
+  --color-muted: var(--color-neutre-100);
+  --color-muted-foreground: var(--color-neutre-700);
+  --color-accent: var(--color-solida-teal-50);
+  --color-accent-foreground: var(--color-solida-teal-800);
+  --color-destructive: var(--color-decision-refus);
+  --color-border: var(--color-neutre-200);
+  --color-input: var(--color-neutre-200);
+  --color-ring: var(--color-solida-teal-600);
+}
+
+:root {
+  --radius: 8px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-solida-teal-600);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
