@@ -24,8 +24,8 @@ export default function BonjourPage() {
       sousTitre="Nous vous avons bien reconnu. Voyons ensemble votre demande."
       pied={<Button onClick={() => router.push("/montant")}>Continuer</Button>}
     >
-      <div className="flex justify-center py-6">
-        <CircleCheck className="size-16 text-succes" strokeWidth={1.5} />
+      <div className="flex justify-center py-3">
+        <CircleCheck className="size-12 text-succes" strokeWidth={1.5} />
       </div>
     </EcranEtape>
   );

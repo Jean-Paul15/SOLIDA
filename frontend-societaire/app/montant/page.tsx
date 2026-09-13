@@ -43,11 +43,11 @@ export default function MontantPage() {
       titre="Combien souhaitez-vous ?"
       pied={<Button onClick={continuer}>Continuer</Button>}
     >
-      <p className="text-center font-mono text-3xl font-semibold text-solida-teal-800">
+      <p className="text-center font-mono text-2xl font-semibold text-solida-teal-800">
         {formaterFcfa(montant)}
       </p>
 
-      <div className="mt-10">
+      <div className="mt-8">
         <Slider
           value={[montant]}
           onValueChange={([valeur]) => setMontant(valeur)}

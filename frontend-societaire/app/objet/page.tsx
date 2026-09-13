@@ -35,7 +35,7 @@ export default function ObjetPage() {
         </Button>
       }
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {LISTE_OBJETS_CREDIT.map((cle) => {
           const { libelle, icone: Icone } = OBJETS_CREDIT[cle];
           const active = selection === cle;
@@ -46,13 +46,13 @@ export default function ObjetPage() {
               onClick={() => setSelection(cle)}
               aria-pressed={active}
               className={cn(
-                "flex min-h-28 flex-col items-center justify-center gap-2 rounded-lg border-2 px-3 py-4 text-center transition-colors",
+                "flex min-h-22 flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-center transition-colors",
                 active
                   ? "border-solida-teal-600 bg-solida-teal-50 text-solida-teal-800"
                   : "border-border bg-blanc text-foreground hover:bg-muted"
               )}
             >
-              <Icone className="size-7" strokeWidth={1.75} />
+              <Icone className="size-5" strokeWidth={1.75} />
               <span className="text-sm font-medium text-balance">{libelle}</span>
             </button>
           );

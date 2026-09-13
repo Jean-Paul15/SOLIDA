@@ -44,20 +44,20 @@
   --font-mono: var(--font-ibm-plex-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif-title: var(--font-source-serif-4), serif;
 
-  /* Échelle relevée par rapport au frontend agent : parcours grand public, corps de
-     texte 18 px minimum exigé par la conception (SOLIDA_Flux_Societaire.md section 5). */
+  /* Légèrement au-dessus du frontend agent, pas surdimensionné : compact d'abord,
+     lisible ensuite (retour explicite : pas de gros juste pour faire gros). */
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.125rem;
-  --text-sm: 0.9375rem;
-  --text-sm--line-height: 1.375rem;
-  --text-base: 1.125rem;
-  --text-base--line-height: 1.75rem;
-  --text-lg: 1.375rem;
-  --text-lg--line-height: 1.875rem;
-  --text-xl: 1.75rem;
-  --text-xl--line-height: 2.25rem;
-  --text-2xl: 2.25rem;
-  --text-2xl--line-height: 2.5rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2rem;
 
   --radius-sm: 4px;
   --radius-md: 8px;

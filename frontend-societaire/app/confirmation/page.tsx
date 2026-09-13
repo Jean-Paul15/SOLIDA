@@ -15,14 +15,14 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-10 text-center">
-      <PartyPopper className="size-16 text-solida-teal-700" strokeWidth={1.5} />
-      <h1 className="mt-6 text-2xl font-semibold text-balance">C&apos;est parti !</h1>
-      <p className="mt-3 text-base text-muted-foreground text-balance">
+    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center px-6 pt-16 text-center">
+      <PartyPopper className="size-12 text-solida-teal-700" strokeWidth={1.5} />
+      <h1 className="mt-5 text-xl font-semibold text-balance">C&apos;est parti !</h1>
+      <p className="mt-2 text-base text-muted-foreground text-balance">
         Votre demande a bien été transmise à votre agent. Il l&apos;examinera et vous recontactera
         prochainement.
       </p>
-      <div className="mt-10 w-full">
+      <div className="mt-7 w-full">
         <Button onClick={terminer}>Terminer</Button>
       </div>
     </div>

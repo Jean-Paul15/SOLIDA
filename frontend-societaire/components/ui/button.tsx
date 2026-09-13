@@ -4,11 +4,11 @@ import { Slot } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
-// Un seul gabarit de taille : "xl", pleine largeur, hauteur généreuse (section 5 de
-// SOLIDA_Flux_Societaire.md — "zones de contact larges"). Pas de variante compacte :
-// ce parcours n'affiche jamais plus d'une action principale par écran.
+// Un seul gabarit de taille, pleine largeur (jamais plus d'une action principale par
+// écran) : compact plutôt que démesuré, mais toujours au-dessus du minimum tactile
+// de 44px (Apple HIG / Material) — ni trop gros ni trop petit.
 const buttonVariants = cva(
-  "group/button inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-transparent text-lg font-medium whitespace-nowrap transition-colors outline-none select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-4 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
+  "group/button inline-flex w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-transparent text-base font-medium whitespace-nowrap transition-colors outline-none select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-4 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -54,7 +54,7 @@ function Button({
       }}
       className={cn(
         buttonVariants({ variant, className }),
-        "min-h-14 px-6 py-3",
+        "min-h-11 px-5 py-2.5",
         loading && "cursor-not-allowed opacity-60"
       )}
       {...props}

@@ -75,7 +75,7 @@ export default function RecapitulatifPage() {
         titre="Vérifions ensemble"
         pied={<Button onClick={() => router.push("/confirmation")}>Terminer</Button>}
       >
-        <div className="rounded-lg border-2 border-alerte/30 bg-solida-gold-100 p-5 text-base">
+        <div className="rounded-lg border-2 border-alerte/30 bg-solida-gold-100 p-4 text-base">
           Votre connexion est instable. Pas d&apos;inquiétude : votre demande est conservée sur ce
           téléphone et partira dès que la connexion reviendra.
         </div>
@@ -96,13 +96,13 @@ function ResultatPreVerification({ resultat }: { resultat: DemandePreVerificatio
       titre="Vérifions ensemble"
       pied={<Button onClick={() => router.push("/confirmation")}>Envoyer à mon agent</Button>}
     >
-      <div className={`rounded-lg border-2 p-5 text-base ${styleAmbiance}`}>{resultat.message}</div>
+      <div className={`rounded-lg border-2 p-4 text-base ${styleAmbiance}`}>{resultat.message}</div>
       {montantRecommande ? (
-        <p className="mt-4 text-center font-mono text-xl font-semibold text-solida-teal-800">
+        <p className="mt-3 text-center font-mono text-lg font-semibold text-solida-teal-800">
           {new Intl.NumberFormat("fr-FR").format(montantRecommande)} FCFA
         </p>
       ) : null}
-      <p className="mt-6 text-sm text-muted-foreground">
+      <p className="mt-5 text-sm text-muted-foreground">
         Votre agent examinera votre demande et vous recontactera. C&apos;est toujours lui qui
         décide.
       </p>
