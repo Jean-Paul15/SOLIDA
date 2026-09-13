@@ -44,7 +44,7 @@ export function EcranEtape({
             type="button"
             aria-label="Retour à l'étape précédente"
             onClick={() => (precedent ? router.push(precedent) : router.back())}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-muted active:bg-neutre-200"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition active:scale-90 hover:bg-muted active:bg-neutre-200"
           >
             <ChevronLeft className="size-5" />
           </button>

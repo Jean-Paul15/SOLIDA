@@ -38,18 +38,18 @@ export default function ObjetPage() {
       <div className="grid grid-cols-2 gap-2.5">
         {LISTE_OBJETS_CREDIT.map((cle) => {
           const { libelle, icone: Icone } = OBJETS_CREDIT[cle];
-          const active = selection === cle;
+          const selectionne = selection === cle;
           return (
             <button
               key={cle}
               type="button"
               onClick={() => setSelection(cle)}
-              aria-pressed={active}
+              aria-pressed={selectionne}
               className={cn(
-                "flex min-h-22 flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-center transition-colors",
-                active
+                "flex min-h-22 flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-center transition active:scale-[0.97]",
+                selectionne
                   ? "border-solida-teal-600 bg-solida-teal-50 text-solida-teal-800"
-                  : "border-border bg-blanc text-foreground hover:bg-muted"
+                  : "border-border bg-blanc text-foreground hover:bg-muted active:bg-neutre-100"
               )}
             >
               <Icone className="size-5" strokeWidth={1.75} />

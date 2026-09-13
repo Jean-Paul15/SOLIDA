@@ -44,18 +44,18 @@ export default function DureePage() {
     >
       <div className="flex flex-col gap-2">
         {CHOIX.map(({ valeur, libelle }) => {
-          const active = selection === valeur;
+          const selectionne = selection === valeur;
           return (
             <button
               key={valeur}
               type="button"
               onClick={() => setSelection(valeur)}
-              aria-pressed={active}
+              aria-pressed={selectionne}
               className={cn(
-                "min-h-12 rounded-lg border-2 px-4 text-left text-base font-medium transition-colors",
-                active
+                "min-h-12 rounded-lg border-2 px-4 text-left text-base font-medium transition active:scale-[0.98]",
+                selectionne
                   ? "border-solida-teal-600 bg-solida-teal-50 text-solida-teal-800"
-                  : "border-border bg-blanc text-foreground hover:bg-muted"
+                  : "border-border bg-blanc text-foreground hover:bg-muted active:bg-neutre-100"
               )}
             >
               {libelle}
