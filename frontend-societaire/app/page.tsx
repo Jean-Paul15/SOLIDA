@@ -13,7 +13,10 @@ const NOM_CAISSE = process.env.NEXT_PUBLIC_NOM_CAISSE ?? "votre caisse";
 export default function AccueilPage() {
   return (
     <CadreMobile>
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center px-6 pt-16 text-center sm:min-h-0 sm:py-12">
+      {/* pt en clamp (pas une valeur fixe) : pousse le bouton principal vers la
+          zone atteignable au pouce en bas-centre plutôt que de tout laisser collé
+          en haut, en s'adaptant à la hauteur réelle de l'écran. */}
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center px-6 pt-[clamp(3rem,15vh,6rem)] text-center sm:min-h-0 sm:py-12">
         <div className="flex size-16 items-center justify-center rounded-full bg-solida-teal-50">
           <Image src="/solida-logo.png" alt="SOLIDA" width={36} height={27} priority />
         </div>

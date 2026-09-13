@@ -67,7 +67,13 @@ export function EcranEtape({
           </p>
         </div>
 
-        <main className="mt-3">
+        {/* Pousse le titre/champ vers la zone atteignable au pouce (bas-centre, pas
+            le haut de l'écran — cf. recherche Steven Hoober / Smashing Magazine sur
+            la "thumb zone") plutôt que de tout laisser collé sous l'en-tête. Un
+            "clamp" plutôt qu'une valeur fixe : s'adapte à la hauteur réelle de
+            l'écran sans jamais pousser trop loin sur un petit téléphone. Réinitialisé
+            en desktop (sm:), où le panneau centre déjà le contenu correctement. */}
+        <main className="mt-[clamp(2rem,12vh,5rem)] sm:mt-3">
           <h1 className="text-xl font-semibold text-balance">{titre}</h1>
           {sousTitre ? (
             <p className="mt-1.5 text-base text-muted-foreground">{sousTitre}</p>

@@ -17,7 +17,7 @@ export default function ConfirmationPage() {
 
   return (
     <CadreMobile>
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center px-6 pt-16 text-center sm:min-h-0 sm:py-12">
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center px-6 pt-[clamp(3rem,15vh,6rem)] text-center sm:min-h-0 sm:py-12">
         <PartyPopper className="size-12 text-solida-teal-700" strokeWidth={1.5} />
         <h1 className="mt-5 text-xl font-semibold text-balance">C&apos;est parti !</h1>
         <p className="mt-2 text-base text-muted-foreground text-balance">
