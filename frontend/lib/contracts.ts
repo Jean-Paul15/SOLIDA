@@ -207,6 +207,26 @@ export interface DecisionRegistreApi {
   agent_nom: string;
 }
 
+export interface DemandeSocietaireApi {
+  demande_id: string;
+  societaire_id: string;
+  societaire_nom: string;
+  agence_id: string;
+  montant_demande: number;
+  objet_credit: ObjetCredit;
+  duree_mois: number;
+  produit_id: string;
+  resultat: ScoringResult;
+  statut: string;
+  cree_le: string;
+  assigne_a_agent_id: string | null;
+}
+
+export interface PageNotificationsApi {
+  elements: DemandeSocietaireApi[];
+  total: number;
+}
+
 export interface GridParametersApi {
   marge: number;
   lgd: number;

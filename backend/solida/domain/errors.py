@@ -50,6 +50,10 @@ class SurEndettement(DomainError):
     """Le sociétaire a déjà un crédit en cours : refus d'un nouvel octroi par ce canal."""
 
 
+class IdentiteSocietaireInvalide(DomainError):
+    """Numéro de compte ou montant du dernier dépôt incorrect (portail sociétaire)."""
+
+
 class VersionGrilleDejaExistante(DomainError):
     """Une configuration de grille porte déjà ce `version_grille`."""
 

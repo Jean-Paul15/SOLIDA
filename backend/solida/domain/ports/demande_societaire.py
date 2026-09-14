@@ -1,0 +1,19 @@
+from typing import Protocol
+
+from solida.domain.values.demande_societaire import DemandeSocietaire, DemandeSocietaireACreer
+
+
+class DemandeSocietaireRepository(Protocol):
+    def enregistrer(self, demande: DemandeSocietaireACreer) -> DemandeSocietaire: ...
+
+    def lister(
+        self, agence_id: str | None, statut: str, limite: int, decalage: int
+    ) -> list[DemandeSocietaire]: ...
+
+    def compter(self, agence_id: str | None, statut: str) -> int: ...
+
+    def lire(self, demande_id: str) -> DemandeSocietaire | None: ...
+
+    def archiver(self, demande_id: str, agent_id: str) -> DemandeSocietaire | None: ...
+
+    def assigner(self, demande_id: str, agent_id: str) -> DemandeSocietaire | None: ...

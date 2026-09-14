@@ -11,4 +11,4 @@ class MouvementEpargne:
     """`depot` | `retrait`."""
     montant: int
     type_operation: str = "depot"
-    """Nature source : dépôt libre, retrait, transfert nanti ou restitution."""
+    """depot | retrait | transfert_nantie | restitution_nantie (plus fin que sens)."""

@@ -29,6 +29,52 @@ services:
       start_period: 20s
       retries: 5
 
+  # Site sociétaire (self-service), coquille UI cf. PLAN 72H/SOLIDA_Flux_Societaire.md.
+  # Meme construction que "front", conteneur separe : sessions incompatibles (pas de
+  # compte agent), et site distinct a exposer separement du site agence (voir le
+  # second server block de infra/nginx/nginx.conf, port 8080).
+  front-societaire:
+    build:
+      context: ./frontend-societaire
+      target: runner
+    environment:
+      BACKEND_INTERNAL_URL: http://api:8000
+      HOSTNAME: "0.0.0.0"
+    networks:
+      - solida
+    depends_on:
+      api:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/v1/health').then(r=>{if(!r.ok)throw 0}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  front-societaire-dev:
+    build:
+      context: ./frontend-societaire
+      target: dev
+    environment:
+      BACKEND_INTERNAL_URL: http://api:8000
+    volumes:
+      - ./frontend-societaire:/app
+      - front_societaire_node_modules:/app/node_modules
+      - front_societaire_next_cache:/app/.next
+    networks:
+      - solida
+    depends_on:
+      api:
+        condition: service_healthy
+    profiles:
+      - dev
+
   # Uniquement pour le developpement local (make front-dev, front-install, ...) : jamais
   # demarre par un simple "docker compose up" et jamais route par nginx. Next.js en mode
   # "next dev" ne doit pas etre expose derriere le reverse proxy, meme en demo (audit F2).
@@ -214,12 +260,16 @@ services:
     image: nginx:1.30.4-alpine
     ports:
       - "80:80"
+      - "8080:8080"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/securite-communes.conf:/etc/nginx/securite-communes.conf:ro
     networks:
       - solida
     depends_on:
       front:
+        condition: service_healthy
+      front-societaire:
         condition: service_healthy
       api:
         condition: service_healthy
@@ -337,6 +387,8 @@ services:
 volumes:
   front_node_modules:
   front_next_cache:
+  front_societaire_node_modules:
+  front_societaire_next_cache:
   back_venv:
   pgdata_coresim:
   pgdata_solida:

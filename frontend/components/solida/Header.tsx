@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/solida/NotificationBell";
 import { canAccessCreditPolicy } from "@/lib/roles";
 
 interface HeaderProps {
@@ -57,6 +58,7 @@ export function Header({ agence, userName, role }: HeaderProps) {
         )}
       </div>
       <div className="flex items-center gap-4 text-sm text-neutre-700">
+        {role === "agent" && <NotificationBell />}
         {agence && <span>{agence}</span>}
         {userName && <span>{userName}</span>}
         <Button variant="ghost" size="sm" onClick={logOut} loading={loggingOut} className="gap-1.5">

@@ -46,6 +46,9 @@ class CoreSimPostgresReader:
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
         return self._societaires.charger_societaire(societaire_id)
 
+    def charger_societaire_par_numero_membre(self, numero_membre: str) -> Societaire | None:
+        return self._societaires.charger_societaire_par_numero_membre(numero_membre)
+
     def charger_historique_credit(self, societaire_id: str) -> list[Credit]:
         return self._credits.charger_historique_credit(societaire_id)
 

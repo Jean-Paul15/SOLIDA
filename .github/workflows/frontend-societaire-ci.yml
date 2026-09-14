@@ -1,0 +1,45 @@
+name: frontend-societaire-ci
+
+on:
+  push:
+    paths:
+      - "frontend-societaire/**"
+      - ".github/workflows/frontend-societaire-ci.yml"
+  pull_request:
+    paths:
+      - "frontend-societaire/**"
+      - ".github/workflows/frontend-societaire-ci.yml"
+
+defaults:
+  run:
+    working-directory: frontend-societaire
+
+jobs:
+  lint-typecheck-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend-societaire/package-lock.json
+
+      - name: Installer les dependances
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typage
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
+
+      - name: Audit des dependances
+        run: npm audit --audit-level=high
+
+      - name: Build
+        run: npm run build
