@@ -20,6 +20,7 @@ from solida.adapters.persistence.demande_societaire_repository_sql import (
 )
 from solida.adapters.persistence.fiche_archivee_repository_sql import SqlFicheArchiveeRepository
 from solida.adapters.persistence.grille_repository_sql import SqlGrilleRepository
+from solida.adapters.persistence.utilisateur_repository_sql import SqlUtilisateurRepository
 from solida.adapters.storage.fiche_repository_seaweedfs import SeaweedfsFicheRepository
 from solida.infrastructure.config import Configuration
 from solida.infrastructure.database import coresim_engine, solida_engine
@@ -44,6 +45,22 @@ def scoring_model() -> EBMScoringModel:
         tracking_uri=configuration.mlflow_tracking_uri,
         model_name=configuration.mlflow_model_name,
         model_alias=configuration.mlflow_model_alias,
+        nom_artefact_bundle="bundle_socle",
+    )
+
+
+@lru_cache
+def scoring_model_enrichi() -> EBMScoringModel:
+    """Même résolution que le SOCLE (alias MLflow -> cache vérifié -> bundle DVC), échec
+    explicite sans bundle valide — voir `docs/continuite` sur le SOCLE, identique ici."""
+    configuration = Configuration()
+    return EBMScoringModel(
+        fallback_path=Path(configuration.modele_enrichi_path),
+        cache_path=Path(configuration.modele_enrichi_cache_path),
+        tracking_uri=configuration.mlflow_tracking_uri,
+        model_name=configuration.mlflow_model_name_enrichi,
+        model_alias=configuration.mlflow_model_alias,
+        nom_artefact_bundle="bundle_enrichi",
     )
 
 
@@ -92,6 +109,11 @@ def fiche_pdf_generator() -> WeasyPrintFichePdfGenerator:
 @lru_cache
 def demande_societaire_repository() -> SqlDemandeSocietaireRepository:
     return SqlDemandeSocietaireRepository(solida_engine())
+
+
+@lru_cache
+def utilisateur_repository() -> SqlUtilisateurRepository:
+    return SqlUtilisateurRepository(solida_engine())
 
 
 @lru_cache

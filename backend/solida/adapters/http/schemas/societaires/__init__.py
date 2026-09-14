@@ -1,7 +1,7 @@
 from solida.adapters.http.schemas.societaires.credit import CreditResume, StatutCredit
 from solida.adapters.http.schemas.societaires.dossier import DossierSocietaire
 from solida.adapters.http.schemas.societaires.epargne import (
-    MouvementEpargne,
+    PointSoldeMensuel,
     SyntheseEpargne,
     TendanceEpargne,
 )
@@ -27,8 +27,8 @@ __all__ = [
     "DossierSocietaire",
     "IdentiteSocietaire",
     "MembreGroupe",
-    "MouvementEpargne",
     "NiveauInstruction",
+    "PointSoldeMensuel",
     "RoleGroupe",
     "Segment",
     "SocietaireSearchResult",

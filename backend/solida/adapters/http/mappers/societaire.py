@@ -58,11 +58,14 @@ def dossier_to_schema(dossier: DossierSocietaire) -> schema_societaires.DossierS
             volatilite=dossier.epargne.volatilite,
             ratio_epargne_revenu=dossier.epargne.ratio_epargne_revenu,
             anciennete_relation_mois=dossier.epargne.anciennete_relation_mois,
-            mouvements_recents=[
-                schema_societaires.MouvementEpargne(
-                    date_operation=m.date_operation.isoformat(), sens=m.sens, montant=m.montant
+            serie_solde_12m=[
+                schema_societaires.PointSoldeMensuel(
+                    mois=p.mois.isoformat(),
+                    solde_fin_mois=p.solde_fin_mois,
+                    total_depots=p.total_depots,
+                    total_retraits=p.total_retraits,
                 )
-                for m in dossier.epargne.mouvements_recents
+                for p in dossier.epargne.serie_solde_12m
             ],
         ),
         historique_credit=[

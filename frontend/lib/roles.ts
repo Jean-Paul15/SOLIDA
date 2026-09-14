@@ -7,6 +7,7 @@
 export const ROLES_SCORING = ["agent"];
 export const ROLES_MODIFICATION_GRILLE = ["superviseur"];
 export const ROLES_POLITIQUE_CREDIT = ["superviseur", "auditeur", "administrateur"];
+export const ROLES_NOTIFICATIONS = ["agent", "superviseur"];
 
 export function canScore(role: string | undefined): boolean {
   return role !== undefined && ROLES_SCORING.includes(role);
@@ -24,4 +25,13 @@ export function canEditGrille(role: string | undefined): boolean {
  */
 export function canAccessCreditPolicy(role: string | undefined): boolean {
   return role !== undefined && ROLES_POLITIQUE_CREDIT.includes(role);
+}
+
+/**
+ * Le centre de notifications a deux visages selon le rôle (`CentreNotificationsAgent`/
+ * `CentreNotificationsSuperviseur`) : l'agent traite ses demandes assignées, le superviseur
+ * répartit les demandes non assignées de son agence entre ses agents.
+ */
+export function canAccessNotifications(role: string | undefined): boolean {
+  return role !== undefined && ROLES_NOTIFICATIONS.includes(role);
 }

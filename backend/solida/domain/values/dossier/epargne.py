@@ -3,11 +3,14 @@ from datetime import date
 
 
 @dataclass(frozen=True)
-class MouvementEpargneAffiche:
-    date_operation: date
-    sens: str
-    """`depot` | `retrait`."""
-    montant: int
+class PointSoldeMensuel:
+    """Un mois réellement arrêté (`solde_mensuel_epargne`) : jamais un point reconstruit ou
+    interpolé (J2-11 — voir `PLAN 72H/SOLIDA_Complements_et_Strategie.md` §5.2/5.14)."""
+
+    mois: date
+    solde_fin_mois: int
+    total_depots: int
+    total_retraits: int
 
 
 @dataclass(frozen=True)
@@ -18,6 +21,7 @@ class SyntheseEpargne:
     volatilite: float
     ratio_epargne_revenu: float
     anciennete_relation_mois: int
-    # Échantillon réel de mouvements récents (pas une courbe de solde reconstruite, voir
-    # docs/backend/03-decisions-provisoires-a-revoir.md) : pas une série complète.
-    mouvements_recents: list[MouvementEpargneAffiche]
+    # Série réelle des soldes de fin de mois (épargne libre), triée chronologiquement, jusqu'à
+    # 24 mois. Le front n'a plus à reconstruire quoi que ce soit : `mois_affiches =
+    # min(fenêtre_demandée, len(serie))`, jamais complété par des zéros (§5.14).
+    serie_solde_12m: list[PointSoldeMensuel]

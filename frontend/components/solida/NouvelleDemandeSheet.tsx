@@ -22,6 +22,8 @@ interface NouvelleDemandeSheetProps {
   nomComplet: string;
   activite: ActiviteEconomique;
   produits: ProduitCreditApi[];
+  /** Absent pour un sociétaire hors groupe : `useNewRequest` ne le transmet alors jamais. */
+  groupeId?: string;
 }
 
 export function NouvelleDemandeSheet({
@@ -29,6 +31,7 @@ export function NouvelleDemandeSheet({
   nomComplet,
   activite,
   produits,
+  groupeId,
 }: NouvelleDemandeSheetProps) {
   const {
     sheetOpen,
@@ -57,7 +60,7 @@ export function NouvelleDemandeSheet({
     error,
     annuler,
     calculerLeScore,
-  } = useNewRequest({ societaireId, nomComplet, activite, produits });
+  } = useNewRequest({ societaireId, nomComplet, activite, produits, groupeId });
 
   return (
     <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

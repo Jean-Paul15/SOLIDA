@@ -11,6 +11,8 @@ def grille_to_schema(configuration: ConfigurationGrille) -> schema_grille.Config
             multiplicateur_accord=configuration.grille.multiplicateur_accord,
             multiplicateur_vigilance=configuration.grille.multiplicateur_vigilance,
             multiplicateur_examen=configuration.grille.multiplicateur_examen,
+            plafond_institutionnel_fcfa=configuration.grille.plafond_institutionnel_fcfa,
+            ratio_endettement_maximal=configuration.grille.ratio_endettement_maximal,
         ),
         progressif=schema_grille.ParametresProgressif(
             coefficient_progression=configuration.progressif.coefficient_progression,

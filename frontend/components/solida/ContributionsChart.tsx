@@ -28,7 +28,7 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
   }
 
   const visibles = allVisible ? decomposition : decomposition.slice(0, LIMITE_VISIBLE);
-  const masques = decomposition.length - visibles.length;
+  const masques = decomposition.length - LIMITE_VISIBLE;
 
   const chartData = visibles.map((contribution) => ({
     nom: `${contribution.libelle} : ${contribution.valeur}`,
@@ -112,13 +112,13 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
         </span>
       </div>
 
-      {!allVisible && masques > 0 && (
+      {masques > 0 && (
         <button
           type="button"
-          onClick={() => setAllVisible(true)}
+          onClick={() => setAllVisible((v) => !v)}
           className="cursor-pointer self-start text-xs text-solida-teal-800 underline"
         >
-          + {masques} autres facteurs
+          {allVisible ? "Réduire" : `+ ${masques} autres facteurs`}
         </button>
       )}
     </div>

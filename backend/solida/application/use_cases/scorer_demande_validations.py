@@ -13,7 +13,9 @@ from solida.domain.errors import (
 from solida.domain.ports.decisions import DecisionRepository
 
 PLAFOND_INSTITUTIONNEL_FCFA = 100_000_000
-"""Décision terrain : aucun plafond par produit, maximum institutionnel unique."""
+"""Repli si aucune grille n'est fournie. La valeur réellement appliquée vient de
+`ConfigurationGrille.grille.plafond_institutionnel_fcfa` (modifiable par la supervision) ;
+décision terrain : aucun plafond par produit, un seul maximum institutionnel."""
 
 
 def valider_societaire_trouve(societaire: Societaire | None, societaire_id: str) -> Societaire:
@@ -50,11 +52,13 @@ def valider_pas_de_multi_octroi(
         )
 
 
-def valider_montant_sous_plafond_institutionnel(montant_demande: int) -> None:
-    if montant_demande > PLAFOND_INSTITUTIONNEL_FCFA:
+def valider_montant_sous_plafond_institutionnel(
+    montant_demande: int, plafond: int = PLAFOND_INSTITUTIONNEL_FCFA
+) -> None:
+    if montant_demande > plafond:
         raise MontantDemandeInvalide(
             f"Le montant demandé ({montant_demande:,} FCFA) dépasse le plafond institutionnel "
-            f"de {PLAFOND_INSTITUTIONNEL_FCFA:,} FCFA."
+            f"de {plafond:,} FCFA."
         )
 
 

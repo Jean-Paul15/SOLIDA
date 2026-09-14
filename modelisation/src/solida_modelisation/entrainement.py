@@ -20,7 +20,13 @@ from sklearn.utils.class_weight import compute_sample_weight
 
 from .artifact import ManifesteModele, sauvegarder_bundle
 from .calibration import CalibrateurPlatt
-from .catalogue import FEATURES_SOCLE, codes_features_socle, types_ebm
+from .catalogue import (
+    FEATURES_ENRICHI,
+    FEATURES_SOCLE,
+    FeatureSpec,
+    codes_features_socle,
+    types_ebm,
+)
 from .equite import ecarts_a_risque_comparable, rapport_par_strate, seuil_revue_humaine
 from .metrics import courbe_precision_rappel, metriques_classification
 from .splits import plis_temporels_entrainement
@@ -46,9 +52,10 @@ def _jeu_par_split(dataset: pd.DataFrame, split: str) -> pd.DataFrame:
     return resultat.sort_values("date_reference").reset_index(drop=True)
 
 
-def _preparer_ebm(frame: pd.DataFrame) -> pd.DataFrame:
-    resultat = frame[codes_features_socle()].copy()
-    for feature in FEATURES_SOCLE:
+def _preparer_ebm(frame: pd.DataFrame, catalogue: tuple[FeatureSpec, ...]) -> pd.DataFrame:
+    codes = [feature.code for feature in catalogue]
+    resultat = frame[codes].copy()
+    for feature in catalogue:
         if feature.type_ebm == "continue":
             resultat[feature.code] = pd.to_numeric(resultat[feature.code], errors="coerce")
         else:
@@ -89,10 +96,12 @@ def _predictions_audit(test: pd.DataFrame, probabilites: np.ndarray) -> pd.DataF
     return test[presentes].assign(probabilite_defaut=probabilites)
 
 
-def _creer_ebm(params: dict[str, Any]) -> ExplainableBoostingClassifier:
+def _creer_ebm(
+    params: dict[str, Any], catalogue: tuple[FeatureSpec, ...] = FEATURES_SOCLE
+) -> ExplainableBoostingClassifier:
     return ExplainableBoostingClassifier(
-        feature_names=codes_features_socle(),
-        feature_types=types_ebm(),
+        feature_names=[feature.code for feature in catalogue],
+        feature_types=types_ebm(catalogue),
         missing="separate",
         random_state=42,
         n_jobs=1,
@@ -120,6 +129,7 @@ def _comparer_ponderation(
     plis: list[tuple[np.ndarray, np.ndarray]],
     params: dict[str, Any],
     baseline: pd.Series,
+    catalogue: tuple[FeatureSpec, ...],
 ) -> pd.DataFrame:
     """Évalue le seul mécanisme natif d'équilibrage d'EBM, par plis temporels.
 
@@ -131,7 +141,7 @@ def _comparer_ponderation(
         x_train, x_validation = x.iloc[indexes_train], x.iloc[indexes_validation]
         y_train, y_validation = y.iloc[indexes_train], y.iloc[indexes_validation]
         poids = compute_sample_weight("balanced", y_train.to_numpy())
-        modele = _fit_ebm(_creer_ebm(params), x_train, y_train, poids)
+        modele = _fit_ebm(_creer_ebm(params, catalogue), x_train, y_train, poids)
         probabilites = modele.predict_proba(x_validation)[:, 1]
         mesures.append(metriques_classification(y_validation, probabilites))
     ponderee = pd.DataFrame(mesures)
@@ -216,16 +226,20 @@ def entrainer_reference_logistique(dataset: pd.DataFrame) -> ResultatEntrainemen
     )
 
 
-def entrainer_socle_ebm(
-    dataset: pd.DataFrame, dossier_bundle: Path | None = None, commit_git: str = "inconnu"
+def _entrainer_ebm(
+    dataset: pd.DataFrame,
+    catalogue: tuple[FeatureSpec, ...],
+    identifiant: str,
+    dossier_bundle: Path | None = None,
+    commit_git: str = "inconnu",
 ) -> ResultatEntrainement:
     train = _jeu_par_split(dataset, "train")
     validation = _jeu_par_split(dataset, "validation")
     test = _jeu_par_split(dataset, "test")
-    x_train = _preparer_ebm(train)
-    x_validation = _preparer_ebm(validation)
-    x_test = _preparer_ebm(test)
-    estimateur = _creer_ebm({})
+    x_train = _preparer_ebm(train, catalogue)
+    x_validation = _preparer_ebm(validation, catalogue)
+    x_test = _preparer_ebm(test, catalogue)
+    estimateur = _creer_ebm({}, catalogue)
     recherche = RandomizedSearchCV(
         estimateur,
         param_distributions={
@@ -260,7 +274,7 @@ def entrainer_socle_ebm(
     params = meilleur["params"]
     plis = plis_temporels_entrainement(train)
     comparaison_ponderation = _comparer_ponderation(
-        x_train, train["cible"], plis, params, meilleur
+        x_train, train["cible"], plis, params, meilleur, catalogue
     )
     candidat_pondere = comparaison_ponderation.loc[
         comparaison_ponderation["strategie"] == "sample_weight_balanced"
@@ -273,7 +287,7 @@ def entrainer_socle_ebm(
         compute_sample_weight("balanced", train["cible"].to_numpy()) if utiliser_ponderation else None
     )
     strategie_ponderation = "sample_weight_balanced" if utiliser_ponderation else "non_pondere"
-    modele = _fit_ebm(_creer_ebm(params), x_train, train["cible"], poids_finaux)
+    modele = _fit_ebm(_creer_ebm(params, catalogue), x_train, train["cible"], poids_finaux)
     p_val = modele.predict_proba(x_validation)[:, 1]
     calibrateur = _calibrer_si_necessaire(p_val, validation["cible"].to_numpy())
     p_val_calibre = calibrateur.predire(_logit_defaut(p_val))
@@ -290,6 +304,8 @@ def entrainer_socle_ebm(
             metriques_test=metriques_classification(test["cible"], p_test_calibre),
             strategie_ponderation=strategie_ponderation,
             features_reference=x_train,
+            catalogue=catalogue,
+            identifiant=identifiant,
         )
     return ResultatEntrainement(
         modele=modele,
@@ -301,6 +317,19 @@ def entrainer_socle_ebm(
         comparaison_ponderation=comparaison_ponderation,
         manifeste=manifeste,
     )
+
+
+def entrainer_socle_ebm(
+    dataset: pd.DataFrame, dossier_bundle: Path | None = None, commit_git: str = "inconnu"
+) -> ResultatEntrainement:
+    return _entrainer_ebm(dataset, FEATURES_SOCLE, "solida-socle", dossier_bundle, commit_git)
+
+
+def entrainer_enrichi_ebm(
+    dataset: pd.DataFrame, dossier_bundle: Path | None = None, commit_git: str = "inconnu"
+) -> ResultatEntrainement:
+    """Même procédure que le SOCLE, sur le catalogue étendu de la couche solidaire."""
+    return _entrainer_ebm(dataset, FEATURES_ENRICHI, "solida-enrichi", dossier_bundle, commit_git)
 
 
 def ecrire_rapport_resultat(resultat: ResultatEntrainement, dossier: Path, nom: str) -> None:

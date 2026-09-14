@@ -4,7 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 
+from solida.domain.errors import ModeleIndisponible
 from solida.infrastructure.application_fastapi import app
+from solida.infrastructure.dependencies import scorer_demande
 
 pytestmark = pytest.mark.skipif(
     "SOLIDA_DATABASE_URL_ASYNC" not in os.environ or "CORESIM_DATABASE_URL" not in os.environ,
@@ -114,10 +116,6 @@ def test_previsualiser_ne_persiste_rien(
     resultat = reponse.json()
     assert resultat["montant_demande"] == 100000
     assert resultat["tranche"] in {"accord", "accord_sous_condition", "comite_de_credit", "refus"}
-    # ConstantScoringModel renvoie une probabilité fixe (les features ne l'influencent pas) mais
-    # produit une décomposition heuristique (pas apprise) pour que la fiche de justification
-    # ne soit pas vide en attendant le vrai modèle (voir modele_constant.py et
-    # docs/backend/03-decisions-provisoires-a-revoir.md).
     assert len(resultat["decomposition"]) > 0
     premiere = resultat["decomposition"][0]
     assert premiere.keys() >= {"code_variable", "libelle", "valeur", "points", "sens", "famille"}
@@ -136,7 +134,6 @@ def test_confirmer_puis_relire_la_decision(
     assert reponse_scoring.status_code == 201
     resultat = reponse_scoring.json()
     assert resultat["montant_demande"] == 100000
-    assert "Score calculé avec un modèle de substitution" in resultat["avertissements"][0]
 
     decision_id = resultat["decision_id"]
     reponse_lecture = client_agent.get(f"/api/v1/scoring/{decision_id}")
@@ -335,3 +332,26 @@ def test_archiver_une_fiche(client_agent: TestClient, societaire_agence_agent: s
         ).first()
     assert ligne is not None
     assert ligne.chemin_objet.startswith("fiches/")
+
+
+def test_modele_indisponible_renvoie_503_avec_un_message_humain(client_agent: TestClient) -> None:
+    """Le message doit rester exploitable par l'agent (pas de jargon technique), et le
+    statut 503 (pas un 500 générique) permettre au frontend de distinguer un incident
+    ponctuel d'une erreur de code — voir `ScorerDemande._calculate`."""
+
+    class _UseCaseModeleIndisponible:
+        def preview(self, *args: object, **kwargs: object) -> None:
+            raise ModeleIndisponible(
+                "Le moteur de scoring n'a pas pu produire de recommandation pour ce dossier."
+            )
+
+    app.dependency_overrides[scorer_demande] = lambda: _UseCaseModeleIndisponible()
+    try:
+        reponse = client_agent.post("/api/v1/scoring/preview", json=_demande("peu-importe"))
+    finally:
+        del app.dependency_overrides[scorer_demande]
+
+    assert reponse.status_code == 503
+    corps = reponse.json()
+    assert corps["code"] == "modele_indisponible"
+    assert "moteur de scoring" in corps["message"]

@@ -1,6 +1,8 @@
 from datetime import date
 from typing import Protocol
 
+from solida_modelisation.features_epargne import SoldeMensuelEpargne
+
 from solida.domain.entities.compte_epargne import CompteEpargne
 from solida.domain.entities.credit import Credit
 from solida.domain.entities.garantie import Garantie
@@ -8,6 +10,7 @@ from solida.domain.entities.groupe import GroupeCaution
 from solida.domain.entities.mouvement_epargne import MouvementEpargne
 from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
+from solida.domain.values.features import DonneesGroupeBrutes
 from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 
@@ -58,4 +61,17 @@ class CoreSimReader(Protocol):
         """Référentiel des produits de crédit — table CORE-SIM, pas les plafonds
         appliqués (ceux-ci vivent dans `grille_decision`, ajustables par la
         supervision sans repasser par le générateur)."""
+        ...
+
+    def charger_donnees_groupe(self, gie_id: str) -> DonneesGroupeBrutes | None:
+        """`None` si `gie_id` ne correspond à aucun groupe connu. Historique complet du
+        groupe, non filtré par date : le filtrage temporel reste entièrement à la charge de
+        `calculer_features_groupe` (jamais dupliqué dans l'adaptateur)."""
+        ...
+
+    def charger_soldes_mensuels(self, societaire_id: str, avant: date) -> list[SoldeMensuelEpargne]:
+        """Photographies mensuelles de l'épargne libre (jamais l'épargne nantie, §5.3),
+        non filtrées au-delà de `avant` : sert à la fois la trajectoire affichée au front et
+        le calcul des features d'épargne du SOCLE (`calculer_features_epargne`, même fonction
+        qu'à l'entraînement — J2-11)."""
         ...

@@ -2,27 +2,31 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
+from solida.adapters.http import mappers
 from solida.adapters.http.schemas.portail import (
     DemandePreVerificationReponse,
     DemandePreVerificationRequete,
     VerificationCompteReponse,
     VerificationCompteRequete,
 )
+from solida.adapters.http.schemas.produits import ProduitCredit
 from solida.adapters.persistence.audit_log_sql import SqlAuditLog
 from solida.application.use_cases.authenticate_societaire import AuthenticateSocietaire
+from solida.application.use_cases.lister_produits import ListerProduits
 from solida.application.use_cases.process_societaire_demande import ProcessSocietaireDemande
 from solida.domain.errors import IdentiteSocietaireInvalide
 from solida.infrastructure.auth.dependencies import client_ip_address
 from solida.infrastructure.dependencies import (
     audit_log,
     authenticate_societaire,
+    lister_produits,
     process_societaire_demande,
 )
 
 router = APIRouter(prefix="/api/v1/portail", tags=["portail"])
 
 TENTATIVES_LIMITE = 3
-FENETRE_VERROU = timedelta(minutes=15)
+FENETRE_VERROU = timedelta(hours=5)
 
 
 def _jeton_bearer(authorization: str | None = Header(default=None)) -> str:
@@ -73,6 +77,7 @@ def demandes(
         montant_demande=demande.montant,
         objet_credit=demande.objet,
         duree_mois=demande.duree_mois,
+        produit_id=demande.produit_id,
     )
     return DemandePreVerificationReponse(
         issue=resultat.pre_verification.issue,
@@ -80,3 +85,14 @@ def demandes(
         montant_propose=resultat.pre_verification.montant_propose,
         demande_id=resultat.demande_id,
     )
+
+
+@router.get("/produits", response_model=list[ProduitCredit])
+def produits(
+    jeton: str = Depends(_jeton_bearer),
+    use_case: ListerProduits = Depends(lister_produits),
+) -> list[ProduitCredit]:
+    """Le sociétaire choisit un produit pour que l'agent l'ait sous les yeux à la
+    réception de la demande : le modèle ne s'en sert pas comme feature, mais le taux
+    et les bornes de durée qu'il fixe entrent bien dans le calcul du score."""
+    return [mappers.produit_to_schema(p) for p in use_case.execute()]

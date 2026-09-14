@@ -1,5 +1,6 @@
 from sqlalchemy import Engine, text
 
+from solida.adapters.core_sim._dates import vers_date
 from solida.domain.entities.societaire import Societaire
 from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
@@ -72,7 +73,7 @@ class PostgresSocietaireReader:
             numero_membre=row.numero_membre,
             nom_complet=row.nom_complet,
             agence=row.caisse_id,
-            date_adhesion=row.date_adhesion,
+            date_adhesion=vers_date(row.date_adhesion),
             anciennete_mois=row.anciennete_societaire_mois,
             segment=row.segment,
             age=row.age,
@@ -107,7 +108,7 @@ class PostgresSocietaireReader:
             numero_membre=row.numero_membre,
             nom_complet=row.nom_complet,
             agence=row.caisse_id,
-            date_adhesion=row.date_adhesion,
+            date_adhesion=vers_date(row.date_adhesion),
             anciennete_mois=row.anciennete_societaire_mois,
             segment=row.segment,
             age=row.age,

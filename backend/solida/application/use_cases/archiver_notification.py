@@ -17,4 +17,6 @@ class ArchiverNotification:
             return None
         if agent_agence_id is not None and demande.agence_id != agent_agence_id:
             raise AccesRefuse("Cette demande ne concerne pas votre agence.")
+        if demande.assigne_a_agent_id != agent_id:
+            raise AccesRefuse("Cette demande n'est pas assignée à cet agent.")
         return self.demande_societaire_repository.archiver(demande_id, agent_id)

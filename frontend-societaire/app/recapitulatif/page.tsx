@@ -7,105 +7,132 @@ import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
 import { envoyerDemande } from "@/lib/services/portail";
 import { mettreEnFile } from "@/lib/offline-queue";
-import { presentationResultat } from "@/lib/presentation-resultat";
-import type { DemandePreVerificationReponse } from "@/lib/contracts";
+import { ApiError } from "@/lib/services/error-service";
 
 /**
- * C8 : "la pré-vérification, en langage clair" est calculée automatiquement à
- * l'arrivée sur cet écran (un seul aller-retour réseau, celui qui enregistre aussi
- * la demande côté backend — pas de second appel "d'envoi" distinct, rien dans la
- * documentation ne justifie une étape brouillon/soumission séparée). Le bouton
- * "Envoyer à mon agent" confirme et passe à C9. Si l'appel échoue faute de réseau,
- * la demande part dans la file hors-ligne (section 6) et l'écran l'indique
- * clairement au lieu d'une erreur technique.
+ * C8 : plus d'écran de résultat côté sociétaire — le calcul complet (score, tranche,
+ * conditions) tourne toujours et part intact vers l'agent (`resultat` stocké sur la
+ * demande, visible dans son centre de notifications), mais le sociétaire ne voit
+ * jamais ce raisonnement : dès l'envoi réussi, on passe directement à C9
+ * ("transmis à votre agent"). Décision explicite du métier, déroge à la description
+ * initiale de cet écran dans SOLIDA_Flux_Societaire.md ("pré-vérification en langage
+ * clair"). Seul un échec RÉSEAU (`ApiError.kind === "network"`) part dans la file
+ * hors-ligne ; une réponse d'erreur du serveur (session expirée, règle métier, panne)
+ * est un message clair et actionnable, jamais confondu avec un problème de connexion.
  */
 export default function RecapitulatifPage() {
   const router = useRouter();
-  const { jetonSession, montant, objet, dureeMois, resultat, enregistrerResultat } = useDemande();
-  // "pret" se déduit directement de la présence du résultat en contexte : pas de
-  // duplication d'état côté effet (évite le setState synchrone dans un effet que
-  // signale react-hooks/set-state-in-effect).
-  const [horsLigne, setHorsLigne] = React.useState(false);
-  const etat = resultat ? "pret" : horsLigne ? "hors_ligne" : "chargement";
+  const {
+    jetonSession,
+    montant,
+    objet,
+    produit,
+    dureeMois,
+    resultat,
+    enregistrerResultat,
+  } = useDemande();
+  const [etatReseau, setEtatReseau] = React.useState<
+    "chargement" | "hors_ligne" | "erreur"
+  >("chargement");
+  const [messageErreur, setMessageErreur] = React.useState<string | null>(null);
+  const [tentative, setTentative] = React.useState(0);
 
   React.useEffect(() => {
-    if (!jetonSession || !montant || !objet || !dureeMois) {
+    if (!jetonSession || !montant || !objet || !produit || !dureeMois) {
       router.replace("/numero-compte");
       return;
     }
-    if (resultat) return;
+    if (resultat) {
+      router.replace("/confirmation");
+      return;
+    }
     let annule = false;
-    envoyerDemande(jetonSession, { montant, objet, duree_mois: dureeMois })
+    envoyerDemande(jetonSession, {
+      montant,
+      objet,
+      duree_mois: dureeMois,
+      produit_id: produit.produit_id,
+    })
       .then((reponse) => {
-        if (!annule) enregistrerResultat(reponse);
-      })
-      .catch(async () => {
         if (annule) return;
-        await mettreEnFile({
-          jeton_session: jetonSession,
-          montant,
-          objet,
-          duree_mois: dureeMois,
-          mise_en_file_le: new Date().toISOString(),
-        });
-        if (!annule) setHorsLigne(true);
+        enregistrerResultat(reponse);
+        router.replace("/confirmation");
+      })
+      .catch(async (erreur: unknown) => {
+        if (annule) return;
+        if (erreur instanceof ApiError && erreur.kind === "network") {
+          await mettreEnFile({
+            jeton_session: jetonSession,
+            montant,
+            objet,
+            duree_mois: dureeMois,
+            produit_id: produit.produit_id,
+            mise_en_file_le: new Date().toISOString(),
+          });
+          if (!annule) setEtatReseau("hors_ligne");
+          return;
+        }
+        setMessageErreur(
+          erreur instanceof ApiError
+            ? erreur.message
+            : "Une erreur technique est survenue.",
+        );
+        setEtatReseau("erreur");
       });
     return () => {
       annule = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jetonSession, montant, objet, dureeMois, resultat]);
+  }, [jetonSession, montant, objet, produit, dureeMois, resultat, tentative]);
 
-  if (etat === "chargement") {
-    return (
-      <EcranEtape etape={6} titre="Vérifions ensemble" pied={null}>
-        <div className="animate-shimmer flex flex-col gap-3 pt-4">
-          <div className="h-24 rounded-lg bg-neutre-100" />
-          <div className="h-4 w-2/3 rounded bg-neutre-100" />
-          <div className="h-4 w-1/2 rounded bg-neutre-100" />
-        </div>
-      </EcranEtape>
-    );
-  }
-
-  if (etat === "hors_ligne") {
+  if (etatReseau === "hors_ligne") {
     return (
       <EcranEtape
-        etape={6}
+        etape={7}
         titre="Vérifions ensemble"
-        pied={<Button onClick={() => router.push("/confirmation")}>Terminer</Button>}
+        pied={
+          <Button onClick={() => router.push("/confirmation")}>Terminer</Button>
+        }
       >
         <div className="rounded-lg border-2 border-alerte/30 bg-solida-gold-100 p-4 text-base">
-          Votre connexion est instable. Pas d&apos;inquiétude : votre demande est conservée sur ce
-          téléphone et partira dès que la connexion reviendra.
+          Votre connexion est instable. Pas d&apos;inquiétude : votre demande
+          est conservée sur ce téléphone et partira dès que la connexion
+          reviendra.
         </div>
       </EcranEtape>
     );
   }
 
-  return <ResultatPreVerification resultat={resultat!} />;
-}
-
-function ResultatPreVerification({ resultat }: { resultat: DemandePreVerificationReponse }) {
-  const router = useRouter();
-  const { montantRecommande, styleAmbiance } = presentationResultat(resultat);
+  if (etatReseau === "erreur") {
+    return (
+      <EcranEtape
+        etape={7}
+        titre="Vérifions ensemble"
+        pied={
+          <Button
+            onClick={() => {
+              setEtatReseau("chargement");
+              setTentative((t) => t + 1);
+            }}
+          >
+            Réessayer
+          </Button>
+        }
+      >
+        <div className="rounded-lg border-2 border-decision-refus/30 bg-decision-refus-fond p-4 text-base">
+          {messageErreur}
+        </div>
+      </EcranEtape>
+    );
+  }
 
   return (
-    <EcranEtape
-      etape={6}
-      titre="Vérifions ensemble"
-      pied={<Button onClick={() => router.push("/confirmation")}>Envoyer à mon agent</Button>}
-    >
-      <div className={`rounded-lg border-2 p-4 text-base ${styleAmbiance}`}>{resultat.message}</div>
-      {montantRecommande ? (
-        <p className="mt-3 text-center font-mono text-lg font-semibold text-solida-teal-800">
-          {new Intl.NumberFormat("fr-FR").format(montantRecommande)} FCFA
-        </p>
-      ) : null}
-      <p className="mt-5 text-sm text-muted-foreground">
-        Votre agent examinera votre demande et vous recontactera. C&apos;est toujours lui qui
-        décide.
-      </p>
+    <EcranEtape etape={7} titre="Vérifions ensemble" pied={null}>
+      <div className="animate-shimmer flex flex-col gap-3 pt-4">
+        <div className="h-24 rounded-lg bg-neutre-100" />
+        <div className="h-4 w-2/3 rounded bg-neutre-100" />
+        <div className="h-4 w-1/2 rounded bg-neutre-100" />
+      </div>
     </EcranEtape>
   );
 }

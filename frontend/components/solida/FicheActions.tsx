@@ -7,26 +7,25 @@ import { Button } from "@/components/ui/button";
 import { archiveFiche } from "@/lib/services/fiche";
 import { useApiErrorToast } from "@/lib/services/error-service";
 import { withMinDuration } from "@/lib/timing";
+import { ECHEC, useAsyncAction } from "@/lib/use-async-action";
 
 interface FicheActionsProps {
   decisionId: string;
 }
 
 export function FicheActions({ decisionId }: FicheActionsProps) {
-  const [archivingInProgress, setArchivingInProgress] = useState(false);
+  const { inProgress: archivingInProgress, run } = useAsyncAction();
   const [archived, setArchived] = useState(false);
   const handleError = useApiErrorToast();
 
   async function handleArchive() {
-    setArchivingInProgress(true);
-    try {
-      await withMinDuration(archiveFiche(decisionId));
+    const resultat = await run(() => withMinDuration(archiveFiche(decisionId)), {
+      fallbackErrorMessage: "L'archivage a échoué.",
+      onError: (e) => handleError(e, "L'archivage a échoué."),
+    });
+    if (resultat !== ECHEC) {
       toast.success("Fiche archivée.");
       setArchived(true);
-    } catch (e) {
-      handleError(e, "L'archivage a échoué.");
-    } finally {
-      setArchivingInProgress(false);
     }
   }
 

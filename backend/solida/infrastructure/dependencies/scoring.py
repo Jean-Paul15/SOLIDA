@@ -12,6 +12,7 @@ from solida.infrastructure.dependencies.adapters import (
     fiche_repository,
     grille_repository,
     scoring_model,
+    scoring_model_enrichi,
 )
 
 
@@ -20,6 +21,7 @@ def scorer_demande() -> ScorerDemande:
         core_sim_reader=core_sim_reader(),
         feature_store=feature_store(),
         scoring_model=scoring_model(),
+        scoring_model_enrichi=scoring_model_enrichi(),
         grille_repository=grille_repository(),
         decision_repository=decision_repository(),
         audit_log=audit_log(),

@@ -71,6 +71,7 @@ export default async function PageDossier({ params }: { params: Promise<{ id: st
             nomComplet={identite.nom_complet}
             activite={activite}
             produits={produits}
+            groupeId={groupe?.groupe_id}
           />
         )}
       </div>

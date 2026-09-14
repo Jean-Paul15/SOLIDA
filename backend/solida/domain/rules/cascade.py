@@ -23,7 +23,10 @@ class ContexteCascade:
 class ParametresCascade:
     """Seuils d'éligibilité au mode enrichi. Ajustable par la coopérative."""
 
-    taille_groupe_minimale: int = 3
+    taille_groupe_minimale: int = 5
+    """Seuil terrain (`précision.txt` réponse 22) : un groupe n'est jugeable qu'à partir de
+    5 membres actifs. Aligné sur `SEUIL_TAILLE_GROUPE_JUGEABLE` (modelisation.catalogue),
+    utilisé côté entraînement pour la même raison."""
     nb_credits_anterieurs_minimum: int = 3
     fraicheur_maximale_jours: int = 7
 

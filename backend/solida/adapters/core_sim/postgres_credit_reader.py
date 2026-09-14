@@ -3,6 +3,7 @@ from typing import Any
 
 from sqlalchemy import Engine, text
 
+from solida.adapters.core_sim._dates import vers_date
 from solida.domain.entities.credit import Credit
 
 
@@ -26,7 +27,7 @@ def _capital_restant_du(
 
 
 def _row_to_credit(row: Any, today: date) -> Credit:
-    date_deblocage: date = row.date_deblocage
+    date_deblocage = vers_date(row.date_deblocage)
     duree_mois: int = row.duree_mois
     statut: str = row.statut
     return Credit(
@@ -34,7 +35,7 @@ def _row_to_credit(row: Any, today: date) -> Credit:
         societaire_id=row.societaire_id,
         produit_id=row.produit_id,
         date_deblocage=date_deblocage,
-        date_echeance_prevue=row.date_issue,
+        date_echeance_prevue=vers_date(row.date_issue),
         duree_mois=duree_mois,
         numero_cycle=row.numero_cycle,
         montant_octroye=row.montant_octroye,

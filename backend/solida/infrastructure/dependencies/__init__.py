@@ -8,6 +8,7 @@ from solida.infrastructure.dependencies.grille import lire_grille_active, modifi
 from solida.infrastructure.dependencies.notifications import (
     archiver_notification,
     assigner_notification,
+    lister_agents_agence,
     lister_notifications,
 )
 from solida.infrastructure.dependencies.portail import (
@@ -39,6 +40,7 @@ __all__ = [
     "generer_fiche",
     "lire_decision",
     "lire_grille_active",
+    "lister_agents_agence",
     "lister_decisions",
     "lister_notifications",
     "lister_produits",

@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ConditionsReexamen } from "@/components/solida/ConditionsReexamen";
 import { ContributionsChart } from "@/components/solida/ContributionsChart";
 import type { ScoringResult } from "@/lib/contracts";
 
@@ -39,11 +40,7 @@ export function FactorsPanel({
       {result.tranche !== "accord" && result.conditions_reexamen.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-neutre-200 p-4">
           <span className="text-xs font-medium text-neutre-500">Conditions de réexamen</span>
-          <ul className="list-disc pl-4 text-sm text-neutre-700">
-            {result.conditions_reexamen.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+          <ConditionsReexamen conditions={result.conditions_reexamen} />
         </div>
       )}
 

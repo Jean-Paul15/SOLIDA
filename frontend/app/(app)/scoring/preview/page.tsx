@@ -3,18 +3,18 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
 import { ScoringResultView } from "@/components/solida/ScoringResultView";
 import { useApiErrorToast } from "@/lib/services/error-service";
 import { confirmDecision } from "@/lib/services/scoring";
 import { usePreview } from "@/lib/preview-context";
 import { withMinDuration } from "@/lib/timing";
+import { ECHEC, useAsyncAction } from "@/lib/use-async-action";
 
 export default function PagePrevisualisationScoring() {
   const router = useRouter();
   const { preview, setPreview } = usePreview();
-  const [confirmationInProgress, setConfirmationInProgress] = useState(false);
+  const { inProgress: confirmationInProgress, run } = useAsyncAction();
   const handleError = useApiErrorToast();
 
   if (!preview) {
@@ -34,15 +34,14 @@ export default function PagePrevisualisationScoring() {
   const { input, result, societaireNom } = preview;
 
   async function handleConfirm() {
-    setConfirmationInProgress(true);
-    try {
-      const enregistre = await withMinDuration(confirmDecision(input));
+    const enregistre = await run(() => withMinDuration(confirmDecision(input)), {
+      fallbackErrorMessage: "L'enregistrement a échoué.",
+      onError: (e) => handleError(e, "L'enregistrement a échoué."),
+    });
+    if (enregistre !== ECHEC) {
       toast.success("Décision enregistrée.");
       setPreview(null);
       router.push(`/scoring/${enregistre.decision_id}`);
-    } catch (e) {
-      handleError(e, "L'enregistrement a échoué.");
-      setConfirmationInProgress(false);
     }
   }
 

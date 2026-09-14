@@ -3,7 +3,7 @@ from dataclasses import replace
 from solida_modelisation.finance import mensualite_actuarielle
 
 from solida.domain.values.demande import DemandeScoring
-from solida.domain.values.features import FeaturesIndividuelles
+from solida.domain.values.features import FeaturesIndividuelles, FeaturesSolidaires
 
 
 def _revenu_effectif(demande: DemandeScoring, revenu_declare: int | None) -> int | None:
@@ -86,4 +86,22 @@ def _features_to_dict(
         "montant_max_rembourse": individuelles.montant_max_rembourse,
         "numero_cycle": individuelles.numero_cycle,
         "ratio_montant_historique": individuelles.ratio_montant_historique,
+    }
+
+
+def _features_to_dict_enrichi(
+    individuelles: FeaturesIndividuelles,
+    solidaires: FeaturesSolidaires,
+    demande: DemandeScoring,
+) -> dict[str, float | int | str | bool | None]:
+    """Catalogue enrichi : les 20 features SOCLE plus la couche solidaire (groupe
+    emprunteur). N'est appelé que pour un crédit de groupe éligible (`cascade.py`)."""
+    return {
+        **_features_to_dict(individuelles, demande),
+        "taille_groupe": solidaires.taille_groupe,
+        "anciennete_groupe_mois": solidaires.anciennete_groupe_mois,
+        "nb_credits_groupe_anterieurs": solidaires.nb_credits_groupe_anterieurs,
+        "nb_incidents_groupe_anterieurs": solidaires.nb_incidents_groupe_anterieurs,
+        "max_jours_retard_groupe_6m": solidaires.max_jours_retard_groupe_6m,
+        "nb_cautions_appelees_anterieures": solidaires.nb_cautions_appelees_anterieures,
     }

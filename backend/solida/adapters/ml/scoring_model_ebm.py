@@ -26,6 +26,7 @@ class EBMScoringModel:
         tracking_uri: str = "",
         model_name: str = "solida-socle",
         model_alias: str = "champion-demo",
+        nom_artefact_bundle: str = "bundle_socle",
     ) -> None:
         self._source = "fallback_dvc"
         self._modele = self._charger(
@@ -34,6 +35,7 @@ class EBMScoringModel:
             model_alias=model_alias,
             cache_path=cache_path,
             fallback_path=fallback_path,
+            nom_artefact_bundle=nom_artefact_bundle,
         )
 
     def _charger(
@@ -43,6 +45,7 @@ class EBMScoringModel:
         model_alias: str,
         cache_path: Path,
         fallback_path: Path,
+        nom_artefact_bundle: str,
     ) -> ModeleSocle:
         if tracking_uri:
             try:
@@ -52,11 +55,14 @@ class EBMScoringModel:
                 racine_modele = Path(
                     artifacts.download_artifacts(artifact_uri=uri, tracking_uri=tracking_uri)
                 )
-                telecharge = racine_modele / "artifacts" / "bundle_socle"
+                telecharge = racine_modele / "artifacts" / nom_artefact_bundle
                 if not telecharge.is_dir():
-                    telecharge = racine_modele / "bundle_socle"
+                    telecharge = racine_modele / nom_artefact_bundle
                 if not telecharge.is_dir():
-                    raise ValueError("Le modèle MLflow ne contient pas le bundle SOCLE attendu.")
+                    raise ValueError(
+                        f"Le modèle MLflow ne contient pas le bundle "
+                        f"{nom_artefact_bundle!r} attendu."
+                    )
                 cache_path.parent.mkdir(parents=True, exist_ok=True)
                 temporaire = cache_path.with_name(f"{cache_path.name}.nouveau")
                 if temporaire.exists():
@@ -90,9 +96,7 @@ class EBMScoringModel:
         return f"{self._modele.version}+{self._modele.checksum[:12]}"
 
     def variables_attendues(self) -> list[str]:
-        from solida_modelisation.catalogue import codes_features_socle
-
-        return codes_features_socle()
+        return self._modele.codes
 
     def predire(self, features: dict[str, ValeurFeature]) -> ProbabiliteDefaut:
         return ProbabiliteDefaut(self._modele.predire(features))

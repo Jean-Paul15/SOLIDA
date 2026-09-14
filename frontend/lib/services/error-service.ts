@@ -47,10 +47,14 @@ interface ApiErrorOptions {
 }
 
 /**
- * Classe la réponse d'erreur du backend, qui prend deux formes distinctes :
- * `{code, message}` pour les erreurs métier (DomainError), `{detail}` pour tout le
- * reste (401 d'authentification, 422 de validation Pydantic natif, 429, 5xx non
- * intercepté) — voir application_fastapi.py pour le handler `{code,message}`.
+ * Classe la réponse d'erreur du backend, qui prend TROIS formes distinctes :
+ * `{code, message}` aplati pour les `DomainError` (handler global,
+ * `application_fastapi.py`), `{detail: {code, message}}` imbriqué pour les
+ * `HTTPException(status, detail={...})` levées directement dans les routeurs (ex.
+ * "introuvable", "session_expiree", "agence_requise"), et `{detail}` brut pour tout
+ * le reste (422 de validation Pydantic natif, 429, 5xx non intercepté). Les deux
+ * premières formes portent un message métier précis à afficher tel quel — jamais le
+ * confondre avec le repli générique, qui masquerait une explication utile à l'agent.
  */
 export async function throwIfError(
   response: Response,
@@ -61,6 +65,22 @@ export async function throwIfError(
 
   if (typeof body?.code === "string" && typeof body?.message === "string") {
     throw new ApiError("domain", body.code, response.status, body.message, body.details);
+  }
+
+  if (
+    body?.detail &&
+    typeof body.detail === "object" &&
+    !Array.isArray(body.detail) &&
+    typeof body.detail.code === "string" &&
+    typeof body.detail.message === "string"
+  ) {
+    throw new ApiError(
+      "domain",
+      body.detail.code,
+      response.status,
+      body.detail.message,
+      body.detail.details
+    );
   }
 
   if (response.status === 401 && !options.authRoute) {

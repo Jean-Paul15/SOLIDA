@@ -13,6 +13,8 @@ _archive-instructions/
 *.key
 *.p12
 secrets/
+ACCES_DONNEES_LOCAL.txt
+PAQUET_TRANSFERT_SOLIDA_*.zip
 .secrets/
 
 # --- Python ---

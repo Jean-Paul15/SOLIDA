@@ -34,6 +34,24 @@ describe("throwIfError", () => {
     expect(error.message).toBe("Cette version existe déjà.");
   });
 
+  it("classe une erreur métier {detail: {code,message}} imbriquée (HTTPException levée dans un routeur)", async () => {
+    const error = await waitForApiError(
+      throwIfError(
+        response(400, {
+          detail: {
+            code: "agence_requise",
+            message: "Un superviseur réseau doit préciser une agence pour lister ses agents.",
+          },
+        })
+      )
+    );
+    expect(error.kind).toBe("domain");
+    expect(error.code).toBe("agence_requise");
+    expect(error.message).toBe(
+      "Un superviseur réseau doit préciser une agence pour lister ses agents."
+    );
+  });
+
   it("classe un 401 hors route d'authentification comme session expirée", async () => {
     const error = await waitForApiError(throwIfError(response(401, { detail: "Unauthorized" })));
     expect(error.kind).toBe("session_expired");

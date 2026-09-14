@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
+import { formaterFcfa } from "@/lib/format";
+import { useEtapeProtegee } from "@/lib/use-etape-protegee";
 
 // Plage et repères : plafond du catalogue produits documenté
 // (PLAN 72H/SOLIDA_Complements_et_Strategie.md, PLAN 72H/SOLIDA_Schema_Donnees_a_valider.md
@@ -17,20 +19,13 @@ const MONTANT_MAX = 3_000_000;
 const PAS = 10_000;
 const REPERES = [50_000, 500_000, 1_500_000, 3_000_000];
 
-function formaterFcfa(valeur: number): string {
-  return `${new Intl.NumberFormat("fr-FR").format(valeur)} FCFA`;
-}
-
 export default function MontantPage() {
   const router = useRouter();
   const { jetonSession, enregistrerMontant } = useDemande();
   const [montant, setMontant] = React.useState(200_000);
+  const pret = useEtapeProtegee(jetonSession);
 
-  React.useEffect(() => {
-    if (!jetonSession) router.replace("/numero-compte");
-  }, [jetonSession, router]);
-
-  if (!jetonSession) return null;
+  if (!pret) return null;
 
   function continuer() {
     enregistrerMontant(montant);
@@ -58,7 +53,9 @@ export default function MontantPage() {
         />
         <div className="mt-2 flex justify-between text-sm text-muted-foreground">
           {REPERES.map((repere) => (
-            <span key={repere}>{new Intl.NumberFormat("fr-FR").format(repere)}</span>
+            <span key={repere}>
+              {new Intl.NumberFormat("fr-FR").format(repere)}
+            </span>
           ))}
         </div>
       </div>

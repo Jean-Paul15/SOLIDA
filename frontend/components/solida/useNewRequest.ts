@@ -13,9 +13,10 @@ import {
 } from "@/lib/credit";
 import { usePreview } from "@/lib/preview-context";
 import { findProduit } from "@/lib/produits";
-import { ApiError, useApiErrorToast } from "@/lib/services/error-service";
+import { useApiErrorToast } from "@/lib/services/error-service";
 import { previewScore } from "@/lib/services/scoring";
 import { withMinDuration } from "@/lib/timing";
+import { ECHEC, useAsyncAction } from "@/lib/use-async-action";
 
 // Catalogue de durees "standard" (aligne sur simulateur/config.yaml, duree_mois_choix) : filtre
 // ensuite aux bornes reelles du produit selectionne plutot qu'affiche une liste universelle qui
@@ -28,6 +29,9 @@ interface UseNewRequestParams {
   nomComplet: string;
   activite: ActiviteEconomique;
   produits: ProduitCreditApi[];
+  /** Groupe emprunteur du sociétaire, s'il en a un : conditionne le mode enrichi côté backend
+   * (cascade), jamais deviné ici. */
+  groupeId?: string;
 }
 
 export function useNewRequest({
@@ -35,6 +39,7 @@ export function useNewRequest({
   nomComplet,
   activite,
   produits,
+  groupeId,
 }: UseNewRequestParams) {
   const router = useRouter();
   const { setPreview } = usePreview();
@@ -47,8 +52,7 @@ export function useNewRequest({
   const [refreshOpen, setRefreshOpen] = useState(false);
   const [revenu, setRevenu] = useState(activite.revenu_mensuel_declare ?? 0);
   const [charges, setCharges] = useState(activite.charges_mensuelles ?? 0);
-  const [inProgress, setInProgress] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { inProgress, error, run, reset } = useAsyncAction();
   const handleError = useApiErrorToast();
 
   const produit = findProduit(produits, produitId);
@@ -87,33 +91,30 @@ export function useNewRequest({
   );
 
   function annuler(): void {
-    setError(null);
+    reset();
     setSheetOpen(false);
   }
 
   async function calculerLeScore() {
-    setInProgress(true);
-    setError(null);
     const input: ScoringInput = {
       societaire_id: societaireId,
       produit_id: produitId,
       montant_demande: montant,
       duree_demandee_mois: duree,
       objet_credit: objet,
+      groupe_id: groupeId,
       actualisation: refreshOpen
         ? { revenu_mensuel_declare: revenu, charges_mensuelles: charges }
         : undefined,
     };
-    try {
-      const result = await withMinDuration(previewScore(input));
+    const result = await run(() => withMinDuration(previewScore(input)), {
+      fallbackErrorMessage: "Le calcul du score a échoué.",
+      onError: (e) => handleError(e, "Le calcul du score a échoué."),
+    });
+    if (result !== ECHEC) {
       setPreview({ input, result, societaireNom: nomComplet });
       setSheetOpen(false);
       router.push("/scoring/preview");
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Le calcul du score a échoué.");
-      handleError(e, "Le calcul du score a échoué.");
-    } finally {
-      setInProgress(false);
     }
   }
 

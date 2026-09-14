@@ -130,12 +130,11 @@ export interface ActiviteEconomique {
   parts_sociales_montant: number;
 }
 
-export type SensMouvementEpargne = "depot" | "retrait";
-
-export interface MouvementEpargne {
-  date_operation: string;
-  sens: SensMouvementEpargne;
-  montant: number;
+export interface PointSoldeMensuel {
+  mois: string;
+  solde_fin_mois: number;
+  total_depots: number;
+  total_retraits: number;
 }
 
 export interface SyntheseEpargne {
@@ -145,7 +144,8 @@ export interface SyntheseEpargne {
   volatilite: number;
   ratio_epargne_revenu: number;
   anciennete_relation_mois: number;
-  mouvements_recents: MouvementEpargne[];
+  /** Mois réellement arrêtés, triés chronologiquement, jamais reconstruits (§5.2/5.14). */
+  serie_solde_12m: PointSoldeMensuel[];
 }
 
 export interface CreditResume {
@@ -225,6 +225,11 @@ export interface DemandeSocietaireApi {
 export interface PageNotificationsApi {
   elements: DemandeSocietaireApi[];
   total: number;
+}
+
+export interface AgentAgenceApi {
+  id: string;
+  nom_complet: string;
 }
 
 export interface GridParametersApi {

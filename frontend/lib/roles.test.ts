@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessCreditPolicy, canEditGrille, canScore } from "./roles";
+import { canAccessCreditPolicy, canAccessNotifications, canEditGrille, canScore } from "./roles";
 
 describe("canScore", () => {
   it("autorise uniquement l'agent", () => {
@@ -36,5 +36,18 @@ describe("canAccessCreditPolicy", () => {
   it("refuse l'agent et l'absence de rôle", () => {
     expect(canAccessCreditPolicy("agent")).toBe(false);
     expect(canAccessCreditPolicy(undefined)).toBe(false);
+  });
+});
+
+describe("canAccessNotifications", () => {
+  it("autorise l'agent et le superviseur", () => {
+    expect(canAccessNotifications("agent")).toBe(true);
+    expect(canAccessNotifications("superviseur")).toBe(true);
+  });
+
+  it("refuse auditeur, administrateur et l'absence de rôle", () => {
+    expect(canAccessNotifications("auditeur")).toBe(false);
+    expect(canAccessNotifications("administrateur")).toBe(false);
+    expect(canAccessNotifications(undefined)).toBe(false);
   });
 });

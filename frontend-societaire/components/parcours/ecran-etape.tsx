@@ -5,12 +5,13 @@ import { ChevronLeft } from "lucide-react";
 import { CadreMobile } from "./cadre-mobile";
 import { cn } from "@/lib/utils";
 
-const NB_ETAPES = 6;
+const NB_ETAPES = 7;
 
 /**
- * Coquille commune aux écrans C2 à C7 (les 6 étapes de saisie — "Étape 3 sur 6",
- * section 5 du document). Un seul bouton d'action visible par écran (section 3),
- * retour toujours possible (section 5 : "aucune impasse").
+ * Coquille commune aux écrans de saisie du parcours ("Étape 3 sur 7", section 5 du
+ * document — le choix du produit ajoute une 7e étape à l'origine à 6). Un seul
+ * bouton d'action visible par écran (section 3), retour toujours possible
+ * (section 5 : "aucune impasse").
  */
 export function EcranEtape({
   etape,
@@ -45,7 +46,9 @@ export function EcranEtape({
             <button
               type="button"
               aria-label="Retour à l'étape précédente"
-              onClick={() => (precedent ? router.push(precedent) : router.back())}
+              onClick={() =>
+                precedent ? router.push(precedent) : router.back()
+              }
               className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition active:scale-90 hover:bg-muted active:bg-neutre-200"
             >
               <ChevronLeft className="size-5" />
@@ -56,7 +59,7 @@ export function EcranEtape({
                   key={i}
                   className={cn(
                     "h-1.5 flex-1 rounded-full",
-                    i < etape ? "bg-solida-teal-600" : "bg-neutre-200"
+                    i < etape ? "bg-solida-teal-600" : "bg-neutre-200",
                   )}
                 />
               ))}
@@ -76,7 +79,9 @@ export function EcranEtape({
         <main className="mt-[clamp(2rem,12vh,5rem)] sm:mt-3">
           <h1 className="text-xl font-semibold text-balance">{titre}</h1>
           {sousTitre ? (
-            <p className="mt-1.5 text-base text-muted-foreground">{sousTitre}</p>
+            <p className="mt-1.5 text-base text-muted-foreground">
+              {sousTitre}
+            </p>
           ) : null}
           <div className="mt-5">{children}</div>
         </main>

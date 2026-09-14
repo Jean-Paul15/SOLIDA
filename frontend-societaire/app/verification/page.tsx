@@ -9,16 +9,14 @@ import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
 import { verifierCompte } from "@/lib/services/portail";
 import { afficherErreur } from "@/lib/services/error-service";
+import { useEtapeProtegee } from "@/lib/use-etape-protegee";
 
 export default function VerificationPage() {
   const router = useRouter();
   const { numeroCompte, enregistrerVerification } = useDemande();
   const [montant, setMontant] = React.useState("");
   const [envoiEnCours, setEnvoiEnCours] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!numeroCompte) router.replace("/numero-compte");
-  }, [numeroCompte, router]);
+  const pret = useEtapeProtegee(numeroCompte);
 
   const valide = montant.length > 0;
 
@@ -35,7 +33,7 @@ export default function VerificationPage() {
     } catch (erreur) {
       afficherErreur(
         erreur,
-        "Numéro de compte ou montant incorrect. Vérifiez et réessayez, ou rendez-vous à votre agence."
+        "Numéro de compte ou montant incorrect. Vérifiez et réessayez, ou rendez-vous à votre agence.",
       );
       setMontant("");
     } finally {
@@ -43,7 +41,7 @@ export default function VerificationPage() {
     }
   }
 
-  if (!numeroCompte) return null;
+  if (!pret) return null;
 
   return (
     <EcranEtape

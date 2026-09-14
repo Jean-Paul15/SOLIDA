@@ -12,6 +12,13 @@ class ParametresGrille(BaseModel):
     # pas de borne de reference documentee, donc pas de valeur inventee ici.
     multiplicateur_vigilance: float
     multiplicateur_examen: float = Field(ge=1.20, le=2.50)
+    # Valeur de repli alignee sur `ParametresGrille.plafond_institutionnel_fcfa` : un appel
+    # qui omet le champ (anciens clients, tests existants) garde le maximum institutionnel
+    # actuel plutot que d'echouer la validation.
+    plafond_institutionnel_fcfa: int = Field(default=100_000_000, gt=0)
+    # Valeur de demonstration (voir solida.domain.rules.grille.ParametresGrille), pas une
+    # norme FUCEC ni BCEAO documentee : repli identique pour ne pas casser un appel existant.
+    ratio_endettement_maximal: float = Field(default=0.33, gt=0, le=1)
 
 
 class ParametresProgressif(BaseModel):

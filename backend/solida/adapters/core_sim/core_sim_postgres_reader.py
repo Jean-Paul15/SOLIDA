@@ -1,13 +1,16 @@
 from datetime import date
 
+from solida_modelisation.features_epargne import SoldeMensuelEpargne
 from sqlalchemy import Engine
 
 from solida.adapters.core_sim.postgres_credit_reader import PostgresCreditReader
+from solida.adapters.core_sim.postgres_donnees_groupe_reader import PostgresDonneesGroupeReader
 from solida.adapters.core_sim.postgres_epargne_reader import PostgresEpargneReader
 from solida.adapters.core_sim.postgres_garantie_reader import PostgresGarantieReader
 from solida.adapters.core_sim.postgres_groupe_reader import PostgresGroupeReader
 from solida.adapters.core_sim.postgres_produit_reader import PostgresProduitReader
 from solida.adapters.core_sim.postgres_societaire_reader import PostgresSocietaireReader
+from solida.adapters.core_sim.postgres_solde_mensuel_reader import PostgresSoldeMensuelReader
 from solida.domain.entities.compte_epargne import CompteEpargne
 from solida.domain.entities.credit import Credit
 from solida.domain.entities.garantie import Garantie
@@ -15,6 +18,7 @@ from solida.domain.entities.groupe import GroupeCaution
 from solida.domain.entities.mouvement_epargne import MouvementEpargne
 from solida.domain.entities.produit_credit import ProduitCredit
 from solida.domain.entities.societaire import Societaire
+from solida.domain.values.features import DonneesGroupeBrutes
 from solida.domain.values.societaire_search_result import SocietaireSearchResult
 
 
@@ -34,6 +38,8 @@ class CoreSimPostgresReader:
         self._garanties = PostgresGarantieReader(engine)
         self._groupes = PostgresGroupeReader(engine)
         self._produits = PostgresProduitReader(engine)
+        self._donnees_groupe = PostgresDonneesGroupeReader(engine)
+        self._soldes_mensuels = PostgresSoldeMensuelReader(engine)
 
     def rechercher_societaires(
         self, terme: str, limite: int, agence_id: str | None = None
@@ -68,3 +74,9 @@ class CoreSimPostgresReader:
 
     def charger_produits(self) -> list[ProduitCredit]:
         return self._produits.charger_produits()
+
+    def charger_donnees_groupe(self, gie_id: str) -> DonneesGroupeBrutes | None:
+        return self._donnees_groupe.charger_donnees_groupe(gie_id)
+
+    def charger_soldes_mensuels(self, societaire_id: str, avant: date) -> list[SoldeMensuelEpargne]:
+        return self._soldes_mensuels.charger_soldes_mensuels(societaire_id, avant)

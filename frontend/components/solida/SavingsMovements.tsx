@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { formatAmount } from "@/lib/format";
 import type { SyntheseEpargne } from "@/lib/contracts";
-import { savingsTrajectory } from "@/lib/savings-trajectory";
+import { selectHorizon } from "@/lib/savings-trajectory";
 
 const TREND_LABEL = {
   hausse: "↗ en hausse",
@@ -19,17 +19,15 @@ const TREND_LABEL = {
   erosion: "↘ en érosion",
 };
 
-// La courbe et les puces reposent sur la même agrégation mensuelle des mouvements réels.
+// Fenêtre maximale proposée, jamais une garantie : jamais masquée même si l'historique réel
+// est plus court (§5.14) — c'est `selectHorizon` qui sert l'intersection.
 const HORIZONS = [3, 6, 9, 12] as const;
 
 export function SavingsMovements({ epargne }: { epargne: SyntheseEpargne }) {
-  const [maintenant] = useState(() => Date.now());
   const [monthsHorizon, setMonthsHorizon] = useState<number>(12);
 
-  const chartData = useMemo(
-    () => savingsTrajectory(epargne, monthsHorizon, maintenant),
-    [epargne, monthsHorizon, maintenant]
-  );
+  const chartData = useMemo(() => selectHorizon(epargne, monthsHorizon), [epargne, monthsHorizon]);
+  const historiqueReduit = chartData.length < monthsHorizon;
 
   const depositMonths = chartData.filter((month) => month.depots > 0).length;
   const filledMonths = chartData.map((month) => month.depots > 0);
@@ -109,12 +107,19 @@ export function SavingsMovements({ epargne }: { epargne: SyntheseEpargne }) {
         ))}
       </div>
       <span className="text-xs text-neutre-500">
-        Régularité d&rsquo;épargne : {depositMonths}/{monthsHorizon} mois avec dépôt
+        Régularité d&rsquo;épargne : {depositMonths}/{chartData.length} mois avec dépôt
       </span>
 
-      <span className="text-xs text-neutre-500">
-        Mouvements réels observés sur les {monthsHorizon} derniers mois.
-      </span>
+      {historiqueReduit ? (
+        <span className="text-xs font-medium text-alerte">
+          Historique d&rsquo;épargne de {chartData.length} mois : indicateurs calculés sur une
+          période réduite.
+        </span>
+      ) : (
+        <span className="text-xs text-neutre-500">
+          Mouvements réels observés sur les {chartData.length} derniers mois.
+        </span>
+      )}
 
       <span className="text-xs text-neutre-500">
         Sociétaire depuis {epargne.anciennete_relation_mois} mois, relation d&rsquo;épargne

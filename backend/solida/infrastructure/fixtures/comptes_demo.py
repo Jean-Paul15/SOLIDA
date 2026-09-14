@@ -26,6 +26,13 @@ COMPTES_DEMO: list[dict[str, str | None]] = [
         "agence_id": None,
     },
     {
+        "identifiant": "superviseur.cai00",
+        "email": "superviseur.cai00@solida.local",
+        "nom_complet": "Superviseure Bè",
+        "role": "superviseur",
+        "agence_id": "CAI-00",
+    },
+    {
         "identifiant": "auditeur.interne",
         "email": "auditeur.interne@solida.local",
         "nom_complet": "Auditeur Interne",

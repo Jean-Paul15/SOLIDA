@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { NumberTicker } from "@/components/solida/NumberTicker";
 import type { ScoringResult } from "@/lib/contracts";
 import { formatAmount } from "@/lib/format";
-import { TRANCHE_COLOR, LABEL_TRANCHE } from "@/lib/labels";
+import { TRANCHE_COLOR, LABEL_TRANCHE, EXPLICATION_TRANCHE } from "@/lib/labels";
 import {
   FOND_TRANCHE_JAUGE,
   gaugePosition,
@@ -103,9 +103,7 @@ export function RecommendationPanel({ result, zones }: RecommendationPanelProps)
           </div>
         )}
 
-        <span className="text-xs text-neutre-500">
-          La décision finale relève de l&rsquo;agent et du comité de crédit.
-        </span>
+        <span className="text-xs text-neutre-500">{EXPLICATION_TRANCHE[result.tranche]}</span>
       </div>
 
       <div className="flex items-center gap-2 text-xs text-neutre-700">
@@ -135,7 +133,9 @@ export function RecommendationPanel({ result, zones }: RecommendationPanelProps)
           {result.trajectoire_progression.map((p) => (
             <div key={p.cycle} className="flex justify-between text-sm">
               <span className="text-neutre-700">Prochain cycle</span>
-              <span className="font-mono text-neutre-950">{formatAmount(p.plafond_accessible)}</span>
+              <span className="font-mono text-neutre-950">
+                {formatAmount(p.plafond_accessible)}
+              </span>
             </div>
           ))}
           <span className="text-xs text-neutre-500 italic">

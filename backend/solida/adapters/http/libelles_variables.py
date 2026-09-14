@@ -53,7 +53,24 @@ _DEFINITIONS: dict[str, _Definition] = {
     "parts_sociales_montant": _Definition("Montant des parts sociales", "profil", "fcfa"),
     "nb_personnes_a_charge": _Definition("Personnes à charge", "profil", "entier"),
     "en_groupe": _Definition("Appartenance à un groupe de caution", "solidaire", "booleen"),
+    "tendance_epargne_12m": _Definition("Tendance de l'épargne (12 mois)", "epargne", "tendance"),
+    "taille_groupe": _Definition("Taille du groupe de caution", "solidaire", "entier"),
+    "anciennete_groupe_mois": _Definition("Ancienneté du groupe de caution", "solidaire", "mois"),
+    "nb_credits_groupe_anterieurs": _Definition(
+        "Crédits antérieurs du groupe", "solidaire", "entier"
+    ),
+    "nb_incidents_groupe_anterieurs": _Definition(
+        "Incidents antérieurs du groupe", "solidaire", "entier"
+    ),
+    "max_jours_retard_groupe_6m": _Definition(
+        "Retard maximal du groupe (6 mois)", "solidaire", "jours"
+    ),
+    "nb_cautions_appelees_anterieures": _Definition(
+        "Cautions déjà appelées dans le groupe", "solidaire", "entier"
+    ),
 }
+
+_LIBELLES_TENDANCE = {"hausse": "En hausse", "stable": "Stable", "erosion": "En érosion"}
 
 _DEFINITION_INCONNUE = _Definition("Variable non documentée", "profil", "brut")
 
@@ -72,6 +89,8 @@ def formater_valeur(code_variable: str, valeur: float | int | str | bool | None)
     format_ = _DEFINITIONS.get(code_variable, _DEFINITION_INCONNUE).format
     if format_ in {"texte", "brut"}:
         return str(valeur)
+    if format_ == "tendance":
+        return _LIBELLES_TENDANCE.get(str(valeur), str(valeur))
     if format_ == "booleen":
         return "Oui" if bool(valeur) else "Non"
     if not isinstance(valeur, (float, int)):
@@ -99,10 +118,12 @@ def sens(points: float) -> Literal["favorable", "defavorable", "neutre"]:
     return "neutre"
 
 
-def explication(code_variable: str, valeur_affichee: str, points: float) -> str:
+def explication(points: float) -> str:
+    """Phrase de jugement seule : l'appelant affiche déjà `{libelle} : {valeur}` juste
+    au-dessus (`FicheApercu.tsx`), la répéter ici ferait doublon."""
     jugement = {
-        "favorable": "contribue positivement au score",
-        "defavorable": "pèse négativement sur le score",
-        "neutre": "n'a pas d'effet notable sur le score",
-    }[sens(points)]
-    return f"{libelle(code_variable)} : {valeur_affichee} ; {jugement}."
+        "favorable": "Contribue positivement au score.",
+        "defavorable": "Pèse négativement sur le score.",
+        "neutre": "N'a pas d'effet notable sur le score.",
+    }
+    return jugement[sens(points)]

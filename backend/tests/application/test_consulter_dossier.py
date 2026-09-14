@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from datetime import date
 
+from solida_modelisation.features_epargne import SoldeMensuelEpargne
+
 from solida.application.use_cases.consulter_dossier import ConsulterDossier
 from solida.domain.entities.compte_epargne import CompteEpargne
 from solida.domain.entities.credit import Credit
 from solida.domain.entities.groupe import GroupeCaution, MembreGroupe
-from solida.domain.entities.mouvement_epargne import MouvementEpargne
 from solida.domain.entities.societaire import Societaire
 
 
@@ -85,7 +86,7 @@ class _FakeCoreSimReader:
     credits: list[Credit]
     compte: CompteEpargne | None
     groupe: GroupeCaution | None
-    mouvements: list[MouvementEpargne]
+    soldes_mensuels: list[SoldeMensuelEpargne]
 
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
         return self.societaire
@@ -99,16 +100,14 @@ class _FakeCoreSimReader:
     def charger_groupe(self, societaire_id: str) -> GroupeCaution | None:
         return self.groupe
 
-    def charger_mouvements_epargne(
-        self, societaire_id: str, depuis: date
-    ) -> list[MouvementEpargne]:
-        return self.mouvements
+    def charger_soldes_mensuels(self, societaire_id: str, avant: date) -> list[SoldeMensuelEpargne]:
+        return self.soldes_mensuels
 
 
 def test_executer_renvoie_none_si_societaire_introuvable() -> None:
     use_case = ConsulterDossier(
         core_sim_reader=_FakeCoreSimReader(
-            societaire=None, credits=[], compte=None, groupe=None, mouvements=[]
+            societaire=None, credits=[], compte=None, groupe=None, soldes_mensuels=[]
         )
     )
 
@@ -129,14 +128,12 @@ def test_executer_compose_le_dossier_complet() -> None:
                 volatilite=0.2,
             ),
             groupe=_groupe(),
-            mouvements=[
-                MouvementEpargne(
-                    mouvement_id="MVT-1",
-                    compte_id="CPT-1",
-                    date_operation=date(2024, 1, 1),
-                    sens="depot",
-                    montant=10000,
-                    type_operation="depot",
+            soldes_mensuels=[
+                SoldeMensuelEpargne(
+                    mois=date(2024, 1, 1),
+                    solde_fin_mois=50000,
+                    total_depots=10000,
+                    total_retraits=0,
                 )
             ],
         )
@@ -148,6 +145,8 @@ def test_executer_compose_le_dossier_complet() -> None:
     assert dossier.identite.societaire_id == "SOC-1"
     assert dossier.activite.secteur == "Commerce et services"
     assert dossier.epargne.tendance_12m == "hausse"
+    assert len(dossier.epargne.serie_solde_12m) == 1
+    assert dossier.epargne.serie_solde_12m[0].solde_fin_mois == 50000
     assert len(dossier.historique_credit) == 1
     assert dossier.groupe is not None
     assert dossier.alertes == []

@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import type { DureeMois, DemandePreVerificationReponse } from "./contracts";
+import type {
+  DemandePreVerificationReponse,
+  ProduitCreditApi,
+} from "./contracts";
 import type { ObjetCredit } from "./objets-credit";
 
 /**
@@ -16,7 +19,8 @@ interface EtatDemande {
   prenom: string | null;
   montant: number | null;
   objet: ObjetCredit | null;
-  dureeMois: DureeMois | null;
+  produit: ProduitCreditApi | null;
+  dureeMois: number | null;
   resultat: DemandePreVerificationReponse | null;
 }
 
@@ -26,6 +30,7 @@ const ETAT_INITIAL: EtatDemande = {
   prenom: null,
   montant: null,
   objet: null,
+  produit: null,
   dureeMois: null,
   resultat: null,
 };
@@ -35,7 +40,8 @@ interface ContexteDemande extends EtatDemande {
   enregistrerVerification: (jetonSession: string, prenom: string) => void;
   enregistrerMontant: (montant: number) => void;
   enregistrerObjet: (objet: ObjetCredit) => void;
-  enregistrerDuree: (dureeMois: DureeMois) => void;
+  enregistrerProduit: (produit: ProduitCreditApi) => void;
+  enregistrerDuree: (dureeMois: number) => void;
   enregistrerResultat: (resultat: DemandePreVerificationReponse) => void;
   reinitialiser: () => void;
 }
@@ -60,12 +66,15 @@ export function DemandeProvider({ children }: { children: React.ReactNode }) {
         setEtat((precedent) => ({ ...precedent, montant, resultat: null })),
       enregistrerObjet: (objet) =>
         setEtat((precedent) => ({ ...precedent, objet, resultat: null })),
+      enregistrerProduit: (produit) =>
+        setEtat((precedent) => ({ ...precedent, produit, resultat: null })),
       enregistrerDuree: (dureeMois) =>
         setEtat((precedent) => ({ ...precedent, dureeMois, resultat: null })),
-      enregistrerResultat: (resultat) => setEtat((precedent) => ({ ...precedent, resultat })),
+      enregistrerResultat: (resultat) =>
+        setEtat((precedent) => ({ ...precedent, resultat })),
       reinitialiser: () => setEtat(ETAT_INITIAL),
     }),
-    [etat]
+    [etat],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;

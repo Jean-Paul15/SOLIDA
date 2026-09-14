@@ -65,13 +65,14 @@ class SqlDemandeSocietaireRepository:
             connection.commit()
         return _row_to_demande(row)
 
-    def lister(
+    def lister_non_assignees(
         self, agence_id: str | None, statut: str, limite: int, decalage: int
     ) -> list[DemandeSocietaire]:
         query = text("""
             SELECT * FROM demande_societaire
             WHERE (CAST(:agence_id AS text) IS NULL OR agence_id = :agence_id)
               AND statut = :statut
+              AND assigne_a_agent_id IS NULL
             ORDER BY cree_le DESC
             LIMIT :limite OFFSET :decalage
         """)
@@ -87,15 +88,53 @@ class SqlDemandeSocietaireRepository:
             )
             return [_row_to_demande(row) for row in rows]
 
-    def compter(self, agence_id: str | None, statut: str) -> int:
+    def compter_non_assignees(self, agence_id: str | None, statut: str) -> int:
         query = text("""
             SELECT count(*) FROM demande_societaire
             WHERE (CAST(:agence_id AS text) IS NULL OR agence_id = :agence_id)
               AND statut = :statut
+              AND assigne_a_agent_id IS NULL
         """)
         with self._engine.connect() as connection:
             return connection.execute(
                 query, {"agence_id": agence_id, "statut": statut}
+            ).scalar_one()
+
+    def lister_assignees(
+        self, agence_id: str | None, agent_id: str, statut: str, limite: int, decalage: int
+    ) -> list[DemandeSocietaire]:
+        query = text("""
+            SELECT * FROM demande_societaire
+            WHERE (CAST(:agence_id AS text) IS NULL OR agence_id = :agence_id)
+              AND statut = :statut
+              AND assigne_a_agent_id = :agent_id
+            ORDER BY cree_le DESC
+            LIMIT :limite OFFSET :decalage
+        """)
+        with self._engine.connect() as connection:
+            rows = connection.execute(
+                query,
+                {
+                    "agence_id": agence_id,
+                    "agent_id": uuid.UUID(agent_id),
+                    "statut": statut,
+                    "limite": limite,
+                    "decalage": decalage,
+                },
+            )
+            return [_row_to_demande(row) for row in rows]
+
+    def compter_assignees(self, agence_id: str | None, agent_id: str, statut: str) -> int:
+        query = text("""
+            SELECT count(*) FROM demande_societaire
+            WHERE (CAST(:agence_id AS text) IS NULL OR agence_id = :agence_id)
+              AND statut = :statut
+              AND assigne_a_agent_id = :agent_id
+        """)
+        with self._engine.connect() as connection:
+            return connection.execute(
+                query,
+                {"agence_id": agence_id, "agent_id": uuid.UUID(agent_id), "statut": statut},
             ).scalar_one()
 
     def lire(self, demande_id: str) -> DemandeSocietaire | None:

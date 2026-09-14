@@ -123,14 +123,19 @@ services:
       SEAWEEDFS_BUCKET: solida-fiches
       MODELE_SOCLE_PATH: /app/modeles/bundle_socle
       MODELE_SOCLE_CACHE_PATH: /var/cache/solida-modele
+      MODELE_ENRICHI_PATH: /app/modeles/bundle_enrichi
+      MODELE_ENRICHI_CACHE_PATH: /var/cache/solida-modele-enrichi
       MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
       MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-solida-socle}
       MLFLOW_MODEL_ALIAS: ${MLFLOW_MODEL_ALIAS:-champion-demo}
+      MLFLOW_MODEL_NAME_ENRICHI: ${MLFLOW_MODEL_NAME_ENRICHI:-solida-enrichi}
     volumes:
       - ./backend:/app/backend
       - ./modelisation/data/modeles/bundle_socle:/app/modeles/bundle_socle:ro
+      - ./modelisation/data/modeles/bundle_enrichi:/app/modeles/bundle_enrichi:ro
       - back_venv:/app/backend/.venv
       - modele_socle_cache:/var/cache/solida-modele
+      - modele_enrichi_cache:/var/cache/solida-modele-enrichi
     networks:
       - solida
     depends_on:
@@ -230,12 +235,17 @@ services:
       SEAWEEDFS_BUCKET: solida-fiches
       MODELE_SOCLE_PATH: /app/modeles/bundle_socle
       MODELE_SOCLE_CACHE_PATH: /var/cache/solida-modele
+      MODELE_ENRICHI_PATH: /app/modeles/bundle_enrichi
+      MODELE_ENRICHI_CACHE_PATH: /var/cache/solida-modele-enrichi
       MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
       MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-solida-socle}
       MLFLOW_MODEL_ALIAS: ${MLFLOW_MODEL_ALIAS:-champion-demo}
+      MLFLOW_MODEL_NAME_ENRICHI: ${MLFLOW_MODEL_NAME_ENRICHI:-solida-enrichi}
     volumes:
       - ./modelisation/data/modeles/bundle_socle:/app/modeles/bundle_socle:ro
+      - ./modelisation/data/modeles/bundle_enrichi:/app/modeles/bundle_enrichi:ro
       - modele_socle_cache:/var/cache/solida-modele
+      - modele_enrichi_cache:/var/cache/solida-modele-enrichi
     networks:
       - solida
     depends_on:
@@ -364,6 +374,7 @@ services:
         mlflow server --host 0.0.0.0 --port 5000
         --backend-store-uri "$${MLFLOW_BACKEND_STORE_URI}"
         --default-artifact-root s3://mlflow
+        --allowed-hosts "*"
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_PASSWORD}@postgres-mlflow:5432/mlflow
       MLFLOW_S3_ENDPOINT_URL: http://seaweedfs:8333
@@ -395,6 +406,7 @@ volumes:
   pgdata_mlflow:
   seaweedfs_data:
   modele_socle_cache:
+  modele_enrichi_cache:
 
 networks:
   solida:

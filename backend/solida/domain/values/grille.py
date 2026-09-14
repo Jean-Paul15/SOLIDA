@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from solida.domain.rules.grille import ParametresGrille
@@ -19,3 +20,7 @@ class ConfigurationGrille:
     auteur: str
     date_activation: datetime
     active: bool
+    classification_objets: Mapping[str, str] = field(default_factory=dict)
+    """`objet_credit` -> `divisible` | `indivisible` | `mixte`. Vide tant qu'aucune table
+    métier réelle n'a été fournie (`modelisation/docs/decisions-socle.md`) : un objet
+    absent de cette table n'est jamais deviné divisible."""

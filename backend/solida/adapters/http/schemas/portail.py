@@ -17,6 +17,7 @@ class DemandePreVerificationRequete(BaseModel):
     montant: int = Field(gt=0)
     objet: ObjetCredit
     duree_mois: int = Field(gt=0, le=1200)
+    produit_id: str = Field(min_length=1)
 
 
 class DemandePreVerificationReponse(BaseModel):

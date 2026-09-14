@@ -1,12 +1,16 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { CentreNotifications } from "@/components/solida/CentreNotifications";
+import { CentreNotificationsAgent } from "@/components/solida/CentreNotificationsAgent";
+import { CentreNotificationsSuperviseur } from "@/components/solida/CentreNotificationsSuperviseur";
 import { fetchBackend } from "@/lib/backend";
 import type { PageNotificationsApi } from "@/lib/contracts";
-import { redirectIfUnauthenticated } from "@/lib/session";
+import { readSession, redirectIfUnauthenticated } from "@/lib/session";
 
 export default async function PageNotifications() {
-  const response = await fetchBackend("/api/v1/notifications?limite=50");
+  const [response, session] = await Promise.all([
+    fetchBackend("/api/v1/notifications?limite=50"),
+    readSession(),
+  ]);
   redirectIfUnauthenticated(response);
   const { elements }: PageNotificationsApi = response.ok
     ? await response.json()
@@ -24,7 +28,11 @@ export default async function PageNotifications() {
       <h1 className="font-serif-title text-lg font-semibold text-neutre-950">
         Demandes des sociétaires
       </h1>
-      <CentreNotifications initial={elements} />
+      {session?.role === "superviseur" ? (
+        <CentreNotificationsSuperviseur initial={elements} />
+      ) : (
+        <CentreNotificationsAgent initial={elements} />
+      )}
     </main>
   );
 }

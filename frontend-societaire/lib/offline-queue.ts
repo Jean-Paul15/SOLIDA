@@ -25,6 +25,7 @@ export interface DemandeEnAttente {
   montant: number;
   objet: string;
   duree_mois: number;
+  produit_id: string;
   mise_en_file_le: string;
 }
 
@@ -52,12 +53,15 @@ export async function mettreEnFile(demande: DemandeEnAttente): Promise<void> {
 
 export async function lireFile(): Promise<DemandeEnAttente | undefined> {
   const base = await ouvrirBase();
-  const resultat = await new Promise<DemandeEnAttente | undefined>((resolve, reject) => {
-    const transaction = base.transaction(NOM_MAGASIN, "readonly");
-    const requete = transaction.objectStore(NOM_MAGASIN).get(CLE_UNIQUE);
-    requete.onsuccess = () => resolve(requete.result as DemandeEnAttente | undefined);
-    requete.onerror = () => reject(requete.error);
-  });
+  const resultat = await new Promise<DemandeEnAttente | undefined>(
+    (resolve, reject) => {
+      const transaction = base.transaction(NOM_MAGASIN, "readonly");
+      const requete = transaction.objectStore(NOM_MAGASIN).get(CLE_UNIQUE);
+      requete.onsuccess = () =>
+        resolve(requete.result as DemandeEnAttente | undefined);
+      requete.onerror = () => reject(requete.error);
+    },
+  );
   base.close();
   return resultat;
 }

@@ -1,7 +1,13 @@
 # Partage optionnel du stockage DVC/MLflow vers un autre poste du LAN ou du VPN.
-# Par défaut, l'interface S3 reste locale. Choisir explicitement une adresse VPN/LAN et
-# protéger le réseau avant de modifier SEAWEEDFS_BIND_ADDRESS dans le fichier .env local.
+# Par défaut, l'interface S3 et l'UI MLflow restent locales. Choisir explicitement une
+# adresse VPN/LAN et protéger le réseau avant de modifier SEAWEEDFS_BIND_ADDRESS /
+# MLFLOW_BIND_ADDRESS dans le fichier .env local. Usage : démarrer le profil "mlops" avec ce
+# fichier en plus du docker-compose.yml principal, ex. :
+#   docker compose --profile mlops -f docker-compose.yml -f docker-compose.mlops-share.yml up -d
 services:
   seaweedfs:
     ports:
       - "${SEAWEEDFS_BIND_ADDRESS:-127.0.0.1}:8333:8333"
+  mlflow:
+    ports:
+      - "${MLFLOW_BIND_ADDRESS:-127.0.0.1}:5000:5000"

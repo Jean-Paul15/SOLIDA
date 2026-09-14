@@ -13,7 +13,7 @@ import joblib
 import pandas as pd
 
 from .calibration import CalibrateurPlatt
-from .catalogue import FEATURES_SOCLE, codes_features_socle
+from .catalogue import FeatureSpec, catalogue_par_identifiant
 
 
 @dataclass(frozen=True)
@@ -39,9 +39,11 @@ def empreinte_fichier(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _distributions_reference(features: pd.DataFrame) -> dict[str, dict[str, object]]:
+def _distributions_reference(
+    features: pd.DataFrame, catalogue: tuple[FeatureSpec, ...]
+) -> dict[str, dict[str, object]]:
     resultat: dict[str, dict[str, object]] = {}
-    for specification in FEATURES_SOCLE:
+    for specification in catalogue:
         serie = features[specification.code]
         manquants = float(serie.isna().mean())
         if specification.type_ebm == "continue":
@@ -80,14 +82,18 @@ def sauvegarder_bundle(
     strategie_ponderation: str = "non_pondere",
     features_reference: pd.DataFrame | None = None,
     version: str = "0.1.0",
+    catalogue: tuple[FeatureSpec, ...] | None = None,
+    identifiant: str = "solida-socle",
 ) -> ManifesteModele:
+    catalogue_effectif = catalogue if catalogue is not None else catalogue_par_identifiant(identifiant)
+    codes = [feature.code for feature in catalogue_effectif]
     dossier.mkdir(parents=True, exist_ok=True)
     modele_path = dossier / "modele.joblib"
     joblib.dump(modele, modele_path)
     checksum = empreinte_fichier(modele_path)
     joblib.dump(calibrateur, dossier / "calibrateur.joblib")
     (dossier / "catalogue_features.json").write_text(
-        json.dumps([asdict(feature) for feature in FEATURES_SOCLE], ensure_ascii=False, indent=2),
+        json.dumps([asdict(feature) for feature in catalogue_effectif], ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     export_json = getattr(modele, "to_json", None)
@@ -100,7 +106,7 @@ def sauvegarder_bundle(
         if len(indexes) != 1:
             continue
         index_feature = int(indexes[0])
-        code = codes_features_socle()[index_feature]
+        code = codes[index_feature]
         # EBM réserve l'index 0 de chaque terme à la branche missing="separate".
         contributions_manquantes[code] = calibrateur.contribution_bon(float(scores[0]))
     (dossier / "contributions_valeurs_manquantes.json").write_text(
@@ -108,7 +114,8 @@ def sauvegarder_bundle(
         encoding="utf-8",
     )
     distributions = _distributions_reference(
-        features_reference if features_reference is not None else pd.DataFrame(columns=codes_features_socle())
+        features_reference if features_reference is not None else pd.DataFrame(columns=codes),
+        catalogue_effectif,
     )
     (dossier / "distributions_reference.json").write_text(
         json.dumps(distributions, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8"
@@ -125,11 +132,11 @@ def sauvegarder_bundle(
         fichier.name: empreinte_fichier(fichier) for fichier in fichiers_a_verifier
     }
     manifeste = ManifesteModele(
-        identifiant="solida-socle",
+        identifiant=identifiant,
         version=version,
         commit_git=commit_git,
         date_fin_donnees=date_fin_donnees,
-        features=codes_features_socle(),
+        features=codes,
         metriques_test=metriques_test,
         calibrateur_platt_actif=calibrateur.actif,
         strategie_ponderation=strategie_ponderation,
@@ -149,14 +156,17 @@ def charger_bundle(dossier: Path) -> tuple[Any, CalibrateurPlatt, ManifesteModel
     for nom, empreinte_attendue in manifeste.empreintes_fichiers.items():
         fichier = dossier / nom
         if not fichier.is_file() or empreinte_fichier(fichier) != empreinte_attendue:
-            raise ValueError(f"Empreinte du fichier SOCLE invalide : {nom}.")
+            raise ValueError(f"Empreinte du fichier invalide : {nom}.")
     modele_path = dossier / "modele.joblib"
     if empreinte_fichier(modele_path) != manifeste.checksum_modele:
-        raise ValueError("Empreinte du modèle SOCLE invalide.")
-    if manifeste.features != codes_features_socle():
-        raise ValueError("Catalogue des features incompatible avec le bundle SOCLE.")
+        raise ValueError("Empreinte du modèle invalide.")
+    codes_attendus = [feature.code for feature in catalogue_par_identifiant(manifeste.identifiant)]
+    if manifeste.features != codes_attendus:
+        raise ValueError(
+            f"Catalogue des features incompatible avec le bundle {manifeste.identifiant!r}."
+        )
     modele = joblib.load(modele_path)
     calibrateur = joblib.load(dossier / "calibrateur.joblib")
     if not isinstance(calibrateur, CalibrateurPlatt):
-        raise TypeError("Calibrateur SOCLE invalide.")
+        raise TypeError("Calibrateur invalide.")
     return modele, calibrateur, manifeste

@@ -5,10 +5,11 @@ from pydantic import BaseModel
 TendanceEpargne = Literal["hausse", "stable", "erosion"]
 
 
-class MouvementEpargne(BaseModel):
-    date_operation: str
-    sens: Literal["depot", "retrait"]
-    montant: int
+class PointSoldeMensuel(BaseModel):
+    mois: str
+    solde_fin_mois: int
+    total_depots: int
+    total_retraits: int
 
 
 class SyntheseEpargne(BaseModel):
@@ -18,4 +19,4 @@ class SyntheseEpargne(BaseModel):
     volatilite: float
     ratio_epargne_revenu: float
     anciennete_relation_mois: int
-    mouvements_recents: list[MouvementEpargne]
+    serie_solde_12m: list[PointSoldeMensuel]

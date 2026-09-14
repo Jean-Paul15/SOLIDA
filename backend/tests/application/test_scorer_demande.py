@@ -11,6 +11,7 @@ from solida.domain.errors import (
     AccesRefuse,
     DonneesInsuffisantes,
     DureeDemandeeInvalide,
+    ModeleIndisponible,
     MontantDemandeInvalide,
     ProduitIntrouvable,
     SocietaireIntrouvable,
@@ -21,7 +22,11 @@ from solida.domain.rules.progressif_plafond import ParametresProgressif
 from solida.domain.rules.scorecard import ParametresScorecard
 from solida.domain.values.decision import DecisionAEnregistrer, DecisionEnregistree
 from solida.domain.values.demande import DemandeScoring
-from solida.domain.values.features import FeaturesIndividuelles, FeaturesSolidaires
+from solida.domain.values.features import (
+    DonneesGroupeBrutes,
+    FeaturesIndividuelles,
+    FeaturesSolidaires,
+)
 from solida.domain.values.grille import ConfigurationGrille
 from solida.domain.values.montant import Montant
 from solida.domain.values.probabilite import ProbabiliteDefaut
@@ -114,14 +119,33 @@ def _features_individuelles(**overrides: object) -> FeaturesIndividuelles:
 
 def _features_solidaires(**overrides: object) -> FeaturesSolidaires:
     values: dict[str, object] = {
-        "en_groupe": False,
-        "groupe_id": None,
         "taille_groupe": None,
-        "taux_remboursement_groupe": None,
-        "deja_secouru_par_groupe": False,
+        "anciennete_groupe_mois": None,
+        "nb_credits_groupe_anterieurs": None,
+        "nb_incidents_groupe_anterieurs": None,
+        "max_jours_retard_groupe_6m": None,
+        "nb_cautions_appelees_anterieures": None,
     }
     values.update(overrides)
     return FeaturesSolidaires(**values)  # type: ignore[arg-type]
+
+
+def _donnees_groupe_eligibles(**overrides: object) -> DonneesGroupeBrutes:
+    """5 membres actifs, 3 crédits antérieurs soldés : satisfait `ParametresCascade` par défaut."""
+    from solida_modelisation.features_groupe import AppartenanceGie, CreditGroupeAnterieur
+
+    values: dict[str, object] = {
+        "date_creation": date(2015, 1, 1),
+        "appartenances": [AppartenanceGie(f"SOC-G{i}", date(2015, 1, 1), None) for i in range(5)],
+        "credits_anterieurs": [
+            CreditGroupeAnterieur(f"CRD-G{i}", date(2020, 1, 1), date(2020, 6, 1), "solde")
+            for i in range(3)
+        ],
+        "echeances_groupe": [],
+        "cautions_anterieures": [],
+    }
+    values.update(overrides)
+    return DonneesGroupeBrutes(**values)  # type: ignore[arg-type]
 
 
 def _configuration(**overrides: object) -> ConfigurationGrille:
@@ -148,6 +172,7 @@ class _FakeCoreSimReader:
     societaire: Societaire | None
     groupe: GroupeCaution | None = None
     produits: list[ProduitCredit] = field(default_factory=lambda: [_produit()])
+    donnees_groupe: DonneesGroupeBrutes | None = None
 
     def charger_societaire(self, societaire_id: str) -> Societaire | None:
         return self.societaire
@@ -157,6 +182,9 @@ class _FakeCoreSimReader:
 
     def charger_produits(self) -> list[ProduitCredit]:
         return self.produits
+
+    def charger_donnees_groupe(self, gie_id: str) -> DonneesGroupeBrutes | None:
+        return self.donnees_groupe
 
 
 @dataclass
@@ -169,7 +197,7 @@ class _FakeFeatureStore:
     ) -> FeaturesIndividuelles | None:
         return self.individuelles
 
-    def lire_solidaires(self, societaire_id: str) -> FeaturesSolidaires | None:
+    def lire_solidaires(self, gie_id: str, date_reference: date) -> FeaturesSolidaires | None:
         return self.solidaires
 
 
@@ -177,8 +205,11 @@ class _FakeFeatureStore:
 class _FakeScoringModel:
     probabilite: float = 0.05
     version_str: str = "v-test"
+    leve_erreur: bool = False
 
     def predire(self, features: dict[str, float | int | str | bool | None]) -> ProbabiliteDefaut:
+        if self.leve_erreur:
+            raise ValueError("Features inconnues du bundle EBM.")
         return ProbabiliteDefaut(self.probabilite)
 
     def contributions(
@@ -236,9 +267,12 @@ def _build_use_case(
     produits: list[ProduitCredit] | None = None,
     individuelles: FeaturesIndividuelles | None | object = _NON_FOURNI,
     solidaires: FeaturesSolidaires | None = None,
+    donnees_groupe: DonneesGroupeBrutes | None = None,
     configuration: ConfigurationGrille | None = None,
     decision_existante: bool = False,
     probabilite: float = 0.05,
+    probabilite_enrichi: float = 0.05,
+    modele_leve_erreur: bool = False,
 ) -> tuple[ScorerDemande, _FakeDecisionRepository, _FakeAuditLog]:
     decision_repository = _FakeDecisionRepository(decision_existante=decision_existante)
     audit_log = _FakeAuditLog()
@@ -247,6 +281,7 @@ def _build_use_case(
             societaire=_societaire() if societaire is _NON_FOURNI else societaire,  # type: ignore[arg-type]
             groupe=groupe,
             produits=produits if produits is not None else [_produit()],
+            donnees_groupe=donnees_groupe,
         ),
         feature_store=_FakeFeatureStore(
             individuelles=(
@@ -254,7 +289,12 @@ def _build_use_case(
             ),  # type: ignore[arg-type]
             solidaires=solidaires if solidaires is not None else _features_solidaires(),
         ),
-        scoring_model=_FakeScoringModel(probabilite=probabilite),
+        scoring_model=_FakeScoringModel(
+            probabilite=probabilite, version_str="v-test", leve_erreur=modele_leve_erreur
+        ),
+        scoring_model_enrichi=_FakeScoringModel(
+            probabilite=probabilite_enrichi, version_str="v-test-enrichi"
+        ),
         grille_repository=_FakeGrilleRepository(
             configuration=configuration if configuration is not None else _configuration()
         ),
@@ -364,9 +404,74 @@ def test_confirmer_accord_persiste_et_journalise() -> None:
     assert audit_log.evenements[-1][0] == "scoring_confirme"
 
 
+def test_previsualiser_leve_modele_indisponible_si_le_modele_echoue() -> None:
+    use_case, decision_repository, _ = _build_use_case(modele_leve_erreur=True)
+
+    with pytest.raises(ModeleIndisponible):
+        use_case.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
+
+    assert decision_repository.decisions_enregistrees == []
+
+
 def test_previsualiser_refus_a_probabilite_elevee() -> None:
     use_case, _, _ = _build_use_case(probabilite=0.5)
 
     decision = use_case.preview(_demande(), {}, "agent-1", "Agent", "CAI-00")
 
     assert decision.tranche == "refus"
+
+
+# --- ScorerDemande : cascade SOCLE / enrichi (J2-08b) ---
+
+
+def test_demande_sans_groupe_reste_en_mode_socle() -> None:
+    use_case, _, _ = _build_use_case()
+
+    decision = use_case.preview(_demande(groupe_id=None), {}, "agent-1", "Agent", "CAI-00")
+
+    assert decision.mode_calcul == "socle_seul"
+    assert decision.motif_mode == "sans_groupe"
+    assert decision.version_modele == "v-test"
+
+
+def test_groupe_trop_petit_reste_en_mode_socle() -> None:
+    donnees = _donnees_groupe_eligibles(
+        appartenances=[]  # aucun membre actif -> taille 0 < seuil
+    )
+    use_case, _, _ = _build_use_case(donnees_groupe=donnees)
+
+    decision = use_case.preview(_demande(groupe_id="GIE-1"), {}, "agent-1", "Agent", "CAI-00")
+
+    assert decision.mode_calcul == "socle_seul"
+    assert decision.motif_mode == "groupe_trop_petit"
+
+
+def test_groupe_eligible_bascule_en_mode_enrichi_avec_le_modele_dedie() -> None:
+    use_case, _, _ = _build_use_case(
+        donnees_groupe=_donnees_groupe_eligibles(), probabilite=0.9, probabilite_enrichi=0.01
+    )
+
+    decision = use_case.preview(_demande(groupe_id="GIE-1"), {}, "agent-1", "Agent", "CAI-00")
+
+    assert decision.mode_calcul == "enrichi"
+    assert decision.motif_mode is None
+    # La probabilité vient bien du modèle enrichi (0.01), pas du SOCLE (0.9) : la tranche
+    # ACCORD ne serait pas atteinte avec 0.9 sur cette grille.
+    assert decision.tranche == "accord"
+    assert decision.version_modele == "v-test-enrichi"
+
+
+def test_caution_appelee_du_groupe_alimente_les_conditions_de_reexamen() -> None:
+    # `_FakeFeatureStore.lire_solidaires` renvoie directement `solidaires` sans recalculer
+    # depuis `donnees_groupe` (contrairement à `FeatureStoreCoreSim`, couvert par le test de
+    # parité) : les deux doivent donc être passés cohérents ici.
+    use_case, _, _ = _build_use_case(
+        donnees_groupe=_donnees_groupe_eligibles(),
+        solidaires=_features_solidaires(taille_groupe=5, nb_cautions_appelees_anterieures=1),
+        probabilite=0.5,
+    )
+
+    decision = use_case.preview(_demande(groupe_id="GIE-1"), {}, "agent-1", "Agent", "CAI-00")
+
+    assert decision.mode_calcul == "enrichi"
+    assert any("caution" in condition.lower() for condition in decision.conditions_reexamen)

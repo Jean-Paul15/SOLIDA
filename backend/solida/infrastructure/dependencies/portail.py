@@ -3,6 +3,7 @@ from solida.application.use_cases.process_societaire_demande import ProcessSocie
 from solida.infrastructure.dependencies.adapters import (
     core_sim_reader,
     demande_societaire_repository,
+    grille_repository,
     notification_sender,
     secret_auth,
 )
@@ -19,5 +20,6 @@ def process_societaire_demande() -> ProcessSocietaireDemande:
         scorer_demande=scorer_demande(),
         demande_societaire_repository=demande_societaire_repository(),
         notification_sender=notification_sender(),
+        grille_repository=grille_repository(),
         secret=secret_auth(),
     )

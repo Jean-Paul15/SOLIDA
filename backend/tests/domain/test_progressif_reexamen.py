@@ -6,6 +6,7 @@ from solida.domain.rules.progressif_reexamen import (
 from solida.domain.values.montant import Montant
 
 SITUATION_PARAMETRES = ParametresReexamen()
+ENDETTEMENT_SEUIL = 0.33  # ParametresGrille.ratio_endettement_maximal, valeur par défaut
 
 
 def test_un_dossier_sans_aucun_levier_bloquant_le_dit_explicitement() -> None:
@@ -18,7 +19,7 @@ def test_un_dossier_sans_aucun_levier_bloquant_le_dit_explicitement() -> None:
         montant_demande=Montant(250_000),
     )
 
-    conditions = lister_conditions_reexamen(situation, SITUATION_PARAMETRES)
+    conditions = lister_conditions_reexamen(situation, SITUATION_PARAMETRES, ENDETTEMENT_SEUIL)
 
     assert conditions == [
         "Aucun levier bloquant : le dossier peut être réexaminé dès le prochain cycle."
@@ -35,7 +36,7 @@ def test_un_dossier_avec_tous_les_leviers_actifs_liste_les_cinq_conditions() -> 
         montant_demande=Montant(250_000),
     )
 
-    conditions = lister_conditions_reexamen(situation, SITUATION_PARAMETRES)
+    conditions = lister_conditions_reexamen(situation, SITUATION_PARAMETRES, ENDETTEMENT_SEUIL)
 
     assert len(conditions) == 5
     assert "dépôt" in conditions[0]

@@ -7,6 +7,7 @@ from solida.domain.errors import (
     DonneesInsuffisantes,
     DureeDemandeeInvalide,
     IdentiteSocietaireInvalide,
+    ModeleIndisponible,
     MontantDemandeInvalide,
     ProduitIntrouvable,
     ScorecardImmuable,
@@ -41,6 +42,7 @@ _ERROR_STATUSES: list[tuple[type[DomainError], int, str]] = [
     (VersionGrilleDejaExistante, 409, "version_deja_existante"),
     (ScorecardImmuable, 422, "scorecard_immuable"),
     (IdentiteSocietaireInvalide, 401, "identite_invalide"),
+    (ModeleIndisponible, 503, "modele_indisponible"),
     (DomainError, 400, "regle_metier"),
 ]
 

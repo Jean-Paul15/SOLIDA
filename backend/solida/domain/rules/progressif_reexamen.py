@@ -17,20 +17,27 @@ class SituationReexamen:
 
 @dataclass(frozen=True)
 class ParametresReexamen:
-    """Cibles utilisées pour transformer un refus en parcours d'éligibilité."""
+    """Cibles utilisées pour transformer un refus en parcours d'éligibilité.
+
+    Pas de seuil d'endettement propre à cette règle : `lister_conditions_reexamen` reçoit
+    celui de la grille (`ParametresGrille.ratio_endettement_maximal`, sourcé CEF-MF Lomé
+    2025) pour qu'une seule valeur d'endettement existe dans tout le système, modifiable à
+    un seul endroit (`/parametrage/grille`).
+    """
 
     regularite_cible: float = 0.75
     mois_observation: int = 3
     ratio_garantie_cible: float = 0.5
-    endettement_seuil: float = 0.5
 
 
 def lister_conditions_reexamen(
-    situation: SituationReexamen, parametres: ParametresReexamen
+    situation: SituationReexamen, parametres: ParametresReexamen, endettement_seuil: float
 ) -> list[str]:
     """Leviers concrets et vérifiables que le sociétaire peut activer.
 
     Le refus cesse d'être une porte fermée : il devient un parcours d'éligibilité.
+    `endettement_seuil` vient de la grille active (`ratio_endettement_maximal`), jamais
+    d'une constante propre à cette règle.
     """
     conditions: list[str] = []
 
@@ -51,13 +58,11 @@ def lister_conditions_reexamen(
             "la garantie."
         )
 
-    if (
-        situation.endettement is not None
-        and situation.endettement > parametres.endettement_seuil
-    ):
+    if situation.endettement is not None and situation.endettement > endettement_seuil:
         conditions.append(
-            "Réduire le montant demandé ou allonger la durée : la charge de remboursement "
-            f"dépasse {parametres.endettement_seuil * 100:.0f}% du revenu estimé."
+            "Ramener la mensualité sous le tiers du revenu total : la charge de "
+            f"remboursement dépasse {endettement_seuil * 100:.0f}% du revenu estimé "
+            "(seuil de rupture observé sur le risque d'impayé, étude CEF-MF Lomé 2025)."
         )
 
     if situation.tendance_epargne_baissiere:

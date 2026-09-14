@@ -46,6 +46,32 @@ export const LABEL_TRANCHE: Record<Tranche, string> = {
   refus: "REFUS",
 };
 
+/**
+ * Ce que chaque tranche signifie concrètement, à afficher à côté du résultat brut
+ * (`RecommendationPanel.tsx`) pour qu'une décision ne soit jamais qu'un mot et un score.
+ * Le passage en comité de crédit n'est JAMAIS optionnel, quelle que soit la tranche — c'est la
+ * mention légale de toute fiche (`03-MODELE/11-formule-cible-credit-progressif.md:77-80` :
+ * « La décision finale relève de l'agent de crédit et du comité de crédit de la coopérative »).
+ * Ces textes ne varient donc que sur ce que le signal du modèle indique, jamais sur la
+ * nécessité du comité.
+ */
+export const EXPLICATION_TRANCHE: Record<Tranche, string> = {
+  accord:
+    "Le modèle ne détecte pas de signal de risque notable sur ce profil : la recommandation " +
+    "est favorable. Comme pour tout dossier, la décision finale relève de l'agent et du comité " +
+    "de crédit.",
+  accord_sous_condition:
+    "La recommandation est favorable, sous réserve du point signalé ci-dessous (conditions de " +
+    "réexamen) à porter devant le comité de crédit, qui statuera avec l'agent.",
+  comite_de_credit:
+    "Le signal du modèle est incertain sur ce dossier : il appelle un examen approfondi en " +
+    "comité de crédit avant toute décision.",
+  refus:
+    "Le profil de risque est trop élevé pour une recommandation favorable en l'état. Ce n'est " +
+    "pas automatique ni définitif : le comité de crédit peut réexaminer le dossier à la lumière " +
+    "des conditions listées ci-dessous.",
+};
+
 export const TRANCHE_COLOR: Record<Tranche, { text: string; background: string; border: string }> =
   {
     accord: {

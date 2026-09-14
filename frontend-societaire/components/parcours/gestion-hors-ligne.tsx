@@ -22,10 +22,14 @@ export function GestionHorsLigne() {
         await envoyerDemande(enAttente.jeton_session, {
           montant: enAttente.montant,
           objet: enAttente.objet as never,
-          duree_mois: enAttente.duree_mois as never,
+          duree_mois: enAttente.duree_mois,
+          produit_id: enAttente.produit_id,
         });
         await viderFile();
-        if (actif) toast.success("Votre demande, gardée en attente, vient d'être envoyée à votre agent.");
+        if (actif)
+          toast.success(
+            "Votre demande, gardée en attente, vient d'être envoyée à votre agent.",
+          );
       } catch {
         // Réseau toujours indisponible ou session expirée : on retente au prochain
         // événement "online", rien à signaler à l'utilisateur (déjà informé à C8).

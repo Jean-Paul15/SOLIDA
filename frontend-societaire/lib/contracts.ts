@@ -18,22 +18,36 @@ export interface VerificationCompteReponse {
   prenom: string;
 }
 
-// 4 choix, pas une saisie libre (section 3 : "trois ou quatre choix seulement").
-// Sous-ensemble des durées produites par le simulateur (3/6/9/12/18/24 mois) : les
-// bornes courte et longue, plus deux intermédiaires usuelles.
-export type DureeMois = 3 | 6 | 12 | 24;
-
+/**
+ * Durée en mois : seule unité que le catalogue produits (`duree_min_mois`/
+ * `duree_max_mois`) et le modèle connaissent. Choix guidés (3/6/9/12/18/24 mois,
+ * filtrés aux bornes du produit) avec une option "Autre durée" en saisie libre
+ * bornée — déroge sciemment à SOLIDA_Flux_Societaire.md ("trois ou quatre choix
+ * seulement, aucune saisie libre" pour cet écran), à la demande explicite du métier.
+ */
 export interface DemandePreVerificationRequete {
   montant: number;
   objet: ObjetCredit;
-  duree_mois: DureeMois;
+  duree_mois: number;
+  produit_id: string;
+}
+
+/** Catalogue produits (même forme que côté agent, `frontend/lib/contracts.ts`) : le
+ * sociétaire choisit un produit pour que l'agent l'ait sous les yeux, même si le
+ * modèle ne le consomme pas directement comme feature. */
+export interface ProduitCreditApi {
+  produit_id: string;
+  libelle: string;
+  type_garantie: string;
+  montant_min: number;
+  montant_max: number;
+  duree_min_mois: number;
+  duree_max_mois: number;
+  taux_annuel: number;
 }
 
 export type IssuePreVerification =
-  | "peut_avancer"
-  | "montant_reduit"
-  | "duree_ou_attente"
-  | "pas_maintenant";
+  "peut_avancer" | "montant_reduit" | "duree_ou_attente" | "pas_maintenant";
 
 export interface DemandePreVerificationReponse {
   issue: IssuePreVerification;

@@ -2,6 +2,7 @@ from datetime import date
 
 from sqlalchemy import Engine, text
 
+from solida.adapters.core_sim._dates import vers_date
 from solida.domain.entities.compte_epargne import CompteEpargne
 from solida.domain.entities.mouvement_epargne import MouvementEpargne
 
@@ -46,7 +47,7 @@ class PostgresEpargneReader:
                 MouvementEpargne(
                     mouvement_id=row.mouvement_id,
                     compte_id=row.compte_id,
-                    date_operation=row.date_operation,
+                    date_operation=vers_date(row.date_operation),
                     sens=row.sens,
                     montant=round(row.montant),
                     type_operation=row.type_operation,

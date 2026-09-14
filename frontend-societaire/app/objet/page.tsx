@@ -3,26 +3,28 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ChoixCarte } from "@/components/ui/choix-carte";
 import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
-import { LISTE_OBJETS_CREDIT, OBJETS_CREDIT, type ObjetCredit } from "@/lib/objets-credit";
-import { cn } from "@/lib/utils";
+import {
+  LISTE_OBJETS_CREDIT,
+  OBJETS_CREDIT,
+  type ObjetCredit,
+} from "@/lib/objets-credit";
+import { useEtapeProtegee } from "@/lib/use-etape-protegee";
 
 export default function ObjetPage() {
   const router = useRouter();
   const { jetonSession, objet, enregistrerObjet } = useDemande();
   const [selection, setSelection] = React.useState<ObjetCredit | null>(objet);
+  const pret = useEtapeProtegee(jetonSession);
 
-  React.useEffect(() => {
-    if (!jetonSession) router.replace("/numero-compte");
-  }, [jetonSession, router]);
-
-  if (!jetonSession) return null;
+  if (!pret) return null;
 
   function continuer() {
     if (!selection) return;
     enregistrerObjet(selection);
-    router.push("/duree");
+    router.push("/produit");
   }
 
   return (
@@ -37,24 +39,16 @@ export default function ObjetPage() {
     >
       <div className="grid grid-cols-2 gap-2.5">
         {LISTE_OBJETS_CREDIT.map((cle) => {
-          const { libelle, icone: Icone } = OBJETS_CREDIT[cle];
-          const selectionne = selection === cle;
+          const { libelle, icone } = OBJETS_CREDIT[cle];
           return (
-            <button
+            <ChoixCarte
               key={cle}
-              type="button"
+              disposition="grille"
+              libelle={libelle}
+              icone={icone}
+              selectionne={selection === cle}
               onClick={() => setSelection(cle)}
-              aria-pressed={selectionne}
-              className={cn(
-                "flex min-h-22 flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-center transition active:scale-[0.97]",
-                selectionne
-                  ? "border-solida-teal-600 bg-solida-teal-50 text-solida-teal-800"
-                  : "border-border bg-blanc text-foreground hover:bg-muted active:bg-neutre-100"
-              )}
-            >
-              <Icone className="size-5" strokeWidth={1.75} />
-              <span className="text-sm font-medium text-balance">{libelle}</span>
-            </button>
+            />
           );
         })}
       </div>

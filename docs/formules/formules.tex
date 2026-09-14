@@ -324,6 +324,10 @@ $m_a$ (multiplicateur accord) & $0{,}6$ & Même origine. \\
 $m_v$ (multiplicateur vigilance) & $1{,}0$ & Même origine (le seuil économique lui-même, sans
   marge de tolérance). \\
 $m_e$ (multiplicateur examen) & $1{,}6$ & Même origine. \\
+$\mathit{plafond\_institutionnel}$ & $100\,000\,000$ FCFA & Maximum institutionnel unique,
+  sans plafond par produit -- décision terrain actée
+  (\texttt{docs/\brk continuite/\brk 2026-09-13-constat-claude-plafonds.md}). Champ de la
+  grille depuis le 2026-09-14 (auparavant une constante Python en dur). \\
 \bottomrule
 \end{tabular}
 
@@ -350,6 +354,19 @@ crédit) avant le refus pur. La jauge du résultat de scoring recalcule ces mêm
 (via la formule de la section~\ref{sec:scorecard}) pour que les zones colorées affichées
 correspondent exactement aux frontières de décision -- aucune constante supplémentaire n'y est
 introduite.
+
+\textbf{Ce n'est pas une formule maison} : c'est exactement le seuil de décision bayésien optimal
+sous coûts asymétriques établi par Elkan (2001), équation~2 -- $p^{*} = (c_{10}-c_{00}) /
+(c_{10}-c_{00}+c_{01}-c_{11})$, qui se réduit à $c_{10}/(c_{10}+c_{01})$ quand les prédictions
+correctes ne coûtent rien (hypothèse standard). $\mathit{marge}$ correspond à $c_{10}$ (coût
+d'un bon dossier refusé, le manque à gagner) et $\mathit{lgd}$ à $c_{01}$ (coût d'un mauvais
+dossier accepté, la perte en cas de défaut). Seules les \emph{valeurs} de $\mathit{marge}$ et
+$\mathit{lgd}$ restent à calibrer sur des coûts réels (recherche du 2026-09-14, source
+officielle) ; la formule elle-même n'a pas besoin d'être revue.
+
+\textit{Source : C. Elkan, ``The Foundations of Cost-Sensitive Learning'', IJCAI-01, 2001,
+\S1.3, équation (2) --
+\url{https://cseweb.ucsd.edu/~elkan/rescale.pdf}.}
 
 \subsection*{Statut et rôle du modèle réel}
 Le modèle réel améliore uniquement $p$, l'entrée de \texttt{decider}. Il ne calibre jamais
@@ -487,7 +504,7 @@ pas une pratique standard.
 
 \ecran{Résultat de scoring (« Conditions de réexamen »), affiché pour toute tranche autre que
 ACCORD.}
-\fichier{backend/\brk solida/\brk domain/\brk rules/\brk progressif.py::\brk{}lister\_conditions\_reexamen}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk progressif\_reexamen.py::\brk{}lister\_conditions\_reexamen}
 
 \subsection*{Constantes -- cibles}
 
@@ -500,7 +517,10 @@ $\mathit{régularité\_cible}$ & $75\,\%$ & Hérite du prototype retiré \texttt
   des cohortes réelles. \\
 $\mathit{mois\_observation}$ & $3$ & Même origine. \\
 $\mathit{ratio\_garantie\_cible}$ & $50\,\%$ & Même origine. \\
-$\mathit{endettement\_seuil}$ & $50\,\%$ & Même origine. \\
+$\mathit{endettement\_seuil}$ & $33\,\%$ & \textbf{Plus une constante propre à cette règle} depuis
+  le 2026-09-14 : reçu de \texttt{ParametresGrille.ratio\_endettement\_maximal} (section
+  \ref{sec:capacite}), sourcé étude CEF-MF Lomé 2025 -- une seule valeur d'endettement dans tout
+  le système. \\
 \bottomrule
 \end{tabular}
 
@@ -539,8 +559,10 @@ et le modèle n'influence pas quelles conditions sont listées -- seule la tranc
 \toprule
 Constante & Valeur & Pourquoi cette valeur \\
 \midrule
-$\mathit{taille\_groupe\_minimale}$ & $3$ & Aucune source documentée au-delà de l'intuition
-  qu'un groupe de 1 ou 2 membres ne peut pas produire une statistique de groupe fiable. \\
+$\mathit{taille\_groupe\_minimale}$ & $5$ & Réponse terrain (\texttt{précision.txt}, question
+  22 : « à partir de combien de membres peut-on réellement juger le comportement d'un groupe ? »,
+  réponse « de 5 à 10 »). Relevé de $3$ à $5$ le 2026-09-14 ; aligné sur
+  \texttt{SEUIL\_TAILLE\_GROUPE\_JUGEABLE} du catalogue d'entraînement. \\
 $\mathit{nb\_credits\_anterieurs\_minimum}$ & $3$ & Arbitrage documenté explicitement dans
   \texttt{03-MODELE/\brk 04-cascade-\brk et-cold-start.md} : en dessous, le taux de remboursement
   du groupe repose sur trop peu d'observations et introduirait plus de bruit que de signal. \\
@@ -571,6 +593,69 @@ historique de groupe pour scorer serait inutilisable précisément là où le be
 Cette règle choisit \emph{quel} modèle appeler (socle ou enrichi), elle ne calcule pas elle-même
 de score. Les trois seuils restent des paramètres de politique ajustables par la coopérative,
 indépendants de l'implémentation du modèle derrière chacun des deux ports.
+
+\newpage
+
+% ============================================================
+\section{Montant recommandé par capacité de remboursement}
+\label{sec:capacite}
+
+\ecran{Résultat de scoring (montant recommandé) ; alerte agent si ce montant est réduit sur un
+objet non divisible.}
+\fichier{backend/\brk solida/\brk domain/\brk rules/\brk capacite\_remboursement.py::\brk{}montant\_maximal\_supportable}
+
+\subsection*{Variables}
+
+\begin{tabular}{@{}lL{9.5cm}@{}}
+\toprule
+Symbole & Signification \\
+\midrule
+$\mathit{revenu}$ & Revenu mensuel effectif (déclaré ou actualisé par l'agent) \\
+$\mathit{duree}$, $\mathit{taux}$ & Durée et taux annuel du crédit demandé \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Constantes}
+
+\begin{tabular}{@{}L{3.2cm}rL{7.4cm}@{}}
+\toprule
+Constante & Valeur & Pourquoi cette valeur \\
+\midrule
+$\mathit{ratio\_endettement\_maximal}$ & $0{,}33$ & \textbf{Sourcé, mais pas par FUCEC.} Étude de
+  terrain CEF-MF Lomé 2025 (\texttt{PLAN 72H/\brk SOLIDA\_Complements\_et\_Strategie.md} §1.2) :
+  ratio mensualité/revenu moyen de $23\,\%$ sur l'échantillon, rupture du risque d'impayé
+  identifiée à $33\,\%$. Ni FUCEC-Togo (page publique des crédits, aucun ratio chiffré) ni le
+  dispositif prudentiel BCEAO/UMOA (encadre le taux d'usure, pas un ratio d'endettement
+  individuel) ne le documentent. C'est une étude d'un autre réseau togolais, pas encore confirmée
+  par le comité de crédit de la coopérative elle-même. Voir
+  \texttt{PLAN 72H/\brk DECISION\_MANQUANTE\_ratio\_endettement.md}. \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Formule}
+\begin{formule}
+\begin{align}
+\mathit{mensualite\_unitaire} &= \mathit{mensualite\_actuarielle}(1,\ \mathit{duree},\ \mathit{taux}) \\
+\mathit{montant\_maximal} &= \frac{\mathit{revenu} \times \mathit{ratio\_endettement\_maximal}}{\mathit{mensualite\_unitaire}} \\
+\mathit{montant\_recommande} &= \min(\mathit{montant\_demande},\ \mathit{montant\_maximal})
+\end{align}
+\end{formule}
+Réutilise la même fonction d'amortissement que le SOCLE et l'enrichi (linéarité en montant à
+durée et taux fixés), plutôt que de dupliquer la formule financière.
+
+\subsection*{Pourquoi cette formule}
+Demande explicite d'un agent de crédit interrogé pendant la préparation terrain : recommander un
+montant, mais avec une justification vérifiable variable par variable plutôt qu'un coefficient
+sur le prêt précédent (mécanisme de crédit progressif, écarté par la décision terrain
+« pas de coefficient fondé sur le prêt précédent »). Sans revenu connu, aucun plafond n'est
+calculé -- décision terrain déjà actée, un revenu manquant ne réduit ni ne refuse rien
+automatiquement.
+
+\subsection*{Statut et rôle du modèle réel}
+Indépendant du modèle de scoring : ce plafond ne dépend que de la demande et du revenu, pas de
+la probabilité de défaut. Modifiable sans déploiement via \texttt{ratio\_endettement\_maximal}
+dans la grille (\texttt{/parametrage/grille}) -- la coopérative peut l'ajuster dès qu'elle
+dispose d'une vraie valeur.
 
 \newpage
 

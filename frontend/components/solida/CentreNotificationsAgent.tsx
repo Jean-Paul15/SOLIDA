@@ -22,11 +22,11 @@ import { confirmDecision } from "@/lib/services/scoring";
 
 const INTERVALLE_RAFRAICHISSEMENT_MS = 45_000;
 
-interface CentreNotificationsProps {
+interface CentreNotificationsAgentProps {
   initial: DemandeSocietaireApi[];
 }
 
-export function CentreNotifications({ initial }: CentreNotificationsProps) {
+export function CentreNotificationsAgent({ initial }: CentreNotificationsAgentProps) {
   const [notifications, setNotifications] = useState(initial);
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -128,7 +128,9 @@ export function CentreNotifications({ initial }: CentreNotificationsProps) {
       </Table>
 
       {notifications.length === 0 && (
-        <p className="py-8 text-center text-sm text-neutre-500">Aucune demande en attente.</p>
+        <p className="py-8 text-center text-sm text-neutre-500">
+          Aucune demande ne vous est assignée pour le moment.
+        </p>
       )}
     </div>
   );

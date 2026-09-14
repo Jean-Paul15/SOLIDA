@@ -12,16 +12,23 @@ import pandas as pd
 
 from .artifact import ManifesteModele, charger_bundle
 from .calibration import CalibrateurPlatt
-from .catalogue import FEATURES_SOCLE, codes_features_socle
+from .catalogue import FeatureSpec, catalogue_par_identifiant
 
 
 class ModeleSocle:
-    """Adaptateur pur autour d'un bundle EBM contrôlé."""
+    """Adaptateur pur autour d'un bundle EBM contrôlé.
+
+    Le nom `ModeleSocle` est conservé pour ne pas casser les imports existants ; la classe
+    sert aussi bien au bundle SOCLE qu'au bundle enrichi, son catalogue de features étant
+    déterminé par `manifeste.identifiant` (`catalogue_par_identifiant`).
+    """
 
     def __init__(self, modele: Any, calibrateur: CalibrateurPlatt, manifeste: ManifesteModele) -> None:
         self._modele = modele
         self._calibrateur = calibrateur
         self._manifeste = manifeste
+        self._catalogue: tuple[FeatureSpec, ...] = catalogue_par_identifiant(manifeste.identifiant)
+        self._codes: list[str] = [feature.code for feature in self._catalogue]
 
     @classmethod
     def depuis_dossier(cls, dossier: Path) -> ModeleSocle:
@@ -40,13 +47,18 @@ class ModeleSocle:
     def checksum(self) -> str:
         return self._manifeste.checksum_modele
 
+    @property
+    def codes(self) -> list[str]:
+        """Catalogue de features effectivement attendu par ce bundle (SOCLE ou enrichi)."""
+        return list(self._codes)
+
     def _dataframe(self, features: Mapping[str, object]) -> pd.DataFrame:
-        inconnues = set(features).difference(codes_features_socle())
+        inconnues = set(features).difference(self._codes)
         if inconnues:
-            raise ValueError(f"Features SOCLE inconnues : {sorted(inconnues)}")
-        ligne = {code: features.get(code, np.nan) for code in codes_features_socle()}
+            raise ValueError(f"Features {self._manifeste.identifiant!r} inconnues : {sorted(inconnues)}")
+        ligne = {code: features.get(code, np.nan) for code in self._codes}
         frame = pd.DataFrame([ligne])
-        for spec in FEATURES_SOCLE:
+        for spec in self._catalogue:
             if spec.type_ebm == "continue":
                 frame[spec.code] = pd.to_numeric(frame[spec.code], errors="coerce")
             else:
@@ -69,7 +81,7 @@ class ModeleSocle:
         termes = getattr(self._modele, "term_features_", None)
         if termes is None:
             raise ValueError("Le bundle EBM ne contient pas les termes explicables attendus.")
-        noms = codes_features_socle()
+        noms = self._codes
         for indexes, contribution in zip(termes, contributions_termes, strict=True):
             repartition = self._calibrateur.contribution_bon(float(contribution)) / len(indexes)
             for index in indexes:

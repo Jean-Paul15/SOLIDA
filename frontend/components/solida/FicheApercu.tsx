@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ConditionsReexamen } from "@/components/solida/ConditionsReexamen";
 import type { ContributionVariable, FicheJustification, ProduitCreditApi } from "@/lib/contracts";
 import { formatAmount } from "@/lib/format";
 import { TRANCHE_COLOR, LABEL_OBJET_CREDIT, LABEL_TRANCHE } from "@/lib/labels";
@@ -116,11 +117,7 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
           <span className="text-[11px] font-medium text-neutre-500 uppercase">
             Conditions de réexamen
           </span>
-          <ul className="list-disc pl-4 text-[11px] text-neutre-700">
-            {fiche.conditions_reexamen.slice(0, 3).map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+          <ConditionsReexamen conditions={fiche.conditions_reexamen} compact />
         </div>
       )}
 

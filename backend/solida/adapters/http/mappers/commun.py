@@ -19,9 +19,7 @@ def _decomposition_to_schema(
                 points=point.points,
                 sens=libelles_variables.sens(point.points),
                 famille=libelles_variables.famille(point.code_variable),
-                explication=libelles_variables.explication(
-                    point.code_variable, valeur_affichee, point.points
-                ),
+                explication=libelles_variables.explication(point.points),
             )
         )
     # Les facteurs les plus déterminants d'abord : c'est ce que "Facteurs déterminants" promet.

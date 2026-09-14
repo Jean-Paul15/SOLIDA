@@ -1,0 +1,392 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\definecolor{solidateal}{RGB}{15,76,79}
+\definecolor{gris}{RGB}{90,90,90}
+\definecolor{vertaccord}{RGB}{45,110,80}
+\definecolor{orangevigilance}{RGB}{180,120,20}
+\definecolor{rougerefus}{RGB}{160,50,45}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=solidateal,
+  urlcolor=solidateal,
+  pdftitle={SOLIDA -- Explication du modèle de scoring},
+  pdfauthor={SOLIDA}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gris}{SOLIDA -- Explication du modèle de scoring}}
+\fancyhead[R]{\small\textcolor{gris}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\brk}{\allowbreak}
+\newcommand{\fichier}[1]{\noindent\textbf{Implémentation :} \tiny\ttfamily#1\normalfont\normalsize\par}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\textcolor{solidateal}{\Huge SOLIDA} \\[0.3em] \Large Comment le modèle calcule un score, et ce que chaque variable y change}
+\author{}
+\date{Dernière mise à jour : \today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Objet de ce document}
+
+Ce document explique, en détail et sans raccourci, comment le moteur de scoring de SOLIDA
+transforme les données d'un sociétaire en un score, une décision et une fiche de justification.
+Il répond à trois questions précises : comment le modèle considère-t-il les variables et leurs
+poids, comment un point de score se calcule-t-il exactement, et quel est l'impact réel de chaque
+variable sur la sortie du modèle. Chaque chiffre cité ici est extrait du code réel ou des
+artefacts d'entraînement réels du projet -- aucune valeur n'est approximée ou inventée pour les
+besoins de l'explication.
+
+\tableofcontents
+
+\section{Vue d'ensemble architecturale}
+
+\subsection{Un modèle additif, pas une boîte noire}
+
+Le modèle utilisé est un \textbf{EBM} (\emph{Explainable Boosting Machine}), une variante moderne
+des modèles additifs généralisés (GAM). Contrairement à une régression logistique classique, il
+n'a pas un coefficient unique par variable : chaque variable dispose de sa \textbf{propre courbe
+de score} $f_j$, apprise par petites étapes de boosting successives, et le résultat final est la
+somme de toutes ces courbes :
+
+\begin{equation}
+\text{log-odds} = \beta_0 + f_1(x_1) + f_2(x_2) + \dots + f_n(x_n)
+\end{equation}
+
+où $\beta_0$ est l'intercept du modèle et chaque $f_j$ une fonction non linéaire propre à la
+variable $x_j$ (une table de valeurs par tranche pour une variable continue, une valeur par
+modalité pour une variable catégorielle). Cette structure purement additive est ce qui rend le
+modèle explicable par construction : il n'y a aucune interaction cachée à décoder, la contribution
+de chaque variable à la décision finale est un terme séparé et directement lisible.
+
+\subsection{Un choix architectural délibéré}
+
+Le projet exclut explicitement toute approche qui réintroduirait de l'opacité : pas de
+vectorisation de texte libre, pas de NLP, pas de réseau de neurones profond sur les variables
+structurées. La documentation de cadrage du projet le formule ainsi :
+
+\begin{quote}\itshape
+« Pas de vectorisation ni de NLP : ce serait introduire une opacité que l'architecture EBM a
+précisément été choisie pour éviter, sur un problème qui n'en a pas besoin. »
+\end{quote}
+
+Toutes les variables d'entrée sont donc des grandeurs structurées (montants, ratios, compteurs,
+catégories fermées) -- jamais un champ de texte libre ni un document scanné analysé
+automatiquement.
+
+\section{Le pipeline complet, de la donnée brute au score affiché}
+
+Cinq étapes successives, chacune vérifiable indépendamment.
+
+\subsection{Étape 1 -- Construction des features}
+
+Pour chaque demande, le backend calcule un dictionnaire de variables à partir de l'historique
+CORE-SIM du sociétaire (épargne, crédits antérieurs, profil) et, le cas échéant, de son groupe de
+caution. Ce calcul est strictement identique à celui utilisé pendant l'entraînement -- les mêmes
+fonctions Python pures sont partagées entre le pipeline d'entraînement (\texttt{modelisation/}) et
+le moteur d'inférence (\texttt{backend/}), pour garantir qu'aucun écart de définition ne puisse
+exister entre ce que le modèle a appris et ce qu'il reçoit en production.
+
+\subsection{Étape 2 -- Le modèle EBM produit un log-odds}
+
+Le modèle évalue chaque courbe $f_j$ à la valeur reçue pour la variable correspondante, puis les
+additionne avec l'intercept $\beta_0$ (valeur réelle du modèle SOCLE actuel : $\beta_0 = -3{,}074$).
+Le résultat est un log-odds brut, pas encore une probabilité.
+
+\subsection{Étape 3 -- Calibration}
+
+Le log-odds brut est recalé par un calibrateur de type Platt (une régression logistique simple
+appliquée sur la sortie du modèle), pour que la probabilité produite corresponde réellement aux
+fréquences observées dans les données -- et pas seulement à un bon classement relatif des
+dossiers. Cette étape est ce qui permet d'obtenir une erreur de calibration (ECE) mesurée à
+$0{,}011$ pour le modèle SOCLE et $0{,}018$ pour le modèle enrichi : des valeurs basses, signe
+d'une probabilité fiable en valeur absolue et pas seulement en classement.
+
+\subsection{Étape 4 -- Transformation en score (méthode PDO)}
+
+La probabilité calibrée est ensuite transformée en un score compris entre 300 et 850, selon la
+méthode \textbf{PDO} (\emph{Points to Double the Odds}) -- la méthode standard de l'industrie du
+crédit, la même famille de méthode qui produit les scores FICO :
+
+\begin{align}
+\text{log-odds}_{\text{bon}} &= \ln\!\left(\frac{1-p}{p}\right) \\
+\text{facteur} &= \frac{\text{PDO}}{\ln 2} \\
+\text{décalage} &= \text{score}_{\text{réf}} - \text{facteur} \times \ln(\text{odds}_{\text{réf}}) \\
+\text{score} &= \text{décalage} + \text{facteur} \times \text{log-odds}_{\text{bon}}
+\end{align}
+
+avec $p$ la probabilité de défaut (convention bancaire : score élevé = risque \emph{faible}, d'où
+le rapport $(1-p)/p$ et non son inverse). Les paramètres réellement configurés dans SOLIDA
+aujourd'hui sont :
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Paramètre & Valeur actuelle \\
+\midrule
+PDO (points pour doubler les chances) & 20 \\
+Score de référence & 600 \\
+Rapport de cotes de référence & 50 \\
+Score minimum / maximum & 300 / 850 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Concrètement : \textbf{chaque fois que le rapport (chances de bien rembourser) / (chances de faire
+défaut) double, le score augmente de 20 points}. Le score final est borné à $[300, 850]$ : un
+dossier extrême ne peut jamais sortir de cette plage, même si le calcul brut le dépasserait.
+
+\subsection{Étape 5 -- Décomposition en points par variable}
+
+C'est l'étape qui produit ce qu'affiche la fiche de justification. La transformation ci-dessus
+étant \textbf{affine} (une mise à l'échelle plus un décalage), chaque terme $f_j(x_j)$ du modèle
+se convertit indépendamment en points, par le même facteur d'échelle :
+
+\begin{align}
+\text{points de base} &= \text{décalage} + \text{facteur} \times \beta_0 \\
+\text{points}_j &= \text{facteur} \times f_j(x_j) \quad \text{pour chaque variable } j
+\end{align}
+
+Le score final affiché est garanti égal à la somme de tous ces termes :
+
+\begin{equation}
+\text{score} = \text{points de base} + \sum_j \text{points}_j
+\end{equation}
+
+Cette égalité n'est pas une simple convention d'affichage : elle est \textbf{vérifiée
+automatiquement à chaque calcul}, et le système \emph{rejette} le scoring si la somme ne
+correspond pas exactement au score annoncé (tolérance de 1 point, pour absorber les seuls
+arrondis flottants). Une fiche de justification dont les points ne somment pas au score détruirait
+la crédibilité du produit devant un agent ou un auditeur -- le système préfère refuser un calcul
+incohérent plutôt que de le montrer.
+
+\fichier{backend/solida/domain/rules/scorecard.py}
+
+\section{De la probabilité à la décision : la grille}
+
+Une fois la probabilité de défaut $p$ calculée, la tranche de décision (accord, accord sous
+condition, comité de crédit, refus) se détermine par comparaison à un \textbf{seuil économique},
+lui-même issu de la théorie de la classification sensible aux coûts (Elkan, 2001) :
+
+\begin{equation}
+\text{seuil} = \frac{\text{marge}}{\text{marge} + \text{LGD}}
+\end{equation}
+
+où LGD (\emph{Loss Given Default}) est la perte proportionnelle en cas de défaut, et marge la
+marge économique sur un crédit remboursé normalement. Avec les valeurs actuellement configurées
+(marge $= 0{,}15$, LGD $= 0{,}75$), le seuil économique vaut $0{,}15 / 0{,}90 \approx 0{,}167$. Ce
+seuil est ensuite modulé par des multiplicateurs de zone pour définir quatre bandes :
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Condition sur $p$ & Tranche & Multiplicateur actuel \\
+\midrule
+$p < \text{seuil} \times 0{,}6$ & \textcolor{vertaccord}{\textbf{Accord}} & 0,6 \\
+$p < \text{seuil} \times 1{,}0$ & \textcolor{orangevigilance}{\textbf{Accord sous condition}} & 1,0 \\
+$p < \text{seuil} \times 1{,}6$ & \textbf{Comité de crédit} & 1,6 \\
+sinon & \textcolor{rougerefus}{\textbf{Refus}} & -- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Ces seuils et multiplicateurs sont \textbf{modifiables sans redéploiement}, par la supervision, via
+l'écran de paramétrage de la grille -- ce ne sont jamais des constantes figées dans le code.
+
+\fichier{backend/solida/domain/rules/grille.py}
+
+\section{Catalogue complet des variables}
+
+Deux catalogues coexistent. Le \textbf{catalogue SOCLE} (20 variables) s'applique à tout dossier.
+Le \textbf{catalogue enrichi} (SOCLE + 6 variables de groupe) s'applique uniquement quand le
+sociétaire appartient à un groupe de caution solidaire jugé éligible par la cascade de décision --
+un mécanisme séparé, non traité ici.
+
+\subsection{Catalogue SOCLE (20 variables)}
+
+\begin{longtable}{L{6cm}L{9cm}}
+\toprule
+\textbf{Variable} & \textbf{Nature} \\
+\midrule
+\endhead
+anciennete\_societaire\_mois & Ancienneté du sociétaire dans la coopérative, en mois \\
+nb\_personnes\_a\_charge & Nombre de personnes à charge déclarées \\
+zone\_residence & Zone de résidence (urbain / rural) \\
+parts\_sociales\_montant & Montant des parts sociales détenues \\
+revenu\_mensuel\_declare & Revenu mensuel déclaré \\
+ratio\_endettement & Mensualité du crédit demandé rapportée au revenu \\
+duree\_demandee\_mois & Durée demandée pour le crédit \\
+solde\_epargne\_moyen\_6m & Solde d'épargne moyen sur les 6 derniers mois \\
+nb\_mois\_avec\_depot\_12m & Nombre de mois avec au moins un dépôt sur 12 mois \\
+tendance\_epargne\_12m & Tendance de l'épargne sur 12 mois (hausse / stable / érosion) \\
+volatilite\_epargne & Volatilité du solde d'épargne \\
+ratio\_epargne\_revenu & Épargne moyenne rapportée au revenu \\
+anciennete\_epargne\_mois & Ancienneté de la relation d'épargne \\
+ratio\_epargne\_montant & Épargne moyenne rapportée au montant demandé \\
+nb\_credits\_anterieurs & Nombre de crédits antérieurs \\
+nb\_incidents\_anterieurs & Nombre d'incidents de remboursement antérieurs \\
+max\_jours\_retard\_historique & Retard maximal observé sur l'historique \\
+montant\_max\_rembourse & Plus gros montant déjà remboursé avec succès \\
+numero\_cycle & Numéro du cycle de crédit en cours \\
+ratio\_montant\_historique & Montant demandé rapporté au meilleur remboursement passé \\
+\bottomrule
+\end{longtable}
+
+\subsection{Variables additionnelles du catalogue enrichi (+6)}
+
+\begin{longtable}{L{6cm}L{9cm}}
+\toprule
+\textbf{Variable} & \textbf{Nature} \\
+\midrule
+\endhead
+taille\_groupe & Nombre de membres actifs dans le groupe de caution \\
+anciennete\_groupe\_mois & Ancienneté du groupe de caution \\
+nb\_credits\_groupe\_anterieurs & Nombre de crédits antérieurs portés par le groupe \\
+nb\_incidents\_groupe\_anterieurs & Nombre d'incidents de remboursement du groupe \\
+max\_jours\_retard\_groupe\_6m & Retard maximal du groupe sur les 6 derniers mois \\
+nb\_cautions\_appelees\_anterieures & Nombre de cautions déjà appelées dans le groupe \\
+\bottomrule
+\end{longtable}
+
+\fichier{modelisation/data/modeles/bundle\_socle/manifeste.json, bundle\_enrichi/manifeste.json}
+
+\section{Impact réel de chaque variable}
+
+\subsection{Importance globale, calculée sur les données réelles d'entraînement}
+
+Le tableau ci-dessous n'est pas une estimation : il est calculé directement à partir du modèle
+SOCLE entraîné et des 12\,690 dossiers réels du jeu d'entraînement (\texttt{modelisation/\brk
+data/\brk processed/\brk jeu\_socle.parquet}), via l'explication globale native d'EBM (moyenne de
+la valeur absolue de la contribution de chaque variable sur l'ensemble du jeu de données).
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Variable} & \textbf{Poids relatif global} \\
+\midrule
+Épargne rapportée au montant demandé & 0,73 \\
+Taux d'endettement & 0,52 \\
+Durée demandée & 0,33 \\
+Revenu mensuel déclaré & 0,29 \\
+Montant demandé / meilleur remboursement & 0,26 \\
+Volatilité de l'épargne & 0,22 \\
+Plus gros montant déjà remboursé & 0,15 \\
+Épargne rapportée au revenu & 0,13 \\
+Personnes à charge & 0,08 \\
+Zone de résidence & 0,08 \\
+Solde d'épargne moyen (6 mois) & 0,07 \\
+Montant des parts sociales & 0,07 \\
+Ancienneté sociétaire & 0,06 \\
+Ancienneté de l'épargne & 0,06 \\
+Régularité des dépôts (12 mois) & 0,04 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Ce classement révèle que le modèle fonde l'essentiel de sa décision sur deux familles de signaux
+: la \textbf{capacité de remboursement} (taux d'endettement, durée, revenu) et la \textbf{capacité
+d'épargne relative à la demande} (épargne rapportée au montant, à l'historique de remboursement).
+Les variables purement démographiques (personnes à charge, zone de résidence) pèsent nettement
+moins.
+
+\subsection{Importance globale et contribution individuelle : deux choses différentes}
+
+Ce classement dit ce qui compte \emph{en moyenne} sur tout le portefeuille. Il ne prédit pas ce
+qui va compter pour un dossier précis : une variable secondaire dans ce classement peut peser
+lourd sur un dossier particulier si sa valeur y est extrême (une volatilité d'épargne
+anormalement haute, par exemple, peut faire perdre beaucoup de points à un dossier donné même si
+cette variable pèse peu en moyenne). C'est précisément pour cette raison que la fiche de
+justification affiche toujours la contribution \textbf{réelle et individuelle} de chaque variable
+pour le dossier en cours, jamais un classement générique plaqué sur tous les dossiers.
+
+\section{Couverture par rapport aux 5C du crédit}
+
+Le cadre classique d'analyse du risque de crédit distingue cinq dimensions (les « 5C »). Voici ce
+que le modèle couvre réellement aujourd'hui, variable par variable :
+
+\begin{center}
+\begin{tabular}{L{2.7cm}L{1.8cm}L{9cm}}
+\toprule
+\textbf{Dimension} & \textbf{Couvert.} & \textbf{Variables concernées} \\
+\midrule
+Capacity (capacité de remboursement) & Forte & revenu\_mensuel\_declare, ratio\_endettement, duree\_demandee\_mois, ratio\_montant\_historique, montant\_max\_rembourse \\
+Capital (fonds propres) & Forte & solde\_epargne\_moyen\_6m, parts\_sociales\_montant, ratio\_epargne\_revenu, anciennete\_epargne\_mois, volatilite\_epargne \\
+Character (comportement, réputation) & Forte & nb\_credits\_anterieurs, nb\_incidents\_anterieurs, max\_jours\_retard\_historique, numero\_cycle, anciennete\_societaire\_mois, nb\_mois\_avec\_depot\_12m, et en enrichi le comportement du groupe \\
+Collateral (garantie) & Partielle & ratio\_epargne\_montant (épargne nantie) et, en mode enrichi, la caution solidaire du groupe -- aucune garantie matérielle classique n'est modélisée \\
+Conditions (contexte économique) & Faible & zone\_residence uniquement ; l'objet du crédit est collecté mais n'est pas une variable du modèle, et aucune donnée macro-économique ou sectorielle n'entre dans le calcul \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Limites et garde-fous encore ouverts}
+
+Par souci d'honnêteté, cette section documente ce que le modèle \textbf{ne garantit pas encore},
+sur la base des artefacts d'audit réellement produits par le pipeline d'entraînement lui-même --
+pas d'une opinion externe.
+
+\subsection{Données d'entraînement synthétiques}
+
+Le modèle est entraîné sur 12\,690 dossiers générés par un simulateur
+(\texttt{simulateur/}), pas sur l'historique réel de la coopérative. C'est documenté et assumé
+dans tout le projet : c'est un prototype conçu pour être recalibré sur données réelles avant tout
+usage en production.
+
+\subsection{Un seuil de performance qui déclenche sa propre alerte}
+
+Le fichier d'audit produit automatiquement à l'entraînement (\texttt{modelisation/\brk data/\brk
+modeles/\brk socle\_audit\_fuite.json}) contient :
+
+\begin{quote}\ttfamily\footnotesize
+"auc\_test": 0.898,\\
+"audit\_renforce\_requis": true,\\
+"motif": "AUC test strictement supérieure\\
+à 0,88 : revue humaine de fuite requise."
+\end{quote}
+
+Les contrôles automatiques (absence de colonne interdite, pas de fuite temporelle, classes cible
+correctes) sont passés. Mais la \textbf{revue humaine que ce seuil déclenche explicitement n'a
+laissé aucune trace de validation} dans le dépôt à ce jour -- c'est une étape identifiée comme
+nécessaire, pas encore réalisée.
+
+\subsection{Équité et seuil de sélection non actés}
+
+Le fichier \texttt{socle\_revue\_equite.json} signale de la même façon deux points en attente :
+
+\begin{quote}\ttfamily\footnotesize
+"seuil\_selection\_non\_defini": true,\\
+"revue\_humaine\_ecart\_\brk risque\_superieur\_5\_points": true
+\end{quote}
+
+Le seuil de décision opérationnel n'est pas figé, et un écart de risque entre segments dépasse 5
+points sans qu'une revue d'équité n'ait été actée à ce jour.
+
+\subsection{Ce que cela signifie concrètement}
+
+Le modèle est \textbf{techniquement solide} : architecture explicable par construction, bonne
+discrimination, bonne calibration mesurée (Brier $0{,}046$, ECE $0{,}011$--$0{,}018$). Mais deux
+garde-fous que le projet s'est lui-même explicitement imposés restent ouverts, et les données
+d'entraînement ne reflètent pas encore la réalité de la coopérative. Présenter ce modèle comme
+définitivement validé serait inexact ; le présenter comme un prototype rigoureux et transparent,
+avec une feuille de route claire vers la validation, est la description honnête de son état
+actuel.
+
+\end{document}

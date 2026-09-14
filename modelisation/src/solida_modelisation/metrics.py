@@ -32,6 +32,11 @@ def ecart_maximal_deciles(y_true: np.ndarray, probabilites: np.ndarray, bins: in
     """Écart observé/prédit dans des déciles de population, pas de largeur fixe."""
     try:
         indices = pd.qcut(probabilites, q=bins, labels=False, duplicates="drop")
+        # Sur un vecteur de probabilités constant (ou presque), `qcut` ne lève pas
+        # `ValueError` : il renvoie des labels entièrement `NaN`, faute de pouvoir former
+        # des bornes de bin distinctes. Un seul décile couvre alors toute la population.
+        if pd.isna(indices).all():
+            indices = np.zeros(len(probabilites), dtype=int)
     except ValueError:
         indices = np.zeros(len(probabilites), dtype=int)
     ecarts: list[float] = []

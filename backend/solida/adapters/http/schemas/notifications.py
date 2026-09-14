@@ -21,3 +21,12 @@ class DemandeSocietaireNotification(BaseModel):
 class PageNotifications(BaseModel):
     elements: list[DemandeSocietaireNotification]
     total: int
+
+
+class AssignerNotificationRequest(BaseModel):
+    agent_id: str
+
+
+class AgentAgence(BaseModel):
+    id: str
+    nom_complet: str

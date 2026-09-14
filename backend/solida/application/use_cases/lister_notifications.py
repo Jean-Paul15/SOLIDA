@@ -11,12 +11,24 @@ class ListerNotifications:
     core_sim_reader: CoreSimReader
 
     def execute(
-        self, agence_id: str | None, limite: int, decalage: int
+        self, role: str, agent_id: str, agence_id: str | None, limite: int, decalage: int
     ) -> tuple[list[DemandeSocietaireAffichee], int]:
-        demandes = self.demande_societaire_repository.lister(
-            agence_id, STATUT_NOUVELLE, limite, decalage
-        )
-        total = self.demande_societaire_repository.compter(agence_id, STATUT_NOUVELLE)
+        """Un superviseur voit les demandes non assignées de son périmètre (à répartir) ; un
+        agent ne voit que celles qui lui ont été assignées (fin de la boîte partagée)."""
+        if role == "superviseur":
+            demandes = self.demande_societaire_repository.lister_non_assignees(
+                agence_id, STATUT_NOUVELLE, limite, decalage
+            )
+            total = self.demande_societaire_repository.compter_non_assignees(
+                agence_id, STATUT_NOUVELLE
+            )
+        else:
+            demandes = self.demande_societaire_repository.lister_assignees(
+                agence_id, agent_id, STATUT_NOUVELLE, limite, decalage
+            )
+            total = self.demande_societaire_repository.compter_assignees(
+                agence_id, agent_id, STATUT_NOUVELLE
+            )
 
         affichees = []
         for demande in demandes:

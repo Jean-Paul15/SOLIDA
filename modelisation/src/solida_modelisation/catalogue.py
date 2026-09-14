@@ -53,9 +53,9 @@ def codes_features_socle() -> list[str]:
     return [feature.code for feature in FEATURES_SOCLE]
 
 
-def types_ebm() -> list[object]:
+def types_ebm(catalogue: tuple[FeatureSpec, ...] = FEATURES_SOCLE) -> list[object]:
     result: list[object] = []
-    for feature in FEATURES_SOCLE:
+    for feature in catalogue:
         if feature.type_ebm == "continue":
             result.append("continuous")
         elif feature.type_ebm == "nominale":
@@ -63,3 +63,64 @@ def types_ebm() -> list[object]:
         else:
             result.append(list(ORDRE_TENDANCE))
     return result
+
+
+# Variables de la couche solidaire : uniquement pour un crédit dont l'emprunteur est le
+# groupe (garantie `caution_solidaire_gie` + `gie_id` renseigné), jamais pour une demande
+# individuelle d'un membre — cf. `précision.txt` réponses 1, 16, 21, 33 et
+# `docs-solida/decisions-couche-solidaire.md`. Absentes (mises à `null`) si le groupe compte
+# moins de `SEUIL_TAILLE_GROUPE_JUGEABLE` membres actifs (réponse 22).
+SEUIL_TAILLE_GROUPE_JUGEABLE = 5
+
+FEATURES_GROUPE: tuple[FeatureSpec, ...] = (
+    FeatureSpec(
+        "taille_groupe",
+        "Taille du groupe",
+        "continue",
+        "Membres actifs (entrés, non sortis) à la date de référence.",
+    ),
+    FeatureSpec(
+        "anciennete_groupe_mois",
+        "Anciennete du groupe",
+        "continue",
+        "Mois depuis la création du GIE.",
+    ),
+    FeatureSpec(
+        "nb_credits_groupe_anterieurs",
+        "Credits de groupe anterieurs",
+        "continue",
+        "Crédits du même GIE débloqués avant la date de référence.",
+    ),
+    FeatureSpec(
+        "nb_incidents_groupe_anterieurs",
+        "Incidents de groupe anterieurs",
+        "continue",
+        "Crédits de groupe antérieurs avec un retard groupe observable d'au moins 30 jours.",
+    ),
+    FeatureSpec(
+        "max_jours_retard_groupe_6m",
+        "Retard groupe sur 6 mois",
+        "continue",
+        "Pire retard groupe observable dans les 6 mois précédant la référence.",
+    ),
+    FeatureSpec(
+        "nb_cautions_appelees_anterieures",
+        "Cautions du groupe appelees",
+        "continue",
+        "Cautions solidaires appelées sur des crédits de groupe antérieurs déjà clos.",
+    ),
+)
+
+FEATURES_ENRICHI: tuple[FeatureSpec, ...] = FEATURES_SOCLE + FEATURES_GROUPE
+
+
+def codes_features_enrichi() -> list[str]:
+    return [feature.code for feature in FEATURES_ENRICHI]
+
+
+def catalogue_par_identifiant(identifiant: str) -> tuple[FeatureSpec, ...]:
+    if identifiant == "solida-socle":
+        return FEATURES_SOCLE
+    if identifiant == "solida-enrichi":
+        return FEATURES_ENRICHI
+    raise ValueError(f"Identifiant de catalogue inconnu : {identifiant!r}.")

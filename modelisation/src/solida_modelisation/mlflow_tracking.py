@@ -55,24 +55,28 @@ def journaliser_reference(
         mlflow.sklearn.log_model(modele, name="reference_logistique", signature=signature)
 
 
-def journaliser_socle(
+def _journaliser_ebm(
+    identifiant: str,
+    experience: str,
+    run_name: str,
+    nom_artefact_bundle: str,
     metriques_validation: dict[str, float],
     metriques_test: dict[str, float],
     bundle: Path,
     exemple: pd.DataFrame,
-    promouvoir_champion_demo: bool = False,
+    promouvoir_champion_demo: bool,
 ) -> None:
     if not actif():
         return
     mlflow, infer_signature, client_type, pyfunc = _dependances_mlflow()
 
-    class PyfuncSocle(pyfunc.PythonModel):  # type: ignore[misc, name-defined]
+    class PyfuncEbm(pyfunc.PythonModel):  # type: ignore[misc, name-defined]
         """Interface MLflow qui charge le même bundle vérifié que l'API."""
 
         def load_context(self, context: Any) -> None:
             from .inference import ModeleSocle
 
-            self._modele = ModeleSocle.depuis_dossier(Path(context.artifacts["bundle_socle"]))
+            self._modele = ModeleSocle.depuis_dossier(Path(context.artifacts[nom_artefact_bundle]))
 
         def predict(self, context: Any, model_input: pd.DataFrame, params: Any = None) -> pd.DataFrame:
             probabilites = [
@@ -81,21 +85,62 @@ def journaliser_socle(
             ]
             return pd.DataFrame({"probabilite_defaut": probabilites})
 
-    mlflow.set_experiment("solida-socle")
-    with mlflow.start_run(run_name="socle-ebm-temporel"):
+    mlflow.set_experiment(experience)
+    with mlflow.start_run(run_name=run_name):
         _journaliser_metriques(mlflow, "validation", metriques_validation)
         _journaliser_metriques(mlflow, "test", metriques_test)
         mlflow.log_param("graine", 42)
         signature = infer_signature(exemple, pd.DataFrame({"probabilite_defaut": [0.0] * len(exemple)}))
         info = mlflow.pyfunc.log_model(
-            name="socle_ebm",
-            python_model=PyfuncSocle(),
-            artifacts={"bundle_socle": str(bundle)},
+            name=nom_artefact_bundle,
+            python_model=PyfuncEbm(),
+            artifacts={nom_artefact_bundle: str(bundle)},
             signature=signature,
             input_example=exemple.head(3),
-            registered_model_name="solida-socle",
+            registered_model_name=identifiant,
         )
         if promouvoir_champion_demo and info.registered_model_version is not None:
             client_type().set_registered_model_alias(
-                "solida-socle", "champion-demo", str(info.registered_model_version)
+                identifiant, "champion-demo", str(info.registered_model_version)
             )
+
+
+def journaliser_socle(
+    metriques_validation: dict[str, float],
+    metriques_test: dict[str, float],
+    bundle: Path,
+    exemple: pd.DataFrame,
+    promouvoir_champion_demo: bool = False,
+) -> None:
+    _journaliser_ebm(
+        "solida-socle",
+        "solida-socle",
+        "socle-ebm-temporel",
+        "bundle_socle",
+        metriques_validation,
+        metriques_test,
+        bundle,
+        exemple,
+        promouvoir_champion_demo,
+    )
+
+
+def journaliser_enrichi(
+    metriques_validation: dict[str, float],
+    metriques_test: dict[str, float],
+    bundle: Path,
+    exemple: pd.DataFrame,
+    promouvoir_champion_demo: bool = False,
+) -> None:
+    """Candidat seulement : aucun alias `champion-demo` n'est posé automatiquement (J2-03)."""
+    _journaliser_ebm(
+        "solida-enrichi",
+        "solida-enrichi",
+        "enrichi-ebm-temporel",
+        "bundle_enrichi",
+        metriques_validation,
+        metriques_test,
+        bundle,
+        exemple,
+        promouvoir_champion_demo,
+    )

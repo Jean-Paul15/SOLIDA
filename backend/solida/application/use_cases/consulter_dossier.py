@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 
 from solida.application.use_cases.consulter_dossier_mapping import (
     _alertes,
@@ -14,11 +14,13 @@ from solida.domain.values.dossier import (
     CreditResume,
     DossierSocietaire,
     IdentiteSocietaire,
-    MouvementEpargneAffiche,
+    PointSoldeMensuel,
     SyntheseEpargne,
 )
 
-DUREE_HISTORIQUE_MOUVEMENTS = timedelta(days=365)
+PROFONDEUR_SERIE_SOLDE_MOIS = 24
+"""Cible du §5.2 : 24 mois, minimum 12 — la série sert aussi bien un horizon d'affichage
+court (3 mois) qu'un futur horizon 24 mois sans changer le contrat."""
 
 STATUT_SOCIETAIRE_PAR_DEFAUT = "actif"
 """Le générateur ne modélise ni churn ni radiation, voir `CoreSimPostgresReader`."""
@@ -36,9 +38,9 @@ class ConsulterDossier:
         credits = self.core_sim_reader.charger_historique_credit(societaire_id)
         compte = self.core_sim_reader.charger_compte_epargne(societaire_id)
         groupe = _groupe_affiche(self.core_sim_reader.charger_groupe(societaire_id))
-        mouvements = self.core_sim_reader.charger_mouvements_epargne(
-            societaire_id, depuis=date.today() - DUREE_HISTORIQUE_MOUVEMENTS
-        )
+        soldes_mensuels = self.core_sim_reader.charger_soldes_mensuels(
+            societaire_id, avant=date.today()
+        )[-PROFONDEUR_SERIE_SOLDE_MOIS:]
 
         historique = [
             CreditResume(
@@ -86,12 +88,14 @@ class ConsulterDossier:
                     compte, societaire.revenu_mensuel_declare
                 ),
                 anciennete_relation_mois=societaire.anciennete_mois,
-                # CORE-SIM ne fournit pas de solde mensuel : afficher les mouvements observés.
-                mouvements_recents=[
-                    MouvementEpargneAffiche(
-                        date_operation=m.date_operation, sens=m.sens, montant=m.montant
+                serie_solde_12m=[
+                    PointSoldeMensuel(
+                        mois=s.mois,
+                        solde_fin_mois=round(s.solde_fin_mois),
+                        total_depots=round(s.total_depots),
+                        total_retraits=round(s.total_retraits),
                     )
-                    for m in mouvements
+                    for s in soldes_mensuels
                 ],
             ),
             historique_credit=historique,

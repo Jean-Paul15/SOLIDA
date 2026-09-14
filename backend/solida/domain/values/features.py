@@ -1,4 +1,12 @@
 from dataclasses import dataclass
+from datetime import date
+
+from solida_modelisation.features_groupe import (
+    AppartenanceGie,
+    CautionGroupe,
+    CreditGroupeAnterieur,
+    EcheanceGroupe,
+)
 
 type ValeurFeature = float | int | str | bool | None
 
@@ -31,10 +39,28 @@ class FeaturesIndividuelles:
 
 @dataclass(frozen=True)
 class FeaturesSolidaires:
-    """`None` pour un sociétaire hors segment de groupe."""
+    """Couche solidaire : historique du groupe emprunteur lui-même (arbitrage 2026-09-14,
+    voir `précision.txt` réponses 1, 16, 21, 33) — jamais calculée pour une demande
+    individuelle. `None` sur chaque champ hors `taille_groupe` si le groupe compte moins de
+    membres que le seuil jugeable (réponse 22, `SEUIL_TAILLE_GROUPE_JUGEABLE`)."""
 
-    en_groupe: bool
-    groupe_id: str | None
     taille_groupe: int | None
-    taux_remboursement_groupe: float | None
-    deja_secouru_par_groupe: bool | None
+    anciennete_groupe_mois: int | None
+    nb_credits_groupe_anterieurs: int | None
+    nb_incidents_groupe_anterieurs: int | None
+    max_jours_retard_groupe_6m: float | None
+    nb_cautions_appelees_anterieures: int | None
+
+
+@dataclass(frozen=True)
+class DonneesGroupeBrutes:
+    """Ce que `CoreSimReader.charger_donnees_groupe` doit fournir pour que
+    `calculer_features_groupe` (partagée avec `modelisation`) puisse s'appliquer à
+    l'identique côté inférence — c'est la garantie de parité entraînement/inférence
+    (J2-08b), pas une duplication de logique."""
+
+    date_creation: date
+    appartenances: list[AppartenanceGie]
+    credits_anterieurs: list[CreditGroupeAnterieur]
+    echeances_groupe: list[EcheanceGroupe]
+    cautions_anterieures: list[CautionGroupe]

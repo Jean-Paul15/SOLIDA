@@ -5,6 +5,7 @@ from solida.application.use_cases.scorer_demande import ScorerDemande
 from solida.domain.errors import IdentiteSocietaireInvalide, SocietaireIntrouvable
 from solida.domain.ports.core_sim import CoreSimReader
 from solida.domain.ports.demande_societaire import DemandeSocietaireRepository
+from solida.domain.ports.grille import GrilleRepository
 from solida.domain.ports.notification_sender import NotificationSender
 from solida.domain.rules.jeton_societaire import verifier_jeton
 from solida.domain.rules.pre_verification import PreVerification, calculer_pre_verification
@@ -22,16 +23,13 @@ class ResultatDemandeSocietaire:
     pre_verification: PreVerification
 
 
-def _produit_id_depuis_segment(segment: str) -> str:
-    return f"prod-{segment.replace('_', '-')}"
-
-
 @dataclass(frozen=True)
 class ProcessSocietaireDemande:
     core_sim_reader: CoreSimReader
     scorer_demande: ScorerDemande
     demande_societaire_repository: DemandeSocietaireRepository
     notification_sender: NotificationSender
+    grille_repository: GrilleRepository
     secret: str
 
     def execute(
@@ -40,6 +38,7 @@ class ProcessSocietaireDemande:
         montant_demande: int,
         objet_credit: str,
         duree_mois: int,
+        produit_id: str,
     ) -> ResultatDemandeSocietaire:
         societaire_id = verifier_jeton(self.secret, jeton_session)
         if societaire_id is None:
@@ -49,7 +48,6 @@ class ProcessSocietaireDemande:
         if societaire is None:
             raise SocietaireIntrouvable(societaire_id)
 
-        produit_id = _produit_id_depuis_segment(societaire.segment)
         demande = DemandeScoring(
             societaire_id=societaire_id,
             produit_id=produit_id,
@@ -72,12 +70,14 @@ class ProcessSocietaireDemande:
             agent_agence_id=None,
         )
 
+        configuration = self.grille_repository.lire_active()
         pre_verification = calculer_pre_verification(
             decision.tranche,
             Montant(valeur=montant_demande),
             decision.montant_recommande,
             objet_credit,
             decision.conditions_reexamen,
+            configuration.classification_objets,
         )
 
         demande_a_creer = DemandeSocietaireACreer(

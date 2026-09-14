@@ -1,21 +1,18 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
+import { useEtapeProtegee } from "@/lib/use-etape-protegee";
 
 export default function BonjourPage() {
   const router = useRouter();
   const { prenom, jetonSession } = useDemande();
+  const pret = useEtapeProtegee(jetonSession);
 
-  React.useEffect(() => {
-    if (!jetonSession) router.replace("/numero-compte");
-  }, [jetonSession, router]);
-
-  if (!jetonSession) return null;
+  if (!pret) return null;
 
   return (
     <EcranEtape
