@@ -50,6 +50,7 @@ def _produit(**overrides: object) -> ProduitCredit:
     values: dict[str, object] = {
         "produit_id": "PROD-1",
         "libelle": "Produit test",
+        "segment": "individuel",
         "type_garantie": "individuelle",
         "montant_min": 50000,
         "montant_max": 1000000,

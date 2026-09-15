@@ -21,7 +21,7 @@ export function SimulationTab({ total, count, approvalRate }: SimulationTabProps
         <span className="text-xs font-medium text-neutre-500">
           Répartition sur {total} dossiers
         </span>
-        {(["accord", "accord_sous_condition", "comite_de_credit", "refus"] as const).map((t) => (
+        {(["accord", "accord_sous_condition", "refus"] as const).map((t) => (
           <div key={t} className="flex items-center gap-3">
             <span className="w-40 text-sm text-neutre-700">{LABEL_TRANCHE[t]}</span>
             <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-neutre-200">

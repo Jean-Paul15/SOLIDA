@@ -42,8 +42,10 @@ export const GROUP_ROLE_LABEL: Record<RoleGroupe, string> = {
 export const LABEL_TRANCHE: Record<Tranche, string> = {
   accord: "ACCORD",
   accord_sous_condition: "ACCORD SOUS CONDITION",
-  comite_de_credit: "COMITÉ DE CRÉDIT",
   refus: "REFUS",
+  // Historique uniquement : plus jamais produite depuis le passage à 3 tranches, mais une
+  // décision archivée peut encore la porter (voir TrancheDecision.COMITE_DE_CREDIT, backend).
+  comite_de_credit: "COMITÉ DE CRÉDIT",
 };
 
 /**
@@ -63,13 +65,15 @@ export const EXPLICATION_TRANCHE: Record<Tranche, string> = {
   accord_sous_condition:
     "La recommandation est favorable, sous réserve du point signalé ci-dessous (conditions de " +
     "réexamen) à porter devant le comité de crédit, qui statuera avec l'agent.",
-  comite_de_credit:
-    "Le signal du modèle est incertain sur ce dossier : il appelle un examen approfondi en " +
-    "comité de crédit avant toute décision.",
   refus:
     "Le profil de risque est trop élevé pour une recommandation favorable en l'état. Ce n'est " +
     "pas automatique ni définitif : le comité de crédit peut réexaminer le dossier à la lumière " +
     "des conditions listées ci-dessous.",
+  // Historique uniquement (voir LABEL_TRANCHE ci-dessus) : texte conservé tel qu'affiché à
+  // l'époque pour une décision archivée sous cette tranche, jamais montré pour une nouvelle.
+  comite_de_credit:
+    "Le signal du modèle était incertain sur ce dossier : il appelait un examen approfondi en " +
+    "comité de crédit avant toute décision.",
 };
 
 export const TRANCHE_COLOR: Record<Tranche, { text: string; background: string; border: string }> =
@@ -84,14 +88,15 @@ export const TRANCHE_COLOR: Record<Tranche, { text: string; background: string; 
       background: "bg-decision-conditionnel-fond",
       border: "border-l-decision-conditionnel",
     },
-    comite_de_credit: {
-      text: "text-decision-comite",
-      background: "bg-decision-comite-fond",
-      border: "border-l-decision-comite",
-    },
     refus: {
       text: "text-decision-refus",
       background: "bg-decision-refus-fond",
       border: "border-l-decision-refus",
+    },
+    // Historique uniquement (voir LABEL_TRANCHE ci-dessus).
+    comite_de_credit: {
+      text: "text-decision-comite",
+      background: "bg-decision-comite-fond",
+      border: "border-l-decision-comite",
     },
   };

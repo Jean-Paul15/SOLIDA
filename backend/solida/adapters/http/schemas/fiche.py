@@ -18,5 +18,7 @@ class FicheJustification(BaseModel):
     date_edition: str
     facteurs_favorables: list[ContributionVariable]
     facteurs_defavorables: list[ContributionVariable]
+    nb_facteurs_favorables_masques: int = 0
+    nb_facteurs_defavorables_masques: int = 0
     conditions_reexamen: list[str]
     mention_legale: str

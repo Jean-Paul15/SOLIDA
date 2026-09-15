@@ -8,7 +8,6 @@ interface PolicyParameters {
   margin: number;
   lgd: number;
   approvalMultiplier: number;
-  reviewMultiplier: number;
   productCaps: Record<string, number>;
 }
 
@@ -39,8 +38,6 @@ export function useSavePolicy(initialConfiguration: ConfigurationGrilleApi, canE
               marge: parameters.margin,
               lgd: parameters.lgd,
               multiplicateur_accord: parameters.approvalMultiplier,
-              multiplicateur_vigilance: initialConfiguration.grille.multiplicateur_vigilance,
-              multiplicateur_examen: parameters.reviewMultiplier,
             },
             progressif: {
               ...initialConfiguration.progressif,

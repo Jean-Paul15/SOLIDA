@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from solida.domain.errors import ScorecardImmuable
 from solida.domain.ports.grille import GrilleRepository
@@ -39,4 +39,14 @@ class ModifierGrille:
                 "pdo, score_reference et odds_reference ne peuvent pas être modifiés tant que "
                 "le modèle réel n'est pas calibré."
             )
-        return self.grille_repository.enregistrer_nouvelle_version(nouvelle_configuration)
+        # classification_objets et objets_implicites_produits ne sont pas exposes par le schema
+        # HTTP de cet endpoint (aucun ecran ne les edite) : sans ce report explicite, chaque
+        # enregistrement depuis l'ecran Politique de credit les reinitialiserait silencieusement
+        # a {} (valeur par defaut du value object), effacant une table que seule la supervision
+        # peut renseigner par un autre canal.
+        configuration_a_enregistrer = replace(
+            nouvelle_configuration,
+            classification_objets=active.classification_objets,
+            objets_implicites_produits=active.objets_implicites_produits,
+        )
+        return self.grille_repository.enregistrer_nouvelle_version(configuration_a_enregistrer)

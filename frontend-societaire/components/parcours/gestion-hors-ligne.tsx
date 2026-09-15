@@ -23,7 +23,12 @@ export function GestionHorsLigne() {
           montant: enAttente.montant,
           objet: enAttente.objet as never,
           duree_mois: enAttente.duree_mois,
-          produit_id: enAttente.produit_id,
+          ...(enAttente.revenu_mensuel_declare !== null && {
+            revenu_mensuel_declare: enAttente.revenu_mensuel_declare,
+          }),
+          ...(enAttente.charges_mensuelles !== null && {
+            charges_mensuelles: enAttente.charges_mensuelles,
+          }),
         });
         await viderFile();
         if (actif)

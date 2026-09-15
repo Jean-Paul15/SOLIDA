@@ -12,7 +12,10 @@ export type Segment = "salarie" | "individuel" | "jeune" | "femme_gie" | "agrico
 
 export type StatutSocietaire = "actif" | "inactif" | "radie";
 
-export type Tranche = "accord" | "accord_sous_condition" | "comite_de_credit" | "refus";
+// "comite_de_credit" : historique uniquement, plus jamais produit par une nouvelle décision
+// depuis le passage à 3 tranches (fusionnée dans "refus") — conservée pour que le registre
+// puisse encore afficher les décisions archivées sous ce statut.
+export type Tranche = "accord" | "accord_sous_condition" | "refus" | "comite_de_credit";
 
 export type CalculationMode = "socle_seul" | "enrichi";
 
@@ -91,6 +94,8 @@ export interface FicheJustification {
   date_edition: string;
   facteurs_favorables: ContributionVariable[];
   facteurs_defavorables: ContributionVariable[];
+  nb_facteurs_favorables_masques: number;
+  nb_facteurs_defavorables_masques: number;
   conditions_reexamen: string[];
   mention_legale: string;
 }
@@ -236,8 +241,6 @@ export interface GridParametersApi {
   marge: number;
   lgd: number;
   multiplicateur_accord: number;
-  multiplicateur_vigilance: number;
-  multiplicateur_examen: number;
 }
 
 export interface ProgressiveParametersApi {
@@ -260,6 +263,9 @@ export interface ProduitCreditApi {
   duree_min_mois: number;
   duree_max_mois: number;
   taux_annuel: number;
+  /** Non nul quand ce produit détermine déjà l'usage du crédit : l'agent n'a alors rien à
+   * choisir, comme côté portail sociétaire (app/produit/page.tsx). */
+  objet_implicite: ObjetCredit | null;
 }
 
 export interface ScorecardParametersApi {

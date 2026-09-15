@@ -40,10 +40,10 @@ class SqlDemandeSocietaireRepository:
         query = text("""
             INSERT INTO demande_societaire
                 (demande_id, societaire_id, agence_id, montant_demande, objet_credit,
-                 duree_mois, produit_id, resultat)
+                 duree_mois, produit_id, resultat, assigne_a_agent_id)
             VALUES
                 (:demande_id, :societaire_id, :agence_id, :montant_demande, :objet_credit,
-                 :duree_mois, :produit_id, :resultat)
+                 :duree_mois, :produit_id, :resultat, :assigne_a_agent_id)
             RETURNING *
         """).bindparams(bindparam("resultat", type_=JSONB))
         with self._engine.connect() as connection:
@@ -60,6 +60,11 @@ class SqlDemandeSocietaireRepository:
                     "resultat": decision_a_enregistrer_to_resultat_scoring(
                         demande.resultat
                     ).model_dump(mode="json"),
+                    "assigne_a_agent_id": (
+                        uuid.UUID(demande.assigne_a_agent_id)
+                        if demande.assigne_a_agent_id
+                        else None
+                    ),
                 },
             ).one()
             connection.commit()

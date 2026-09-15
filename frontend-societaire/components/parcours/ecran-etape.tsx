@@ -9,9 +9,10 @@ const NB_ETAPES = 7;
 
 /**
  * Coquille commune aux écrans de saisie du parcours ("Étape 3 sur 7", section 5 du
- * document — le choix du produit ajoute une 7e étape à l'origine à 6). Un seul
- * bouton d'action visible par écran (section 3), retour toujours possible
- * (section 5 : "aucune impasse").
+ * document — l'estimation facultative de la situation économique a ajouté une étape à
+ * l'origine à 6 ; le choix du produit, ajouté puis retiré, est désormais déduit du
+ * segment du sociétaire). Un seul bouton d'action visible par écran (section 3), retour
+ * toujours possible (section 5 : "aucune impasse").
  */
 export function EcranEtape({
   etape,

@@ -115,7 +115,7 @@ def test_previsualiser_ne_persiste_rien(
     assert reponse.status_code == 200
     resultat = reponse.json()
     assert resultat["montant_demande"] == 100000
-    assert resultat["tranche"] in {"accord", "accord_sous_condition", "comite_de_credit", "refus"}
+    assert resultat["tranche"] in {"accord", "accord_sous_condition", "refus"}
     assert len(resultat["decomposition"]) > 0
     premiere = resultat["decomposition"][0]
     assert premiere.keys() >= {"code_variable", "libelle", "valeur", "points", "sens", "famille"}

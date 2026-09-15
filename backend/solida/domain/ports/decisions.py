@@ -31,3 +31,12 @@ class DecisionRepository(Protocol):
         place dans `enregistrer`, pas par ce contrôle.
         """
         ...
+
+    def dernier_agent_reel(self, societaire_id: str) -> str | None:
+        """L'agent de la décision la plus récente déjà enregistrée pour ce sociétaire.
+        `decision_scoring` ne contient que des décisions `confirm()`, jamais `preview()` (flux
+        portail sociétaire) : le sentinel `AGENT_ID_PORTAIL` n'y apparaît donc jamais, aucun
+        filtre applicatif n'est nécessaire. `None` si aucune décision antérieure n'existe — le
+        sociétaire n'a alors pas d'agent habituel, et sa prochaine demande reste non assignée
+        (le superviseur choisit)."""
+        ...

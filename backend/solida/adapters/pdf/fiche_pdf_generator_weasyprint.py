@@ -10,8 +10,10 @@ from solida.domain.values.fiche import EnTeteFiche
 _LIBELLE_TRANCHE = {
     "accord": "ACCORD",
     "accord_sous_condition": "ACCORD SOUS CONDITION",
-    "comite_de_credit": "COMITÉ DE CRÉDIT",
     "refus": "REFUS",
+    # Historique uniquement (voir TrancheDecision.COMITE_DE_CREDIT) : une fiche archivée
+    # avant le passage à 3 tranches peut encore porter cette valeur.
+    "comite_de_credit": "COMITÉ DE CRÉDIT",
 }
 
 _ENVIRONNEMENT = jinja2.Environment(

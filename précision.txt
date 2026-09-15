@@ -1,0 +1,440 @@
+Oui. Le contenu est pertinent, mais plusieurs questions sont formulées comme des questions de **data scientist/architecte**. Pour un agent de crédit, responsable de caisse ou professionnel CIF, il vaut mieux parler de **ce qu'il fait réellement**, de **ce qu'il voit dans son logiciel** et lui demander des **exemples concrets**.
+
+Voici une version plus naturelle, que tu peux utiliser directement pendant l'entretien.
+
+# Questionnaire métier SOLIDA — version terrain
+
+## A. Comprendre comment fonctionne réellement un crédit de groupe
+
+**1. Quand un crédit est accordé à un GIE, qui est officiellement considéré comme l'emprunteur ?**
+Est-ce le groupe lui-même, la personne qui représente le groupe, ou les deux ?
+
+**Réponse :**
+
+**2. Quand le crédit est débloqué, où l'argent est-il versé ?**
+Sur un compte appartenant au groupe, sur le compte de la présidente ou d'un autre membre, ou autrement ?
+
+**Réponse :**
+
+**3. Si, par exemple, un groupe reçoit 1 000 000 FCFA pour 10 membres, votre système permet-il de savoir quelle part revient à chaque membre ?**
+Si oui, pouvez-vous voir les montants attribués à chacun et les dates correspondantes ?
+
+**Réponse :**
+
+**4. Un même groupe peut-il avoir deux ou plusieurs crédits en cours en même temps ?**
+
+**Réponse :**
+
+**5. Une même personne peut-elle être membre de plusieurs GIE en même temps ?**
+
+**Réponse :**
+
+---
+
+# B. Entrée et sortie des membres d'un GIE
+
+**6. À quel moment considérez-vous officiellement qu'une personne devient membre d'un GIE ?**
+À son inscription, à sa première cotisation, lorsqu'elle est acceptée par le groupe ou lorsqu'elle participe à son premier crédit ?
+
+**Réponse :**
+
+**7. Quand une personne quitte un groupe, est-ce enregistré dans votre système ?**
+Si oui, enregistrez-vous également la date et la raison de son départ ?
+
+**Réponse :**
+
+**8. Si une nouvelle personne rejoint le groupe alors qu'un crédit est déjà en cours, doit-elle participer au remboursement ou garantir ce crédit ?**
+
+**Réponse :**
+
+**9. À l'inverse, si quelqu'un quitte le groupe avant que le crédit soit totalement remboursé, reste-t-il responsable de ce crédit ?**
+
+**Réponse :**
+
+**10. Lorsqu'un groupe disparaît, fusionne avec un autre ou se divise en plusieurs groupes, gardez-vous cette information dans le système ?**
+Si oui, comment est-elle enregistrée ?
+
+**Réponse :**
+
+**11. Enregistrez-vous les responsabilités des membres du groupe, par exemple présidente, trésorière ou secrétaire ?**
+Et lorsqu'une personne change de fonction, gardez-vous l'historique de ces changements ?
+
+**Réponse :**
+
+---
+
+# C. Comprendre la caution solidaire
+
+**12. Lorsqu'un crédit de groupe rencontre un problème de remboursement, jusqu'à quel montant les autres membres doivent-ils couvrir la dette ?**
+Toute la dette restante, une partie déterminée à l'avance, ou cela dépend-il du dossier ?
+
+**Réponse :**
+
+**13. Cette responsabilité est-elle la même pour tous les membres ou certains membres garantissent-ils des montants différents ?**
+
+**Réponse :**
+
+**14. À quel moment demandez-vous réellement aux autres membres du groupe d'intervenir lorsqu'un membre ne paie pas ?**
+Dès le premier retard ? Après plusieurs jours ? Après des relances ? Après décision d'un responsable ?
+
+**Réponse :**
+
+**15. Lorsque la caution du groupe intervient, pouvez-vous retrouver dans votre système : la date, le montant demandé au groupe, le montant effectivement récupéré et le résultat final ?**
+
+**Réponse :**
+
+**16. Si un crédit de groupe connaît un impayé, cet incident apparaît-il ensuite dans l'historique de chacun des membres ?**
+Si oui, comment et pendant combien de temps ?
+
+**Réponse :**
+
+**17. En dehors de la caution des membres, utilisez-vous d'autres garanties pour les crédits de groupe ?**
+Par exemple une épargne commune, un fonds du groupe, un garant extérieur ou une autre garantie ?
+
+**Réponse :**
+
+---
+
+# D. Informations sur le groupe utilisées avant d'accorder le crédit
+
+**18. Lorsque vous étudiez la demande d'un membre d'un GIE, quelles informations concernant son groupe regardez-vous réellement avant de prendre votre décision ?**
+
+Par exemple : depuis combien de temps le groupe existe, nombre de membres, stabilité des membres, régularité des cotisations, anciens crédits, anciens retards ou autres informations.
+
+**Réponse :**
+
+**19. Quand vous examinez l'historique d'un groupe, quelle période vous semble réellement utile ?**
+Les 3 derniers mois ? 6 mois ? 1 an ? 2 ans ? Toute l'existence du groupe ?
+
+**Réponse :**
+
+**20. Quand vous évaluez un groupe, qu'est-ce qui compte le plus pour vous ?**
+Le comportement moyen des membres, le membre le plus fragile, le nombre de membres qui respectent leurs engagements, ou autre chose ?
+
+**Réponse :**
+
+**21. Le comportement financier des autres membres peut-il influencer la décision concernant un demandeur ?**
+Si oui, quelles informations avez-vous le droit d'utiliser ?
+
+**Réponse :**
+
+**22. Selon votre expérience, à partir de combien de membres peut-on réellement juger le comportement d'un groupe ?**
+
+**Réponse :**
+
+**23. Comment traitez-vous un groupe qui vient d'être créé et qui n'a encore aucun historique ?**
+Et que faites-vous lorsque certaines informations du groupe sont manquantes ?
+
+**Réponse :**
+
+---
+
+# E. Activité du client et risques liés au secteur
+
+Ici, il faut encore davantage éviter le vocabulaire « couche sectorielle ».
+
+**24. Quelles activités professionnelles distinguez-vous actuellement dans vos dossiers ?**
+Par exemple commerce, agriculture, élevage, transport, artisanat, services, salariat, etc. Existe-t-il une liste officielle utilisée par votre institution ?
+
+**Réponse :**
+
+**25. Lorsque vous indiquez qu'un client travaille dans l'agriculture ou le commerce, cette information appartient-elle au profil du client, au crédit demandé, au produit de crédit, ou à plusieurs de ces éléments ?**
+
+**Réponse :**
+
+**26. Pour savoir qu'un secteur devient plus risqué, quelles informations utilisez-vous aujourd'hui ?**
+Votre propre historique de crédits ? Les prix des produits agricoles ? Les saisons/pluies ? Des statistiques externes ? L'expérience des agents ?
+
+**Réponse :**
+
+**27. Jusqu'à quel niveau géographique pouvez-vous analyser ces risques ?**
+Tout le Togo, une région, une préfecture, une zone couverte par une caisse, une filière particulière ?
+
+**Réponse :**
+
+**28. À quelle fréquence ces informations changent-elles suffisamment pour être utiles dans vos décisions ?**
+Chaque semaine, chaque mois, chaque trimestre, à chaque campagne agricole ou une fois par an ?
+
+**Réponse :**
+
+**29. Lorsque vous prenez une décision de crédit, comment savez-vous quelles informations économiques étaient disponibles à ce moment-là ?**
+Gardez-vous leur date ou leur période de référence ?
+
+**Réponse :**
+
+**30. Parmi toutes ces informations sur l'activité et le secteur, lesquelles peuvent réellement vous pousser à réduire un montant, modifier une durée ou refuser/revoir un crédit ?**
+
+**Réponse :**
+
+**31. Si vous n'avez aucune information fiable concernant un secteur ou une zone, que faites-vous actuellement ?**
+
+**Réponse :**
+
+---
+
+# F. Comment intégrer le score dans la décision
+
+À partir d'ici, tu interroges davantage les **responsables crédit, risque, informatique et direction** que les agents ordinaires.
+
+**32. Préféreriez-vous avoir un seul score pour tous les clients, auquel on ajoute certaines informations particulières pour les groupes et les secteurs à risque, ou avoir différents scores selon le type de crédit ? Pourquoi ?**
+
+**Réponse :**
+
+**33. Si un client appartient à un groupe qui rembourse très bien, cela peut-il améliorer son appréciation ? Et si le groupe rembourse mal, cela peut-il aussi la dégrader ?**
+
+**Réponse :**
+
+**34. Si le secteur d'activité du client traverse une période difficile, que devrait faire SOLIDA selon vous ?**
+Augmenter le niveau de risque ? Proposer un montant plus faible ? Une durée différente ? Ou simplement demander une analyse humaine supplémentaire ?
+
+**Réponse :**
+
+**35. Si le profil personnel du client est bon mais que son groupe ou son secteur présente un risque important, quelle information doit avoir le dernier mot ?**
+
+**Réponse :**
+
+**36. Voulez-vous qu'un même niveau de score signifie approximativement le même niveau de risque quel que soit le produit ou la caisse ?**
+
+**Réponse :**
+
+**37. Lorsque SOLIDA annonce un risque de défaut, sur quelle période ce risque doit-il être compris ?**
+Dans les 30 prochains jours ? Jusqu'à la fin du crédit ? Autre période ?
+
+**Réponse :**
+
+---
+
+# G. Données nécessaires pour tester sérieusement SOLIDA
+
+**38. Pour entraîner le système, pouvons-nous prendre les anciens crédits déjà terminés et regarder uniquement les informations qui étaient disponibles le jour où chaque crédit a été accordé ?**
+
+**Réponse :**
+
+**39. Pour les crédits qui sont encore en cours aujourd'hui, préférez-vous qu'on les garde uniquement pour le suivi et qu'on ne les utilise pas encore comme exemples définitifs pour entraîner le modèle ?**
+
+**Réponse :**
+
+**40. Si nous disposons d'environ 10 000 anciens crédits terminés, est-ce représentatif de votre activité ?**
+Devons-nous également nous assurer d'avoir suffisamment de crédits de chaque produit, caisse, zone et type de clientèle ?
+
+**Réponse :**
+
+**41. Pour tester le système, quelles périodes historiques pouvons-nous utiliser pour apprendre et quelles périodes pouvons-nous réserver uniquement au test ?**
+
+**Réponse :**
+
+**42. Quelle période récente devrait rester complètement à part pour vérifier que le modèle fonctionne encore correctement sur de nouveaux crédits ?**
+
+**Réponse :**
+
+**43. Pour vous, comment saurons-nous que SOLIDA fonctionne bien ?**
+Est-il plus important de détecter un maximum de futurs impayés, d'éviter de refuser de bons clients, d'avoir des probabilités fiables, ou de maintenir des résultats stables dans le temps ?
+
+**Réponse :**
+
+**44. Si le système fonctionne bien globalement mais beaucoup moins bien pour certains produits, certaines zones ou certains types de clients, à partir de quel niveau considérez-vous que ce n'est plus acceptable ?**
+
+**Réponse :**
+
+**45. Combien de dossiers faut-il au minimum, selon vous, avant de présenter officiellement une statistique concernant un groupe particulier de clients ?**
+
+**Réponse :**
+
+---
+
+# H. Comment SOLIDA doit proposer une décision
+
+**46. Quelles recommandations souhaitez-vous voir apparaître à l'écran ?**
+Par exemple : **favorable**, **à examiner par un agent/comité**, **défavorable**. Utilisez-vous déjà d'autres termes ?
+
+**Réponse :**
+
+**47. Qui doit décider des limites entre ces différentes recommandations ?**
+Et qui doit avoir le droit de les modifier ?
+
+**Réponse :**
+
+**48. SOLIDA doit-il seulement donner un niveau de risque ou également proposer un montant, une durée, une fréquence de remboursement ou d'autres conditions du crédit ?**
+
+**Réponse :**
+
+**49. Lorsque l'agent discute avec le client pour trouver un montant et des conditions qu'il peut réellement supporter, comment cette étape devrait-elle apparaître dans SOLIDA ?**
+
+**Réponse :**
+
+**50. Existe-t-il des règles qui doivent toujours être respectées, même lorsque SOLIDA donne un très bon score ?**
+Par exemple une condition réglementaire, une garantie minimale ou une règle interne.
+
+**Réponse :**
+
+**51. Quels documents ou contrôles manquants doivent automatiquement empêcher l'accord du crédit ?**
+
+**Réponse :**
+
+**52. Que doit faire le système lorsqu'une information importante manque ?**
+Par exemple revenu inconnu, historique d'épargne trop court, nouveau groupe ou information sectorielle indisponible.
+
+**Réponse :**
+
+**53. Un agent ou un responsable peut-il décider contrairement à la recommandation de SOLIDA ?**
+Si oui, qui peut le faire et doit-il obligatoirement expliquer sa décision ?
+
+**Réponse :**
+
+**54. Lorsqu'une demande n'est pas recommandée, quelles explications devons-nous pouvoir donner au sociétaire ?**
+Et dans quelle langue ces explications doivent-elles être disponibles ?
+
+**Réponse :**
+
+**55. Combien de raisons principales souhaitez-vous voir avec le résultat ?**
+Par exemple les trois éléments qui améliorent le dossier et les trois qui augmentent son risque.
+
+**Réponse :**
+
+---
+
+# I. Frais, assurance et situations particulières
+
+**56. Pour chaque type de crédit, quels frais le client paie-t-il exactement ?**
+Pouvez-vous nous donner leur montant ou pourcentage, comment ils sont calculés et à quel moment ils sont prélevés ?
+
+**Réponse :**
+
+**57. Lorsqu'un paiement est transféré, annulé ou corrigé dans le système, comment cela fonctionne-t-il exactement ?**
+
+**Réponse :**
+
+**58. Y a-t-il une assurance liée au crédit ?**
+Si oui, qui doit la payer, combien coûte-t-elle et existe-t-il une limite d'âge ? Que se passe-t-il notamment après **73 ans** ?
+
+**Réponse :**
+
+**59. L'argent épargné par le sociétaire produit-il des intérêts ?**
+Si oui, à quel taux, comment sont-ils calculés et à quel moment sont-ils versés ?
+
+**Réponse :**
+
+**60. Que peut-il se passer lorsqu'un client ne peut plus respecter le calendrier initial ?**
+Pouvez-vous reporter une échéance, restructurer le crédit, modifier sa durée ? Et comment gérez-vous un remboursement anticipé ?
+
+**Réponse :**
+
+---
+
+# J. Qui contrôle SOLIDA une fois en production ?
+
+**61. Qui doit officiellement valider les informations utilisées par SOLIDA, ses règles, ses seuils et les nouvelles versions du modèle ?**
+
+**Réponse :**
+
+**62. À quelle fréquence souhaiteriez-vous vérifier et éventuellement mettre à jour le modèle ?**
+
+**Réponse :**
+
+**63. Quels changements dans les résultats devraient déclencher une alerte ou obliger l'institution à revoir le modèle ?**
+
+**Réponse :**
+
+**64. Pendant combien de temps devons-nous conserver l'historique des scores, des recommandations, des explications et des décisions prises ?**
+
+**Réponse :**
+
+**65. Certaines données utilisées par SOLIDA peuvent-elles être envoyées ou traitées à l'extérieur de l'institution ?**
+Si oui, lesquelles et dans quelles conditions ?
+
+**Réponse :**
+
+---
+
+## Une amélioration importante pour tes entretiens
+
+**Ne pose pas les 65 questions à une seule personne.** Certaines concernent des métiers complètement différents.
+
+Je répartirais l'entretien ainsi :
+
+| Interlocuteur                              | Questions prioritaires                    |
+| ------------------------------------------ | ----------------------------------------- |
+| **Agent de crédit / chargé de clientèle**  | 1–9, 14, 18–23, 46, 48–55                 |
+| **Responsable crédit / risque**            | 10–17, 24–45, 46–55                       |
+| **Responsable métier/SIG ou informatique** | 3, 6–7, 10–11, 15–16, 25–29, 38–42, 56–60 |
+| **Direction / conformité / gouvernance**   | 36–37, 44–45, 47, 50, 53–65               |
+
+Et surtout, après une réponse **« oui »**, enchaîne souvent par :
+
+> **« Pouvez-vous me montrer comment cette information apparaît dans le système, sans afficher de données personnelles de client ? »**
+
+Après une réponse chiffrée :
+
+> **« Est-ce une règle officielle ou plutôt ce que vous observez généralement en pratique ? »**
+
+Et après **« ça dépend »** :
+
+> **« De quoi cela dépend exactement : du produit, du montant, du client, de la caisse ou d'une décision du comité ? »**
+
+Ces trois relances vont considérablement améliorer la qualité des informations que tu récupères, parce qu'elles permettent de distinguer **une règle métier officielle, une pratique habituelle et une simple estimation du professionnel**.
+1. Le groupe
+2. ⁠sur le compte appartenant au groupe
+3. ⁠Non car la crédit est au nom du groupe 
+4. ⁠oui 
+5. ⁠Non
+6. ⁠particulier aux groupes
+7. ⁠Non
+8. ⁠Non
+9. ⁠Oui
+10. ⁠fermeture de compte dans en cas de disparition et création d’un nouveau compte en cas de fusion ou de création d’un nouveau compte 
+11. ⁠Oui
+12. ⁠Oui en cas de changement les modifications sont faites 
+13. ⁠Oui
+14. ⁠Dès le premier retard 
+15. ⁠Oui
+16. ⁠Non uniquement dans l’historique du groupe 
+17. ⁠Non
+18. ⁠Pas d’informations 
+19. ⁠les 6 derniers mois de façon général mais toute l’existence aussi parfois 
+20. ⁠l’historique de remboursement 
+21. ⁠Non 
+22. ⁠De 5 à 10
+23. ⁠Des formations sur  divers thèmes par rapport au crédit
+24. ⁠Tous les activités officiel 
+25. ⁠A plusieurs de ces éléments 
+26. ⁠Des statistiques extérnes
+27. ⁠Dépendant des régions sur certains produits de crédit mais sur tout l’étendue du territoire en général 
+28. ⁠pas de frequence definis
+29. ⁠oui et leur date et référence sont garder en format papier
+30. ⁠le niveau de risque est élevé par rapport aux investigations 
+31. ⁠Se renseigner,
+32. ⁠a revoir 
+33. ⁠non car le membre n’est pas 
+34. ⁠augmenter le niveau de risque et demander une analyse humaine supplémentaire 
+35. ⁠le risque 
+36. ⁠a revoir 
+37. ⁠pas période 
+38. ⁠oui l’historique du membre
+39. ⁠oui 
+40. ⁠plus de 10 000
+41. ⁠a revoir 
+42. ⁠a revoir 
+43. ⁠performance, résultat adapté, gain de temps 
+44. ⁠a revoir 
+45. ⁠8000 dossier à revoir 
+46. ⁠oui avec justificatifs 
+47. ⁠le comité de crédit 
+48. ⁠oui pourquoi pas
+49. ⁠Une sorte d’échange entre agents et clients sur cette partie 
+50. ⁠oui il existe des règles 
+51. ⁠le titre foncier, l’attestation de régularité fiscale et bien d’autres 
+52. ⁠si absent, le crédit de passe pas
+53. ⁠peut-être l’agent de crédit ou son responsable avec explication 
+54. ⁠pourquoi la demande n’est pas accordée, la raison du refus 
+55. ⁠oui pratique 
+56. ⁠1,5% du montant du crédit 
+57. ⁠l’hiérarchie donne l’autorisation pour pouvoir annuler cette opération 
+58. ⁠Oui, le client paie, pas de montant fixe et au delà de 73 ans pas de crédit 
+59. ⁠oui,  pour un DAV rémunération de 3,5 et pour les DAT rémunération variant jusqu’à 5%, calculé sur le dépôt moyen fait par le client les 6 derniers mois de l’année , versés à la fin d’année 
+60. ⁠oui on peut le rééchelonner
+61. ⁠le pôle informatique 
+62. ⁠a revoir 
+63. ⁠a revoir 
+64. ⁠capacité d’imprimer 
+65. ⁠Jamais 
+66.

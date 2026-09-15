@@ -25,7 +25,8 @@ export interface DemandeEnAttente {
   montant: number;
   objet: string;
   duree_mois: number;
-  produit_id: string;
+  revenu_mensuel_declare: number | null;
+  charges_mensuelles: number | null;
   mise_en_file_le: string;
 }
 

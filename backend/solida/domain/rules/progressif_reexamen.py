@@ -60,9 +60,9 @@ def lister_conditions_reexamen(
 
     if situation.endettement is not None and situation.endettement > endettement_seuil:
         conditions.append(
-            "Ramener la mensualité sous le tiers du revenu total : la charge de "
-            f"remboursement dépasse {endettement_seuil * 100:.0f}% du revenu estimé "
-            "(seuil de rupture observé sur le risque d'impayé, étude CEF-MF Lomé 2025)."
+            "Ramener la charge de remboursement sous "
+            f"{endettement_seuil * 100:.0f}% du revenu estimé : c'est le seuil de rupture "
+            "actuellement retenu par votre coopérative, ajustable selon son expérience."
         )
 
     if situation.tendance_epargne_baissiere:

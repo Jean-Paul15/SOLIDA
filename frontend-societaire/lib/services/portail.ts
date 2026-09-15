@@ -2,7 +2,6 @@ import { apiFetch } from "./error-service";
 import type {
   DemandePreVerificationReponse,
   DemandePreVerificationRequete,
-  ProduitCreditApi,
   VerificationCompteReponse,
   VerificationCompteRequete,
 } from "../contracts";
@@ -36,15 +35,6 @@ export async function envoyerDemande(
       Authorization: `Bearer ${jetonSession}`,
     },
     body: JSON.stringify(requete),
-  });
-  return reponse.json();
-}
-
-export async function fetchProduits(
-  jetonSession: string,
-): Promise<ProduitCreditApi[]> {
-  const reponse = await apiFetch("/api/v1/portail/produits", {
-    headers: { Authorization: `Bearer ${jetonSession}` },
   });
   return reponse.json();
 }

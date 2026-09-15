@@ -10,3 +10,4 @@ class ProduitCredit(BaseModel):
     duree_min_mois: int
     duree_max_mois: int
     taux_annuel: float
+    objet_implicite: str | None = None

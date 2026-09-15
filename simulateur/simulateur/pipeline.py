@@ -598,18 +598,25 @@ def gen_credits(cfg, rng, membres, choc, qualite, historiques):
             qualite_groupe = qualite.get(membre.gie_id, 0.0) if membre.gie_id else 0.0
             choc_standardise = choc_a_date(choc, date_deblocage) / ecart_choc
             ratio_garantie = montant_nanti / montant if montant else 0.0
+            # Correction 2026-09-15 (audit Astra, _archive/2026-09-14_correction-generateur-donnees.md) :
+            # la capacite de remboursement (flux/charge, deja mesuree par effet_endettement) doit
+            # dominer, pas l'epargne statique ni des attributs personnels ou geographiques directs.
+            # Retires de ce mecanisme, avec justification :
+            #   - coef_ratio_garantie : la garantie ne doit jamais reduire la probabilite de defaut
+            #     elle-meme (elle borne deja le montant octroye plus haut, via taux_nantissement).
+            #   - coef_rural, coef_jeune, coef_dependants : effets directs sur zone/segment/attribut
+            #     personnel, jamais sur un flux economique -- exactement ce que l'engagement de
+            #     non-discrimination du projet interdit d'apprendre au modele.
+            #   - coef_epargne_anciennete : doublon de coef_anciennete (meme anciennete_octroi,
+            #     centrage different) -- signal duplique, source de la forme non monotone observee.
+            # ratio_garantie reste calcule (utilise ailleurs pour le nantissement) mais n'entre plus
+            # dans lp0.
             lp0 = (
                 -cfg["coef_epargne_regularite"] * membre.lat_discipline
-                - cfg["coef_epargne_anciennete"] * ((anciennete_octroi - 48) / 48.0)
-                - cfg["coef_ratio_garantie"] * ratio_garantie
-                - cfg["coef_salarie"] * (membre.segment == "salarie")
                 - cfg["coef_cycle"] * ((cycle - 1) / 2.0)
                 - cfg["coef_anciennete"] * ((anciennete_octroi - 60) / 60.0)
                 - cfg["coef_qualite_groupe"] * qualite_groupe
                 + effet_endettement(endettement, cfg["seuil_endettement"], cfg["coef_endettement"])
-                + cfg["coef_dependants"] * ((membre.nb_personnes_a_charge - 2.4) / 2.0)
-                + cfg["coef_rural"] * (membre.zone == "rural")
-                + cfg["coef_jeune"] * (membre.segment == "jeune")
                 + cfg["coef_agricole_choc"]
                 * (choc_standardise if membre.segment == "agricole" else 0.0)
                 + cfg["ecart_idiosyncratique"] * rng.normal(0, 1)

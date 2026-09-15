@@ -24,7 +24,7 @@ export default function ObjetPage() {
   function continuer() {
     if (!selection) return;
     enregistrerObjet(selection);
-    router.push("/produit");
+    router.push("/duree");
   }
 
   return (

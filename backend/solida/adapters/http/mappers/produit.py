@@ -12,4 +12,5 @@ def produit_to_schema(produit: ProduitCredit) -> schema_produits.ProduitCredit:
         duree_min_mois=produit.duree_min_mois,
         duree_max_mois=produit.duree_max_mois,
         taux_annuel=produit.taux_annuel,
+        objet_implicite=produit.objet_implicite,
     )

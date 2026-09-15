@@ -1,0 +1,417 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\definecolor{solidateal}{RGB}{15,76,79}
+\definecolor{gris}{RGB}{90,90,90}
+\definecolor{vertaccord}{RGB}{45,110,80}
+\definecolor{orangevigilance}{RGB}{180,120,20}
+\definecolor{rougerefus}{RGB}{160,50,45}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=solidateal,
+  urlcolor=solidateal,
+  pdftitle={SOLIDA -- Pourquoi ces seuils, et d'où viennent-ils},
+  pdfauthor={SOLIDA}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gris}{SOLIDA -- Pourquoi ces seuils, et d'où viennent-ils}}
+\fancyhead[R]{\small\textcolor{gris}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\fichier}[1]{\noindent\textbf{Implémentation :} \\ \tiny\ttfamily#1\normalfont\normalsize\par}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\newcommand{\tranche}[2]{\textcolor{#1}{\textbf{#2}}}
+
+\title{\textcolor{solidateal}{\Huge SOLIDA} \\[0.3em] \Large Pourquoi ces seuils de décision, et d'où viennent-ils}
+\author{}
+\date{Dernière mise à jour : \today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Objet de ce document}
+
+Ce document répond à quatre questions sur le découpage en tranches de décision
+(\tranche{vertaccord}{ACCORD}, \tranche{orangevigilance}{ACCORD SOUS CONDITION},
+\tranche{rougerefus}{REFUS}) : pourquoi ce découpage existe sous cette forme, d'où vient chaque
+nombre qui le compose, comment la formule est utilisée concrètement dans le système, et si elle
+est adaptée à la réalité d'une coopérative togolaise.
+La réponse à la dernière question n'est pas uniformément positive -- ce document distingue
+explicitement ce qui est \emph{économiquement fondé et robuste} de ce qui reste, aujourd'hui,
+\emph{un point de départ de démonstration à calibrer}. Aucune valeur n'est présentée comme sourcée
+si elle ne l'est pas réellement dans le code ou la documentation de référence du projet.
+
+\tableofcontents
+
+\section{Le problème que la formule résout}
+
+\subsection{Un seuil à 50\% n'a pas de sens ici}
+
+Le modèle produit une probabilité de défaut $p$ pour chaque dossier. La tentation la plus simple
+serait de décider : « accord si $p < 0{,}50$ ». C'est le comportement par défaut de n'importe quel
+classifieur binaire, et c'est précisément le choix qu'il faut éviter dans un contexte de crédit.
+
+Deux raisons s'y opposent :
+
+\begin{enumerate}
+\item \textbf{Le problème est déséquilibré.} Sur les données du générateur, le taux de défaut est
+de l'ordre de 7\,\%. Un seuil à 0,50 suppose implicitement que la classe positive et la classe
+négative sont également probables et également coûteuses -- aucune des deux hypothèses n'est
+vraie ici.
+\item \textbf{Les deux types d'erreur n'ont pas le même coût.} Accorder à un futur défaillant
+(faux négatif) fait perdre du capital. Refuser un bon client (faux positif) fait perdre une marge
+d'intérêt. Ce sont deux grandeurs économiques de nature différente, et rien ne dit qu'elles sont
+égales.
+\end{enumerate}
+
+La bonne question n'est donc pas « le modèle pense-t-il que ce client va faire défaut ? » mais
+« économiquement, à partir de quelle probabilité est-il plus coûteux d'accorder que de
+refuser ? ». C'est une question de \textbf{théorie de la décision statistique appliquée au
+risque de crédit}, pas une question de classification pure -- le cadre est connu sous le nom de
+\emph{classification sensible au coût} (\emph{cost-sensitive classification}), formalisé
+notamment par Elkan (2001).
+
+\section{La matrice de coûts : d'où vient la forme du calcul}
+
+\subsection{Les deux erreurs possibles}
+
+\begin{center}
+\begin{tabular}{@{}L{4.2cm}L{5cm}L{5cm}@{}}
+\toprule
+\textbf{Erreur} & \textbf{Ce qui se passe} & \textbf{Coût} \\
+\midrule
+Faux négatif ($C_{FN}$) & On accorde à un futur défaillant & Perte en capital = LGD $\times$ exposition \\
+Faux positif ($C_{FP}$) & On refuse un bon client & Marge nette perdue sur la vie du prêt \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Deux raffinements nécessaires}
+
+\textbf{Raffinement 1 -- la perte en cas de défaut n'est pas 100\,\% du capital.} Quand un
+sociétaire fait défaut, la coopérative ne perd pas la totalité du montant prêté : la caution
+solidaire du groupe est appelée, une partie des échéances a déjà été remboursée, et il existe une
+procédure de recouvrement. On modélise cette perte réelle par un taux \textbf{LGD}
+(\emph{Loss Given Default}), réaliste entre 60 et 80\,\%, jamais 100\,\%. Symétriquement, le coût
+d'un faux positif n'est pas l'intérêt brut du prêt mais la \textbf{marge nette} -- l'intérêt moins
+le coût de refinancement de la coopérative elle-même.
+
+\textbf{Raffinement 2 -- la calibration est un prérequis, pas un détail.} Un seuil sur $p$ n'a de
+sens que si $p$ reflète un vrai risque. Un modèle qui annonce 0,17 alors que le risque réel est de
+0,30 produit un seuil économiquement faux quel que soit le raffinement appliqué ensuite. C'est
+pourquoi la calibration du modèle (courbe de calibration en déciles, correction isotonique si
+nécessaire) est une étape bloquante avant toute mise en production, documentée séparément dans
+\texttt{03-MODELE/03-scorecard-et-grille.md}.
+
+\subsection{Dérivation du seuil optimal}
+
+On refuse un dossier dès que le coût espéré du refus devient inférieur au coût espéré de l'accord :
+
+\begin{equation}
+(1 - p) \cdot C_{FP} < p \cdot C_{FN}
+\end{equation}
+
+En isolant $p$, on obtient le seuil de bascule :
+
+\begin{equation}
+\text{seuil}^{*} = \frac{C_{FP}}{C_{FP} + C_{FN}} = \frac{\text{marge}}{\text{marge} + \text{LGD}}
+\end{equation}
+
+Ce seuil est une \textbf{probabilité}, pas un score. Il se traduit ensuite en score par la même
+transformation PDO (\emph{Points to Double the Odds}) utilisée pour l'ensemble de la scorecard, ce
+qui permet de l'afficher et de le comparer directement aux autres seuils du système.
+
+\fichier{backend/solida/domain/rules/grille.py -- \texttt{ParametresGrille.seuil\_economique()}}
+
+\subsection{Des trois tranches, pas d'une seule bascule}
+
+Une seule bascule accord/refus serait trop rigide pour un métier où l'agent doit pouvoir
+distinguer un dossier clairement favorable d'un dossier qui l'est mais mérite une vigilance
+particulière. Le système multiplie donc le seuil économique par un coefficient qui délimite
+trois zones :
+
+\begin{equation}
+p < \text{seuil}^{*} \times m
+\quad\text{avec}\quad
+m \in \{\,m_{\text{accord}},\ 1\,\}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Tranche} & \textbf{Condition} & \textbf{Multiplicateur} \\
+\midrule
+\tranche{vertaccord}{ACCORD} & $p < \text{seuil}^{*} \times 0{,}6$ & $m_{\text{accord}} = 0{,}6$ \\
+\tranche{orangevigilance}{ACCORD SOUS CONDITION} & $p < \text{seuil}^{*}$ & implicite (= 1) \\
+\tranche{rougerefus}{REFUS} & sinon & -- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La lecture économique est directe : en dessous de 60\,\% du seuil de bascule, le dossier est
+suffisamment loin du point où l'accord devient risqué pour être recommandé sans réserve. Entre
+$0{,}6\times$ le seuil et le seuil lui-même, le dossier est encore favorable mais assez proche du
+point de bascule pour justifier une condition (l'agent tranche avec un levier identifié). Au-delà
+du seuil économique pur -- le point exact où, selon la matrice de coûts, refuser coûte moins cher
+qu'accorder --, le signal de risque est jugé trop fort pour une recommandation favorable, avec ou
+sans condition.
+
+\textbf{Une quatrième zone existait, elle a été supprimée.} Une version antérieure de la grille
+ajoutait une zone \tranche{orangevigilance}{COMITÉ DE CRÉDIT} entre $1{,}0\times$ et $1{,}6\times$
+le seuil, présentée comme la seule renvoyant à un examen approfondi. Elle a été retirée : le
+comité de crédit valide en réalité \textbf{chaque} tranche (section~\ref{sec:humaine}), ce n'était
+donc pas une zone de décision à part mais une confusion de vocabulaire. L'ancienne zone d'examen
+est désormais absorbée par \tranche{rougerefus}{REFUS} -- un dossier qui s'y trouve garde
+exactement le même parcours qu'avant (réexamen possible, voir plus loin), seul le nom de l'étape
+change.
+
+\fichier{backend/solida/domain/rules/grille.py -- \texttt{decider()}}
+
+\subsection{La décision reste humaine à chaque tranche}
+\label{sec:humaine}
+
+Aucune tranche, y compris \tranche{vertaccord}{ACCORD}, ne débloque un crédit automatiquement.
+Le moteur produit une \textbf{recommandation}, jamais une décision exécutoire : l'agent, puis le
+comité de crédit, reste seul décideur final pour les trois tranches indifféremment, avec la fiche
+de justification comme support. C'est précisément pourquoi une tranche nommée d'après le comité
+de crédit n'avait pas lieu d'être : elle laissait croire que le comité n'intervenait que là, alors
+qu'il valide chaque dossier.
+
+\section{D'où viennent les nombres : ce qui est sourcé, ce qui ne l'est pas}
+
+C'est la question la plus importante de ce document, et celle où l'honnêteté prime sur la
+présentation. Le code lui-même le dit noir sur blanc :
+
+\begin{quote}\itshape
+« Mais les seuils ne sont pas un choix technique. \texttt{marge}, \texttt{LGD} et le
+multiplicateur de zone d'accord (0,6) traduisent l'arbitrage entre taux d'approbation et risque
+accepté, qui appartient à la coopérative, pas au code. Les valeurs de \texttt{decision.py}
+(\texttt{marge = 0,15}, \texttt{LGD = 0,75}) sont un point de départ pour construire et tester la
+mécanique -- pas la vérité finale. »
+\end{quote}
+\hfill --- \texttt{03-MODELE/03-scorecard-et-grille.md}
+
+\subsection{Ce qui est réellement démontré}
+
+\begin{itemize}
+\item La \textbf{forme} du calcul -- probabilité $\to$ coût espéré $\to$ seuil optimal $\to$
+traduction en score $\to$ trois tranches par multiplicateur croissant -- est un résultat de
+théorie de la décision statistique, indépendant de tout chiffre togolais ou uémoaïen. Sa validité
+ne dépend pas des valeurs numériques choisies.
+\item L'\textbf{ordre de grandeur} de LGD (60 à 80\,\%, contre 100\,\% naïvement supposé) est
+défendable économiquement dès lors qu'une caution solidaire et un recouvrement partiel existent
+réellement dans le produit -- ce qui est le cas de SOLIDA (couche solidaire, groupe de caution).
+\item Sur le portefeuille de test du générateur (1\,885 crédits synthétiques, 173\,M FCFA), passer
+du seuil naïf 0,50 au seuil optimal $0{,}15/(0{,}15+0{,}75) = 0{,}167$ ferait économiser environ
+2,4\,M FCFA, soit 17\,\% du coût total des erreurs sur cet échantillon. C'est un résultat de
+simulation sur données synthétiques, utile pour démontrer le \emph{mécanisme}, pas une mesure
+d'impact sur le portefeuille réel de la coopérative.
+\item Le seuil théorique (0,167) et le seuil optimal recalculé empiriquement sur le jeu de
+calibration (0,142) sont proches, ce qui suggère que la mécanique se comporte de façon cohérente
+une fois appliquée à un modèle réellement entraîné -- mais ce rapprochement reste mesuré sur des
+données synthétiques, pas sur l'historique réel d'une coopérative togolaise.
+\end{itemize}
+
+\subsection{Ce qui n'est pas sourcé, et doit être dit comme tel}
+
+\texttt{marge = 15\,\%} et \texttt{LGD = 75\,\%} ne proviennent \textbf{d'aucune étude, d'aucun
+historique de recouvrement, d'aucune donnée BCEAO ou togolaise}. Ce sont des valeurs de
+démonstration choisies pour que la mécanique soit testable avant que la coopérative ne dispose
+d'un chiffrage réel. Il en va de même pour le multiplicateur de zone d'accord (0,6) : il fixe la
+largeur relative de la zone favorable sans réserve, mais rien dans \texttt{03-MODELE/} ne documente
+pourquoi 0,6 plutôt que 0,5 ou 0,7 -- c'est un choix d'espacement raisonnable, non calibré.
+
+\textbf{Ce que cela signifie concrètement} : le mécanisme (quelle formule, quelle traduction en
+score, quel découpage en trois zones) est solide et transposable tel quel. Les \emph{curseurs}
+(quelle marge exacte, quel LGD exact, quelle largeur de zone d'accord) ne le sont pas -- ils
+demandent un arbitrage réel de la coopérative avant d'être présentés comme définitifs.
+
+\subsection{Un contre-exemple instructif : le ratio d'endettement, lui, est sourcé}
+
+Le système contient un autre seuil, structurellement proche (une fraction qui déclenche une
+tranche de risque), mais dont le statut de sourcing est radicalement différent : le ratio maximal
+mensualité / revenu, fixé à 33\,\%. Contrairement à \texttt{marge}/\texttt{LGD}, ce chiffre a été
+retrouvé et documenté après coup dans le code :
+
+\begin{quote}\itshape
+« Sourcé (2026-09-14, trouvé après coup -- la valeur avait d'abord été posée en pure
+démonstration) : étude de terrain CEF-MF Lomé 2025 [...] -- ratio mensualité/revenu moyen de 23\,\%
+sur l'échantillon, rupture identifiée à 33\,\% au-delà de laquelle le risque d'impayé augmente. »
+\end{quote}
+\hfill --- \texttt{backend/solida/domain/rules/grille.py}, champ \texttt{ratio\_endettement\_maximal}
+
+Ce contraste illustre exactement la différence à retenir : un seuil du même système, dans le même
+fichier, peut être solidement ancré dans une réalité togolaise (33\,\%, étude CEF-MF) ou rester un
+point de départ non calibré (marge, LGD, multiplicateur d'accord). Le premier peut être présenté au jury et
+à la coopérative comme une donnée de terrain. Les seconds doivent être présentés comme un mécanisme
+prêt à recevoir les vrais chiffres de la coopérative, pas comme des chiffres déjà validés.
+
+\section{Comment la formule est utilisée concrètement}
+
+\subsection{À l'exécution, pour chaque dossier}
+
+\begin{enumerate}
+\item Le modèle (EBM, SOCLE ou enrichi selon le profil) produit une probabilité de défaut
+calibrée $p$.
+\item \texttt{ParametresGrille.seuil\_economique()} calcule
+$\text{seuil}^{*} = \text{marge}/(\text{marge}+\text{LGD})$ à partir de la configuration
+\emph{active} en base (table \texttt{grille\_decision}), jamais d'une constante figée dans le code.
+\item \texttt{decider()} compare $p$ au seuil économique et à sa version réduite par le
+multiplicateur d'accord, et renvoie l'une des trois tranches.
+\item La tranche, avec le score et la décomposition en points, alimente la fiche de justification
+présentée à l'agent -- jamais une décision exécutoire directe.
+\end{enumerate}
+
+\subsection{Versionnage : rien n'écrase silencieusement une décision passée}
+
+Toute modification de ces paramètres (\texttt{marge}, \texttt{LGD}, multiplicateur d'accord) crée
+une nouvelle \texttt{version\_grille} en base, via l'endpoint d'administration
+\texttt{/parametrage/grille}. L'ancienne version est désactivée, jamais supprimée, et chaque décision passée
+conserve la référence de la version qui l'a produite. Sans cela, aucune décision historique ne
+serait rejouable ni auditable -- un point non négociable pour un produit financier soumis à
+justification devant un sociétaire ou un régulateur.
+
+\fichier{backend/solida/adapters/persistence/grille\_repository\_sql.py}
+\fichier{backend/solida/infrastructure/routers/parametrage.py}
+
+\subsection{Qui peut ajuster ces chiffres, et comment}
+
+Ces paramètres ne sont pas codés en dur : ils sont exposés par l'endpoint d'administration
+\texttt{/parametrage/grille}, pensé pour un écran dédié où la coopérative visualise l'effet d'un
+changement de \texttt{marge}/\texttt{LGD}/multiplicateur sur l'historique avant de l'activer. C'est
+la réponse opérationnelle au constat de la section précédente : le mécanisme est prêt, l'écran
+pour que la coopérative y injecte ses propres chiffres existe déjà, il reste à les déterminer.
+
+\section{Pourquoi cette approche est pertinente pour SOLIDA}
+
+\begin{itemize}
+\item \textbf{Elle remplace un seuil arbitraire par un seuil justifiable.} Face à un comité de
+crédit ou un auditeur, « le seuil est 0,167 parce que $C_{FP}/(C_{FP}+C_{FN})$ avec nos chiffres de
+marge et de perte » est défendable ; « le seuil est 0,50 parce que c'est la valeur par défaut d'un
+classifieur » ne l'est pas.
+\item \textbf{Elle est cohérente avec un problème déséquilibré (7\,\% de défaut).} Un seuil fixe à
+0,50 sur une population à 7\,\% de défaut classerait presque tout le monde en accord et n'apporterait
+aucune valeur de tri -- le seuil économique, nettement plus bas (0,167), est ce qui rend le score
+réellement discriminant sur cette population.
+\item \textbf{Elle respecte le rôle du modèle dans SOLIDA : recommander, jamais décider.} Les
+trois tranches, et en particulier la zone \tranche{orangevigilance}{ACCORD SOUS CONDITION},
+formalisent explicitement un palier où le modèle signale une proximité du seuil de bascule et
+renvoie un levier concret à l'agent plutôt que de forcer une décision binaire.
+\item \textbf{Elle est réglable sans nouveau déploiement.} Le stockage en base versionné
+(section~4.2) permet à la coopérative de faire évoluer son arbitrage risque/approbation au fil du
+temps -- notamment quand les coûts réels changent (taux d'usure BCEAO, coût de refinancement) --
+sans dépendre d'un cycle de développement.
+\item \textbf{Elle prolonge le refus en parcours, pas en porte fermée.} Toute décision autre
+qu'un \tranche{vertaccord}{ACCORD} sans réserve s'accompagne de conditions de réexamen concrètes
+et vérifiables (régularité d'épargne, ratio d'épargne nantie, endettement à réduire) et d'une
+trajectoire de plafond accessible en cas de remboursement sans incident.
+
+\fichier{backend/solida/domain/rules/progressif.py -- \texttt{lister\_conditions\_reexamen}}
+\end{itemize}
+
+\section{Est-ce adapté à nos réalités ? Une réponse honnête}
+
+\subsection{Ce qui est adapté}
+
+Le \textbf{cadre} -- coût espéré, calibration préalable obligatoire, décision humaine finale,
+traçabilité par version, ajustabilité sans redéploiement -- est directement adapté à une
+coopérative financière ouest-africaine aux ressources informatiques limitées : aucune dépendance
+lourde, aucune boîte noire, un mécanisme audité et rejouable. Le raffinement LGD (perte réelle
+60-80\,\%, pas 100\,\%) est également adapté \emph{parce que} le produit dispose réellement d'une
+caution solidaire et d'un recouvrement -- ce ne serait pas vrai pour un crédit sans garantie.
+
+\subsection{Ce qui ne l'est pas encore}
+
+\begin{enumerate}
+\item \textbf{\texttt{marge = 15\,\%} et \texttt{LGD = 75\,\%} n'ont, à ce jour, aucune source
+togolaise ou UEMOA.} Contrairement au ratio d'endettement (33\,\%, étude CEF-MF Lomé 2025), rien
+dans \texttt{03-MODELE/} ne documente le coût de refinancement réel de la coopérative, ni son taux
+de recouvrement réel après appel de la caution solidaire. Tant que ces deux chiffres restent des
+valeurs de démonstration, le seuil de 0,167 est \emph{mécaniquement correct} mais
+\emph{économiquement non calibré} sur la réalité de la coopérative.
+\item \textbf{Le multiplicateur de zone d'accord n'est pas calibré sur un historique réel.} Il
+fixe la largeur de la zone \tranche{orangevigilance}{ACCORD SOUS CONDITION} sans mesure de la
+charge de travail que cela impose à l'agent -- un multiplicateur trop bas enverrait trop de
+dossiers en condition pour la capacité réelle de traitement de la coopérative.
+\item \textbf{Le gain chiffré (2,4\,M FCFA, 17\,\%) est un résultat de simulation}, pas une mesure
+sur le portefeuille réel. Il démontre que le mécanisme fonctionne et vaut la peine d'être calibré ;
+il ne doit pas être présenté comme un gain déjà obtenu par la coopérative.
+\item \textbf{Aucun test n'a encore eu lieu à l'échelle réseau UEMOA} (5,7 millions de sociétaires
+visés) : le mécanisme est validé sur un jeu de test synthétique de 1\,885 crédits, plusieurs ordres
+de grandeur en dessous du volume réel visé.
+\end{enumerate}
+
+\subsection{Ce qu'il reste à faire pour que ce soit pleinement adapté}
+
+\begin{itemize}
+\item Faire chiffrer \texttt{marge} et \texttt{LGD} par la coopérative elle-même : coût de
+refinancement réel, taux de recouvrement réel observé après appel de caution solidaire (pas une
+hypothèse de 60-80\,\%).
+\item Faire valider le multiplicateur de zone d'accord par le comité de crédit, en fonction de sa
+capacité réelle à traiter un volume donné de dossiers en zone d'accord sous condition.
+\item Recalculer le seuil optimal empirique (comme le 0,142 obtenu sur le jeu de calibration
+synthétique) une fois le modèle entraîné sur des données réelles de la coopérative, et comparer à
+la valeur théorique.
+\item Documenter la source dans \texttt{03-MODELE/03-scorecard-et-grille.md} dès que ces chiffres
+sont fixés -- exactement comme cela a été fait après coup pour le ratio d'endettement -- pour que
+la formule cesse d'être un point de départ et devienne une décision tracée.
+\end{itemize}
+
+\section{Garde-fous}
+
+Le seuil optimal reste un \textbf{point de départ recommandé}, jamais une porte automatique. Le
+code et la documentation de référence posent trois garde-fous explicites, indépendants de la
+question du calibrage des valeurs :
+
+\begin{enumerate}
+\item La décision reste humaine à chaque tranche (agent, puis comité selon la tranche).
+\item Le seuil se surveille par segment pour éviter d'exclure systématiquement une zone
+géographique ou un secteur d'activité -- cohérence avec l'engagement de non-discrimination du
+projet (\texttt{03-MODELE/06-ethique-et-non-discrimination.md}).
+\item Le seuil se recalcule quand les coûts réels de l'institution changent (taux d'usure, coût de
+refinancement) -- ce n'est pas une valeur figée une fois pour toutes.
+\end{enumerate}
+
+\section*{Note de compatibilité historique}
+
+Une version antérieure de ce document décrivait quatre tranches, avec une zone
+\tranche{orangevigilance}{COMITÉ DE CRÉDIT} entre l'accord sous condition et le refus. Cette
+zone a été retirée du mécanisme de décision (section~2.4) : le comité de crédit valide chaque
+tranche, ce n'était pas une zone à part. La valeur \texttt{comite\_de\_credit} reste néanmoins
+définie dans le code (\texttt{TrancheDecision}, backend) et dans les contrats d'API, pour une
+seule raison : la table qui persiste les décisions (\texttt{decision\_scoring}) est en
+\textbf{insertion seule} -- un trigger interdit toute modification ou suppression après coup, y
+compris pour corriger une tranche devenue obsolète. Les décisions prises avant ce changement et
+portant cette tranche restent donc lisibles telles quelles dans le registre et sur une fiche déjà
+archivée ; aucune nouvelle décision ne peut plus la produire.
+
+\section*{En résumé}
+
+La \textbf{forme} du découpage en trois tranches -- une matrice de coûts, un seuil économique, sa
+traduction en score, un multiplicateur qui ouvre un palier de vigilance avant le refus -- est un
+mécanisme solide, explicable et directement pertinent pour un produit de microcrédit coopératif.
+Les \textbf{valeurs} actuellement injectées dans ce mécanisme (\texttt{marge = 15\,\%},
+\texttt{LGD = 75\,\%}, multiplicateur d'accord 0,6) sont, à la date de ce document, des valeurs de
+démonstration non sourcées sur la réalité togolaise -- à la différence du ratio d'endettement de
+33\,\%, qui l'est. Le mécanisme n'a donc pas besoin d'être reconstruit ; il a besoin d'être nourri
+des vrais chiffres de la coopérative, par l'écran d'administration qui existe déjà à cet effet.
+
+\end{document}

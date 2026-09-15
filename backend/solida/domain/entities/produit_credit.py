@@ -12,9 +12,16 @@ class ProduitCredit:
 
     produit_id: str
     libelle: str
+    segment: str
     type_garantie: str
     montant_min: int
     montant_max: int
     duree_min_mois: int
     duree_max_mois: int
     taux_annuel: float
+    objet_implicite: str | None = None
+    """Pas une colonne CORE-SIM : rempli après coup par `ListerProduits` depuis
+    `ConfigurationGrille.objets_implicites_produits` (SOLIDA, versionné, modifiable par la
+    supervision) quand ce produit détermine déjà l'objet du crédit. `None` tant que la
+    coopérative n'a pas confirmé cette correspondance pour ce produit : le sociétaire
+    choisit alors l'objet lui-même, dans la liste fermée."""

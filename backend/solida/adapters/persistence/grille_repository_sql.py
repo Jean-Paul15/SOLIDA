@@ -20,8 +20,6 @@ def _row_to_configuration(row: Any) -> ConfigurationGrille:
             marge=thresholds["marge"],
             lgd=thresholds["lgd"],
             multiplicateur_accord=thresholds["multiplicateur_accord"],
-            multiplicateur_vigilance=thresholds["multiplicateur_vigilance"],
-            multiplicateur_examen=thresholds["multiplicateur_examen"],
             plafond_institutionnel_fcfa=thresholds["plafond_institutionnel_fcfa"],
             ratio_endettement_maximal=thresholds["ratio_endettement_maximal"],
         ),
@@ -50,6 +48,7 @@ def _row_to_configuration(row: Any) -> ConfigurationGrille:
         date_activation=row.date_activation,
         active=row.active,
         classification_objets=dict(thresholds["classification_objets"]),
+        objets_implicites_produits=dict(thresholds["objets_implicites_produits"]),
     )
 
 
@@ -59,8 +58,6 @@ def _configuration_to_thresholds(configuration: ConfigurationGrille) -> dict[str
         "marge": grille.marge,
         "lgd": grille.lgd,
         "multiplicateur_accord": grille.multiplicateur_accord,
-        "multiplicateur_vigilance": grille.multiplicateur_vigilance,
-        "multiplicateur_examen": grille.multiplicateur_examen,
         "plafond_institutionnel_fcfa": grille.plafond_institutionnel_fcfa,
         "ratio_endettement_maximal": grille.ratio_endettement_maximal,
         "coefficient_progression": progressif.coefficient_progression,
@@ -75,6 +72,7 @@ def _configuration_to_thresholds(configuration: ConfigurationGrille) -> dict[str
         "modulation_min": progressif.modulation_min,
         "modulation_max": progressif.modulation_max,
         "classification_objets": dict(configuration.classification_objets),
+        "objets_implicites_produits": dict(configuration.objets_implicites_produits),
     }
 
 

@@ -12,7 +12,10 @@ ObjetCredit = Literal[
     "habitat",
     "autre",
 ]
-Tranche = Literal["accord", "accord_sous_condition", "comite_de_credit", "refus"]
+# "comite_de_credit" : historique uniquement, plus jamais produit par `decider()` (voir
+# `solida.domain.values.tranche.TrancheDecision`) mais nécessaire pour désérialiser les
+# décisions déjà persistées, réutilisé par le registre (`schemas/registre.py`).
+Tranche = Literal["accord", "accord_sous_condition", "refus", "comite_de_credit"]
 ModeCalcul = Literal["socle_seul", "enrichi"]
 
 

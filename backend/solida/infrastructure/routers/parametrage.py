@@ -42,8 +42,6 @@ def modifier(
             marge=nouvelle.grille.marge,
             lgd=nouvelle.grille.lgd,
             multiplicateur_accord=nouvelle.grille.multiplicateur_accord,
-            multiplicateur_vigilance=nouvelle.grille.multiplicateur_vigilance,
-            multiplicateur_examen=nouvelle.grille.multiplicateur_examen,
             plafond_institutionnel_fcfa=nouvelle.grille.plafond_institutionnel_fcfa,
             ratio_endettement_maximal=nouvelle.grille.ratio_endettement_maximal,
         ),

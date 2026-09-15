@@ -70,6 +70,12 @@ export function useNewRequest({
       setCustomDuration(false);
       setDuree(nouveauProduit.duree_max_mois);
     }
+    // Même logique que le portail sociétaire (app/produit/page.tsx) : un produit qui
+    // détermine déjà l'objet du crédit ne redemande rien, ici on verrouille le champ plutôt
+    // que de sauter un écran (formulaire à un seul écran, pas un parcours en étapes).
+    if (nouveauProduit?.objet_implicite) {
+      setObjet(nouveauProduit.objet_implicite);
+    }
   }
 
   function choisirDuree(v: string): void {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ResumeDemandeSocietaire } from "@/components/solida/ResumeDemandeSocietaire";
 import { ScoringResultView } from "@/components/solida/ScoringResultView";
 import {
   Table,
@@ -13,9 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { DemandeSocietaireApi } from "@/lib/contracts";
+import type { DemandeSocietaireApi, ProduitCreditApi } from "@/lib/contracts";
 import { formatAmount } from "@/lib/format";
 import { LABEL_OBJET_CREDIT } from "@/lib/labels";
+import { findProduit } from "@/lib/produits";
 import { useApiErrorToast } from "@/lib/services/error-service";
 import { archiveNotification, fetchNotifications } from "@/lib/services/notifications";
 import { confirmDecision } from "@/lib/services/scoring";
@@ -24,9 +26,10 @@ const INTERVALLE_RAFRAICHISSEMENT_MS = 45_000;
 
 interface CentreNotificationsAgentProps {
   initial: DemandeSocietaireApi[];
+  produits: ProduitCreditApi[];
 }
 
-export function CentreNotificationsAgent({ initial }: CentreNotificationsAgentProps) {
+export function CentreNotificationsAgent({ initial, produits }: CentreNotificationsAgentProps) {
   const [notifications, setNotifications] = useState(initial);
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -82,6 +85,7 @@ export function CentreNotificationsAgent({ initial }: CentreNotificationsAgentPr
         <Button variant="outline" size="sm" onClick={() => setOuverte(null)} className="w-fit">
           Retour à la liste
         </Button>
+        <ResumeDemandeSocietaire demande={active} produits={produits} />
         <ScoringResultView
           result={active.resultat}
           isPreview
@@ -101,7 +105,9 @@ export function CentreNotificationsAgent({ initial }: CentreNotificationsAgentPr
             <TableHead>Reçue le</TableHead>
             <TableHead>Sociétaire</TableHead>
             <TableHead>Montant</TableHead>
+            <TableHead>Produit</TableHead>
             <TableHead>Objet</TableHead>
+            <TableHead>Durée</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -121,7 +127,9 @@ export function CentreNotificationsAgent({ initial }: CentreNotificationsAgentPr
               <TableCell className="text-right font-mono">
                 {formatAmount(n.montant_demande)}
               </TableCell>
+              <TableCell>{findProduit(produits, n.produit_id)?.libelle ?? n.produit_id}</TableCell>
               <TableCell>{LABEL_OBJET_CREDIT[n.objet_credit]}</TableCell>
+              <TableCell>{n.duree_mois} mois</TableCell>
             </TableRow>
           ))}
         </TableBody>

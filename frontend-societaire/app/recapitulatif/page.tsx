@@ -26,8 +26,9 @@ export default function RecapitulatifPage() {
     jetonSession,
     montant,
     objet,
-    produit,
     dureeMois,
+    revenuMensuelDeclare,
+    chargesMensuelles,
     resultat,
     enregistrerResultat,
   } = useDemande();
@@ -38,7 +39,7 @@ export default function RecapitulatifPage() {
   const [tentative, setTentative] = React.useState(0);
 
   React.useEffect(() => {
-    if (!jetonSession || !montant || !objet || !produit || !dureeMois) {
+    if (!jetonSession || !montant || !objet || !dureeMois) {
       router.replace("/numero-compte");
       return;
     }
@@ -51,7 +52,8 @@ export default function RecapitulatifPage() {
       montant,
       objet,
       duree_mois: dureeMois,
-      produit_id: produit.produit_id,
+      ...(revenuMensuelDeclare !== null && { revenu_mensuel_declare: revenuMensuelDeclare }),
+      ...(chargesMensuelles !== null && { charges_mensuelles: chargesMensuelles }),
     })
       .then((reponse) => {
         if (annule) return;
@@ -66,7 +68,8 @@ export default function RecapitulatifPage() {
             montant,
             objet,
             duree_mois: dureeMois,
-            produit_id: produit.produit_id,
+            revenu_mensuel_declare: revenuMensuelDeclare,
+            charges_mensuelles: chargesMensuelles,
             mise_en_file_le: new Date().toISOString(),
           });
           if (!annule) setEtatReseau("hors_ligne");
@@ -83,7 +86,16 @@ export default function RecapitulatifPage() {
       annule = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jetonSession, montant, objet, produit, dureeMois, resultat, tentative]);
+  }, [
+    jetonSession,
+    montant,
+    objet,
+    dureeMois,
+    revenuMensuelDeclare,
+    chargesMensuelles,
+    resultat,
+    tentative,
+  ]);
 
   if (etatReseau === "hors_ligne") {
     return (

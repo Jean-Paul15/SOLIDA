@@ -151,3 +151,19 @@ class SqlDecisionRepository:
                 ).first()
                 is not None
             )
+
+    def dernier_agent_reel(self, societaire_id: str) -> str | None:
+        # Confirmé dans scorer_demande.py : enregistrer() n'est appelé que depuis confirm(),
+        # jamais depuis preview() (flux portail sociétaire). Le sentinel AGENT_ID_PORTAIL
+        # n'atteint donc jamais cette table -- pas de filtre applicatif nécessaire.
+        query = text("""
+            SELECT agent_id FROM decision_scoring
+            WHERE societaire_id = :societaire_id
+            ORDER BY horodatage DESC
+            LIMIT 1
+        """)
+        with self._engine.connect() as connection:
+            row = connection.execute(query, {"societaire_id": societaire_id}).first()
+        if row is None:
+            return None
+        return str(row.agent_id)

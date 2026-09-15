@@ -18,9 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { AgentAgenceApi, DemandeSocietaireApi } from "@/lib/contracts";
+import { ResumeDemandeSocietaire } from "@/components/solida/ResumeDemandeSocietaire";
+import { ScoringResultView } from "@/components/solida/ScoringResultView";
+import type { AgentAgenceApi, DemandeSocietaireApi, ProduitCreditApi } from "@/lib/contracts";
 import { formatAmount } from "@/lib/format";
-import { LABEL_OBJET_CREDIT } from "@/lib/labels";
+import { LABEL_OBJET_CREDIT, LABEL_TRANCHE, TRANCHE_COLOR } from "@/lib/labels";
+import { findProduit } from "@/lib/produits";
 import { useApiErrorToast } from "@/lib/services/error-service";
 import {
   assignNotification,
@@ -32,19 +35,26 @@ const INTERVALLE_RAFRAICHISSEMENT_MS = 45_000;
 
 interface CentreNotificationsSuperviseurProps {
   initial: DemandeSocietaireApi[];
+  produits: ProduitCreditApi[];
 }
 
 /** Le superviseur répartit les demandes non assignées entre les agents — il ne tranche pas
- * lui-même le score (ce n'est pas son rôle), il n'a donc pas accès à `ScoringResultView` comme
- * `CentreNotificationsAgent`. Un superviseur d'agence ne voit qu'une seule agence, mais un
- * superviseur réseau peut voir des demandes de plusieurs agences dans la même liste : la liste
- * d'agents proposée est donc chargée par agence (celle de la ligne courante), pas une seule
- * fois globalement. */
-export function CentreNotificationsSuperviseur({ initial }: CentreNotificationsSuperviseurProps) {
+ * lui-même le score (ce n'est pas son rôle), donc pas de bouton confirmer/annuler comme
+ * `CentreNotificationsAgent`. Mais il doit pouvoir voir ce que le modèle recommande avant de
+ * choisir à qui assigner : la colonne « Décision » affiche tranche et score en direct, et
+ * ouvre le détail complet (jauge, facteurs, conditions de réexamen) en lecture seule. Un
+ * superviseur d'agence ne voit qu'une seule agence, mais un superviseur réseau peut voir des
+ * demandes de plusieurs agences dans la même liste : la liste d'agents proposée est donc
+ * chargée par agence (celle de la ligne courante), pas une seule fois globalement. */
+export function CentreNotificationsSuperviseur({
+  initial,
+  produits,
+}: CentreNotificationsSuperviseurProps) {
   const [notifications, setNotifications] = useState(initial);
   const [agentsParAgence, setAgentsParAgence] = useState<Record<string, AgentAgenceApi[]>>({});
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [enCours, setEnCours] = useState<string | null>(null);
+  const [ouverte, setOuverte] = useState<string | null>(null);
   const afficherErreur = useApiErrorToast();
 
   useEffect(() => {
@@ -91,6 +101,20 @@ export function CentreNotificationsSuperviseur({ initial }: CentreNotificationsS
     }
   }
 
+  const active = notifications.find((n) => n.demande_id === ouverte);
+
+  if (active) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Button variant="outline" size="sm" onClick={() => setOuverte(null)} className="w-fit">
+          Retour à la liste
+        </Button>
+        <ResumeDemandeSocietaire demande={active} produits={produits} />
+        <ScoringResultView result={active.resultat} isPreview readOnly />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Table>
@@ -100,7 +124,10 @@ export function CentreNotificationsSuperviseur({ initial }: CentreNotificationsS
             <TableHead>Sociétaire</TableHead>
             <TableHead>Agence</TableHead>
             <TableHead>Montant</TableHead>
+            <TableHead>Produit</TableHead>
             <TableHead>Objet</TableHead>
+            <TableHead>Durée</TableHead>
+            <TableHead>Décision du modèle</TableHead>
             <TableHead>Assigner à</TableHead>
             <TableHead />
           </TableRow>
@@ -108,6 +135,7 @@ export function CentreNotificationsSuperviseur({ initial }: CentreNotificationsS
         <TableBody>
           {notifications.map((n) => {
             const agentsDeCetteAgence = agentsParAgence[n.agence_id] ?? [];
+            const couleurs = TRANCHE_COLOR[n.resultat.tranche];
             return (
               <TableRow key={n.demande_id}>
                 <TableCell>
@@ -121,7 +149,22 @@ export function CentreNotificationsSuperviseur({ initial }: CentreNotificationsS
                 <TableCell className="text-right font-mono">
                   {formatAmount(n.montant_demande)}
                 </TableCell>
+                <TableCell>
+                  {findProduit(produits, n.produit_id)?.libelle ?? n.produit_id}
+                </TableCell>
                 <TableCell>{LABEL_OBJET_CREDIT[n.objet_credit]}</TableCell>
+                <TableCell>{n.duree_mois} mois</TableCell>
+                <TableCell>
+                  <button
+                    type="button"
+                    onClick={() => setOuverte(n.demande_id)}
+                    aria-label={`Voir le détail de la décision : ${LABEL_TRANCHE[n.resultat.tranche]}, score ${Math.round(n.resultat.score)}`}
+                    className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solida-teal-600 ${couleurs.text} ${couleurs.background}`}
+                  >
+                    {LABEL_TRANCHE[n.resultat.tranche]}
+                    <span className="font-mono">{Math.round(n.resultat.score)}</span>
+                  </button>
+                </TableCell>
                 <TableCell>
                   <Select
                     value={selection[n.demande_id]}

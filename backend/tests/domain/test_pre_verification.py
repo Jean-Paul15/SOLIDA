@@ -5,7 +5,9 @@ from solida.domain.rules.pre_verification import (
     ISSUE_MONTANT_REDUIT,
     ISSUE_PAS_MAINTENANT,
     ISSUE_PEUT_AVANCER,
+    ISSUE_REVUE_OBLIGATOIRE,
     NON_CLASSE,
+    OBJET_AUTRE,
     calculer_pre_verification,
     classe_objet,
 )
@@ -73,16 +75,31 @@ def test_classe_objet_renvoie_non_classe_si_absent_de_la_table() -> None:
     assert classe_objet("objet_inconnu", {"stock": DIVISIBLE}) == NON_CLASSE
 
 
-def test_comite_de_credit_est_traite_comme_duree_ou_attente() -> None:
+def test_objet_autre_est_toujours_une_revue_obligatoire_meme_en_accord() -> None:
+    """Un objet non classifié route vers l'examen humain quelle que soit la tranche : le
+    modèle recommanderait un accord franc ici, mais l'objet prime."""
     resultat = calculer_pre_verification(
-        TrancheDecision.COMITE_DE_CREDIT,
+        TrancheDecision.ACCORD,
         Montant(valeur=100_000),
         Montant(valeur=100_000),
-        "fonds_roulement",
+        OBJET_AUTRE,
         [],
         {},
     )
-    assert resultat.issue == ISSUE_DUREE_OU_ATTENTE
+    assert resultat.issue == ISSUE_REVUE_OBLIGATOIRE
+    assert resultat.montant_propose is None
+
+
+def test_objet_autre_prime_meme_sur_un_refus() -> None:
+    resultat = calculer_pre_verification(
+        TrancheDecision.REFUS,
+        Montant(valeur=100_000),
+        Montant(valeur=0),
+        OBJET_AUTRE,
+        ["Effectuer un dépôt chaque mois pendant 3 mois."],
+        {},
+    )
+    assert resultat.issue == ISSUE_REVUE_OBLIGATOIRE
 
 
 def test_refus_reprend_les_conditions_de_reexamen_dans_le_message() -> None:

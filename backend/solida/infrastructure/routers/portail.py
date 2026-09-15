@@ -78,6 +78,8 @@ def demandes(
         objet_credit=demande.objet,
         duree_mois=demande.duree_mois,
         produit_id=demande.produit_id,
+        revenu_mensuel_declare=demande.revenu_mensuel_declare,
+        charges_mensuelles=demande.charges_mensuelles,
     )
     return DemandePreVerificationReponse(
         issue=resultat.pre_verification.issue,

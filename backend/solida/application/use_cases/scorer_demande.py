@@ -31,7 +31,7 @@ from solida.domain.ports.modele import ScoringModel
 from solida.domain.rules.capacite_remboursement import montant_maximal_supportable
 from solida.domain.rules.cascade import ContexteCascade, ParametresCascade, determiner_mode
 from solida.domain.rules.grille import decider
-from solida.domain.rules.pre_verification import DIVISIBLE, classe_objet
+from solida.domain.rules.pre_verification import DIVISIBLE, OBJET_AUTRE, classe_objet
 from solida.domain.rules.progressif_reexamen import (
     ParametresReexamen,
     SituationReexamen,
@@ -52,6 +52,11 @@ from solida.domain.values.motif_bascule import MotifBascule
 AVERTISSEMENT_REVENU_MANQUANT = (
     "Le revenu mensuel est absent : les ratios associés ont été traités comme informations "
     "manquantes par le modèle."
+)
+
+AVERTISSEMENT_OBJET_AUTRE = (
+    "Objet de crédit non classifié (« Autre ») : ce dossier doit être soumis au comité de "
+    "crédit / à la conformité avant toute suite, quelle que soit la recommandation ci-contre."
 )
 
 
@@ -299,6 +304,7 @@ class ScorerDemande:
             trajectoire_progression=[],
             conditions_reexamen=conditions,
             avertissements=[
+                *([AVERTISSEMENT_OBJET_AUTRE] if demande.objet_credit == OBJET_AUTRE else []),
                 *([AVERTISSEMENT_REVENU_MANQUANT] if revenu_effectif is None else []),
                 *([avertissement_montant_reduit] if avertissement_montant_reduit else []),
             ],

@@ -11,8 +11,9 @@
       .tranche { display: inline-block; padding: 0.2cm 0.4cm; font-weight: bold; border-radius: 4px; }
       .tranche-accord { background: #d7f0dd; color: #1e6b34; }
       .tranche-accord_sous_condition { background: #fdeecb; color: #8a5a10; }
-      .tranche-comite_de_credit { background: #fdeecb; color: #8a5a10; }
       .tranche-refus { background: #f7d7d7; color: #8a1f1f; }
+      /* Historique uniquement (fiches archivées avant le passage a 3 tranches). */
+      .tranche-comite_de_credit { background: #fdeecb; color: #8a5a10; }
       table { width: 100%; border-collapse: collapse; margin-top: 0.2cm; }
       td, th { text-align: left; padding: 0.1cm 0.3cm; font-size: 10pt; }
       th { color: #666; font-weight: normal; }
@@ -24,7 +25,7 @@
   <body>
     <div class="entete">
       <div>
-        <h1>Fiche de justification — {{ fiche.societaire_nom }}</h1>
+        <h1>Synthèse d&rsquo;aide à la décision — {{ fiche.societaire_nom }}</h1>
         <div>N° {{ fiche.numero_membre }} — {{ fiche.agence }}</div>
       </div>
       <div style="text-align: right">
@@ -42,7 +43,7 @@
       sur {{ "{:,}".format(fiche.resultat.montant_demande).replace(",", " ") }} FCFA sollicités.</p>
     {% endif %}
 
-    <h2>Facteurs favorables</h2>
+    <h2>Éléments favorables</h2>
     <table>
       {% for f in fiche.facteurs_favorables %}
       <tr>
@@ -51,11 +52,14 @@
         <td class="favorable">+{{ "%.1f"|format(f.points) }} pt</td>
       </tr>
       {% else %}
-      <tr><td>Aucun facteur favorable déterminant.</td></tr>
+      <tr><td>Aucun élément favorable déterminant.</td></tr>
       {% endfor %}
     </table>
+    {% if fiche.nb_facteurs_favorables_masques > 0 %}
+    <p class="mention">+ {{ fiche.nb_facteurs_favorables_masques }} élément(s) favorable(s) d&rsquo;impact mineur non affiché(s).</p>
+    {% endif %}
 
-    <h2>Facteurs défavorables</h2>
+    <h2>Points de vigilance</h2>
     <table>
       {% for f in fiche.facteurs_defavorables %}
       <tr>
@@ -64,12 +68,15 @@
         <td class="defavorable">{{ "%.1f"|format(f.points) }} pt</td>
       </tr>
       {% else %}
-      <tr><td>Aucun facteur défavorable déterminant.</td></tr>
+      <tr><td>Aucun point de vigilance déterminant.</td></tr>
       {% endfor %}
     </table>
+    {% if fiche.nb_facteurs_defavorables_masques > 0 %}
+    <p class="mention">+ {{ fiche.nb_facteurs_defavorables_masques }} point(s) de vigilance d&rsquo;impact mineur non affiché(s).</p>
+    {% endif %}
 
     {% if fiche.conditions_reexamen %}
-    <h2>Conditions de réexamen</h2>
+    <h2>{{ "Recommandations pour consolider votre profil" if fiche.resultat.tranche == "accord" else "Conditions de réexamen" }}</h2>
     <ul>
       {% for c in fiche.conditions_reexamen %}
       <li>{{ c }}</li>

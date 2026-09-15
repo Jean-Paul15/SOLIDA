@@ -64,13 +64,13 @@ export function RecommendationPanel({ result, zones }: RecommendationPanelProps)
               <>
                 <div
                   className="absolute top-0 h-1 w-px -translate-x-1/2 bg-neutre-300"
-                  style={{ left: `${gaugePosition(zones.scoreExamen)}%` }}
+                  style={{ left: `${gaugePosition(zones.scoreVigilance)}%` }}
                 />
                 <span
                   className="absolute top-1 -translate-x-1/2 font-mono text-[10px] text-neutre-500"
-                  style={{ left: `${gaugePosition(zones.scoreExamen)}%` }}
+                  style={{ left: `${gaugePosition(zones.scoreVigilance)}%` }}
                 >
-                  {Math.round(zones.scoreExamen)}
+                  {Math.round(zones.scoreVigilance)}
                 </span>
                 <div
                   className="absolute top-0 h-1 w-px -translate-x-1/2 bg-neutre-300"

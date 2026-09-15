@@ -9,8 +9,6 @@ def grille_to_schema(configuration: ConfigurationGrille) -> schema_grille.Config
             marge=configuration.grille.marge,
             lgd=configuration.grille.lgd,
             multiplicateur_accord=configuration.grille.multiplicateur_accord,
-            multiplicateur_vigilance=configuration.grille.multiplicateur_vigilance,
-            multiplicateur_examen=configuration.grille.multiplicateur_examen,
             plafond_institutionnel_fcfa=configuration.grille.plafond_institutionnel_fcfa,
             ratio_endettement_maximal=configuration.grille.ratio_endettement_maximal,
         ),

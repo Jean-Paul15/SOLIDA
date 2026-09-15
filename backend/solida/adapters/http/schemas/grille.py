@@ -8,10 +8,6 @@ class ParametresGrille(BaseModel):
     marge: float = Field(ge=0.05, le=0.30)
     lgd: float = Field(ge=0.40, le=0.90)
     multiplicateur_accord: float = Field(ge=0.30, le=0.95)
-    # multiplicateur_vigilance n'a pas de curseur dans l'ecran (valeur retransmise inchangee) :
-    # pas de borne de reference documentee, donc pas de valeur inventee ici.
-    multiplicateur_vigilance: float
-    multiplicateur_examen: float = Field(ge=1.20, le=2.50)
     # Valeur de repli alignee sur `ParametresGrille.plafond_institutionnel_fcfa` : un appel
     # qui omet le champ (anciens clients, tests existants) garde le maximum institutionnel
     # actuel plutot que d'echouer la validation.

@@ -35,13 +35,19 @@ connue (un modèle mal calibré rend cette mise à l'échelle trompeuse).
 
 ## Paramètres de la grille de décision
 
-`marge` (0,15) et `lgd` — perte en cas de défaut — (0,75), plus les multiplicateurs de zone (0,6 /
-1 / 1,6). Ce ne sont pas des choix techniques : ils traduisent un arbitrage risque/approbation qui
-appartient à la coopérative, pas à qui écrit le code. Les valeurs actuelles reprennent un prototype
-de calcul (retiré du dépôt, voir `03-MODELE/09-lecons-prototype-simulateur.md`) qui a servi à
-construire et tester le mécanisme — pas la vérité finale. Réglage
-prévu par le superviseur (écran de paramétrage de la grille), affiné par le calibrage du modèle
-réel une fois qu'il existe.
+`marge` (0,15) et `lgd` — perte en cas de défaut — (0,75), plus le multiplicateur de zone
+d'accord (0,6). Ce ne sont pas des choix techniques : ils traduisent un arbitrage risque/approbation
+qui appartient à la coopérative, pas à qui écrit le code. Les valeurs actuelles reprennent un
+prototype de calcul (retiré du dépôt, voir `03-MODELE/09-lecons-prototype-simulateur.md`) qui a
+servi à construire et tester le mécanisme — pas la vérité finale. Réglage prévu par le superviseur
+(écran de paramétrage de la grille), affiné par le calibrage du modèle réel une fois qu'il existe.
+
+Depuis le passage à 3 tranches (accord / accord sous condition / refus — le comité de crédit valide
+chaque tranche, ce n'était pas une zone de décision distincte), l'ancien `multiplicateur_examen`
+(1,6, zone « comité de crédit ») a disparu : cette zone est fusionnée dans refus, dont la frontière
+est directement le seuil économique. `TrancheDecision.COMITE_DE_CREDIT` reste définie côté domaine
+pour désérialiser les décisions déjà persistées (`decision_scoring` est en insertion seule), mais
+`decider()` ne la produit plus.
 
 ## Paramètres du crédit progressif
 

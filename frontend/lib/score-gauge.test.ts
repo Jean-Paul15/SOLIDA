@@ -28,8 +28,6 @@ describe("zoneBounds et gaugeSegments", () => {
       marge: 0.1,
       lgd: 0.5,
       multiplicateur_accord: 0.6,
-      multiplicateur_vigilance: 1.0,
-      multiplicateur_examen: 1.6,
     },
     progressif: {
       coefficient_progression: 1.5,
@@ -47,15 +45,10 @@ describe("zoneBounds et gaugeSegments", () => {
     active: true,
   };
 
-  it("produit 4 segments couvrant toute la jauge dans l'ordre croissant", () => {
+  it("produit 3 segments couvrant toute la jauge dans l'ordre croissant", () => {
     const segments = gaugeSegments(zoneBounds(configuration));
 
-    expect(segments.map((s) => s.tranche)).toEqual([
-      "refus",
-      "comite_de_credit",
-      "accord_sous_condition",
-      "accord",
-    ]);
+    expect(segments.map((s) => s.tranche)).toEqual(["refus", "accord_sous_condition", "accord"]);
     expect(segments[0].gauche).toBe(0);
     expect(segments[segments.length - 1].droite).toBe(100);
     for (let i = 1; i < segments.length; i++) {

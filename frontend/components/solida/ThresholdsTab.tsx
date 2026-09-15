@@ -18,8 +18,6 @@ interface ThresholdsTabProps {
   onLgdChange: (value: number) => void;
   approvalMultiplier: number;
   onApprovalMultiplierChange: (value: number) => void;
-  reviewMultiplier: number;
-  onReviewMultiplierChange: (value: number) => void;
   threshold: number;
   scorecardParameters: { pdo: number; scoreReference: number; oddsReference: number };
   onSave: () => void;
@@ -36,8 +34,6 @@ export function ThresholdsTab({
   onLgdChange,
   approvalMultiplier,
   onApprovalMultiplierChange,
-  reviewMultiplier,
-  onReviewMultiplierChange,
   threshold,
   scorecardParameters,
   onSave,
@@ -123,8 +119,9 @@ export function ThresholdsTab({
 
           <Separator />
           <Section
-            title="Largeur des zones de la grille"
-            description="Écarte accord et refus du seuil économique central."
+            title="Largeur de la zone d'accord"
+            description="Écarte l'accord sans réserve du seuil économique central. Le refus, lui,
+              démarre exactement à ce seuil."
           />
 
           <div className="flex flex-col gap-2">
@@ -137,20 +134,6 @@ export function ThresholdsTab({
               onValueChange={([value]) => onApprovalMultiplierChange(value)}
               min={0.3}
               max={0.95}
-              step={0.05}
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between text-sm">
-              <Label>Multiplicateur zone d&rsquo;examen</Label>
-              <span className="font-mono text-neutre-950">× {reviewMultiplier.toFixed(2)}</span>
-            </div>
-            <Slider
-              value={[reviewMultiplier]}
-              onValueChange={([value]) => onReviewMultiplierChange(value)}
-              min={1.2}
-              max={2.5}
               step={0.05}
             />
           </div>
@@ -193,7 +176,7 @@ export function ThresholdsTab({
               <div>
                 <span className="text-neutre-500">Score refus</span>
                 <div className="font-mono text-neutre-950">
-                  {scoreDepuisProbabilite(threshold * reviewMultiplier, scorecardParameters)}
+                  {scoreDepuisProbabilite(threshold, scorecardParameters)}
                 </div>
               </div>
             </div>

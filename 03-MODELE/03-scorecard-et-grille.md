@@ -99,22 +99,33 @@ score fixés arbitrairement à l'avance :
 
 ```
 seuil_economique = marge / (marge + LGD)
-accord      : p < 0,6 × seuil_economique
-vigilance   : p < seuil_economique          (Accord sous condition)
-examen      : p < 1,6 × seuil_economique    (Comité de crédit)
-sinon       : Défavorable (Refus)
+accord                  : p < 0,6 × seuil_economique
+accord_sous_condition   : p < seuil_economique
+sinon                   : Refus
 ```
+
+Trois tranches, pas quatre : le comité de crédit valide déjà chaque tranche (voir
+`11-formule-cible-credit-progressif.md`), ce n'était donc pas une zone de décision à part.
+L'ancienne zone d'examen (`p < 1,6 × seuil_economique`, autrefois affichée « Comité de crédit »)
+est fusionnée dans Refus, dont la frontière est désormais le seuil économique pur, sans
+multiplicateur — un dossier dans cette zone reste consultable et réexaminable par le comité,
+via le parcours de réexamen ci-dessous, exactement comme avant.
 
 Ces probabilités se traduisent ensuite en score par la même transformation PDO que ci-dessus, pour
 rester affichables sous forme de score.
 
-**Mais les seuils ne sont pas un choix technique.** `marge`, `LGD` et les multiplicateurs de zone
-(0,6 / 1 / 1,6) traduisent l'arbitrage entre taux d'approbation et risque accepté, qui **appartient
+**Mais les seuils ne sont pas un choix technique.** `marge`, `LGD` et le multiplicateur de zone
+d'accord (0,6) traduisent l'arbitrage entre taux d'approbation et risque accepté, qui **appartient
 à la coopérative**, pas au code. Les valeurs de `decision.py` (`marge = 0,15`, `LGD = 0,75`) sont un
 point de départ pour construire et tester la mécanique — pas la vérité finale. L'écran E8 permet à
 la coopérative de les ajuster en visualisant l'effet sur l'historique, et le calibrage définitif
 dépend aussi du modèle réellement entraîné (calibration de `p`, voir plus haut) : une partie de
 cette décision **se prend au moment du hackathon**, pas avant.
+
+**Compatibilité historique.** `TrancheDecision.COMITE_DE_CREDIT` reste définie côté code : la
+table `decision_scoring` est en insertion seule (trigger `empecher_modification_decision_scoring`)
+et ne peut pas être réécrite rétroactivement — les décisions persistées avant ce changement avec
+cette tranche restent donc lisibles telles quelles, mais aucune nouvelle décision ne la produit.
 
 ## Plafond progressif
 

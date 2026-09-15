@@ -29,18 +29,21 @@ taux_defaut_cible: 0.09
 
 # Variables disponibles a la date d'octroi uniquement. Age, visites, relances,
 # paiements, retards, statut et defaut n'entrent jamais dans ce mecanisme.
-coef_epargne_regularite: 0.85
-coef_epargne_anciennete: 0.40
-coef_ratio_garantie: 0.55
-coef_salarie: 1.10
+#
+# Correction 2026-09-15 (audit Astra, _archive/2026-09-14_correction-generateur-donnees.md) :
+# la capacite de remboursement (coef_endettement, base sur charge/revenu) doit dominer le
+# mecanisme de defaut, pas l'epargne statique. coef_ratio_garantie, coef_rural, coef_jeune et
+# coef_dependants sont retires de ce mecanisme (effets directs sur garantie/zone/segment/
+# attribut personnel, jamais sur un flux economique) -- voir gen_credits(). coef_salarie n'est
+# plus utilise par gen_credits (retire de lp0) ; conserve ici en reference historique, sans
+# effet. coef_epargne_anciennete retire (doublon de coef_anciennete, meme anciennete_octroi).
+coef_epargne_regularite: 0.35
+coef_salarie: 0.0
 coef_cycle: 0.30
 coef_anciennete: 0.20
 coef_qualite_groupe: 0.90
-coef_endettement: 0.75
+coef_endettement: 1.20
 seuil_endettement: 0.33
-coef_dependants: 0.15
-coef_rural: 0.25
-coef_jeune: 0.35
 coef_agricole_choc: 1.00
 ecart_idiosyncratique: 1.15
 

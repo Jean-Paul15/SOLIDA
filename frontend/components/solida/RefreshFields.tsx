@@ -19,6 +19,10 @@ const OBJETS = Object.entries(LABEL_OBJET_CREDIT).map(([valeur, libelle]) => ({
 interface RefreshFieldsProps {
   objet: ObjetCredit;
   onChangeObjet: (objet: ObjetCredit) => void;
+  /** Non nul quand le produit choisi détermine déjà l'objet : le champ se verrouille plutôt
+   * que de laisser croire à l'agent qu'il peut encore le changer (même règle que côté
+   * portail sociétaire, où l'écran objet est sauté). */
+  objetImplicite?: ObjetCredit | null;
   refreshOpen: boolean;
   onToggleActualisation: () => void;
   revenu: number;
@@ -30,6 +34,7 @@ interface RefreshFieldsProps {
 export function RefreshFields({
   objet,
   onChangeObjet,
+  objetImplicite,
   refreshOpen,
   onToggleActualisation,
   revenu,
@@ -41,7 +46,11 @@ export function RefreshFields({
     <>
       <div className="flex flex-col gap-1.5">
         <Label>Objet du crédit</Label>
-        <Select value={objet} onValueChange={(v) => onChangeObjet(v as ObjetCredit)}>
+        <Select
+          value={objet}
+          onValueChange={(v) => onChangeObjet(v as ObjetCredit)}
+          disabled={Boolean(objetImplicite)}
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -53,6 +62,9 @@ export function RefreshFields({
             ))}
           </SelectContent>
         </Select>
+        {objetImplicite && (
+          <span className="text-xs text-neutre-500">Déterminé par le produit choisi.</span>
+        )}
       </div>
 
       <button

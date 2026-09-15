@@ -85,7 +85,8 @@ exports/
 reports/
 
 # --- Documents internes, hors code (non versionnés) ---
-PLAN 72H/
+PLAN 72H/*
+!PLAN 72H/DISCOURS_NATIONAL_SOLIDA_8_MINUTES.md
 .agents/
 
 # --- Éditeurs et OS ---

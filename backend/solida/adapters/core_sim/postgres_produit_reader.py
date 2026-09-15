@@ -10,7 +10,7 @@ class PostgresProduitReader:
     def charger_produits(self) -> list[ProduitCredit]:
         """Lit le catalogue CORE-SIM, distinct des plafonds de la grille SOLIDA."""
         query = text("""
-            SELECT produit_id, libelle, type_garantie, montant_min, montant_max,
+            SELECT produit_id, libelle, segment, type_garantie, montant_min, montant_max,
                    duree_min_mois, duree_max_mois, taux_annuel
             FROM produits_credit ORDER BY produit_id
         """)
@@ -20,6 +20,7 @@ class PostgresProduitReader:
                 ProduitCredit(
                     produit_id=row.produit_id,
                     libelle=row.libelle,
+                    segment=row.segment,
                     type_garantie=row.type_garantie,
                     montant_min=round(row.montant_min),
                     montant_max=round(row.montant_max),

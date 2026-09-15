@@ -9,42 +9,39 @@ import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
 import { useEtapeProtegee } from "@/lib/use-etape-protegee";
 
-// Catalogue "standard" : 3/6/9/12/18/24 mois, filtré aux bornes réelles du produit choisi
-// (même logique que côté agent, frontend/components/solida/useNewRequest.ts). La durée
-// reste toujours exprimée en mois : c'est la seule unité que le modèle et le catalogue
-// produits connaissent (duree_min_mois/duree_max_mois) — pas de jours/semaines inventés.
+// Catalogue "standard" : 3/6/9/12/18/24 mois. La durée reste toujours exprimée en mois :
+// c'est la seule unité que le modèle et le catalogue produits connaissent. Le produit
+// n'est plus choisi à cette étape (déduit du segment du sociétaire à l'envoi de la
+// demande) : DUREE_MIN/DUREE_MAX reprennent les bornes actuellement communes à tous les
+// produits du catalogue (backend/solida CORE-SIM, table produits_credit -- vérifié le
+// 15/09/2026, les cinq produits partagent 3-24 mois). Si un futur produit s'écarte de ces
+// bornes, le serveur reste la seule source de vérité et refusera la demande hors bornes.
 const DUREES_STANDARD = [3, 6, 9, 12, 18, 24];
+const DUREE_MIN = 3;
+const DUREE_MAX = 24;
 const AUTRE = "autre";
 
 export default function DureePage() {
   const router = useRouter();
-  const { jetonSession, produit, dureeMois, enregistrerDuree } = useDemande();
-  const dureesValides = produit
-    ? DUREES_STANDARD.filter(
-        (d) => d >= produit.duree_min_mois && d <= produit.duree_max_mois,
-      )
-    : DUREES_STANDARD;
+  const { jetonSession, dureeMois, enregistrerDuree } = useDemande();
   const [selection, setSelection] = React.useState<
     number | typeof AUTRE | null
   >(
-    dureeMois && dureesValides.includes(dureeMois)
+    dureeMois && DUREES_STANDARD.includes(dureeMois)
       ? dureeMois
       : dureeMois
         ? AUTRE
         : null,
   );
   const [dureePersonnalisee, setDureePersonnalisee] = React.useState(
-    dureeMois && !dureesValides.includes(dureeMois) ? String(dureeMois) : "",
+    dureeMois && !DUREES_STANDARD.includes(dureeMois) ? String(dureeMois) : "",
   );
   const pret = useEtapeProtegee(jetonSession);
-  React.useEffect(() => {
-    if (jetonSession && !produit) router.replace("/produit");
-  }, [jetonSession, produit, router]);
 
-  if (!pret || !produit) return null;
+  if (!pret) return null;
 
-  const bornesMin = produit.duree_min_mois;
-  const bornesMax = produit.duree_max_mois;
+  const bornesMin = DUREE_MIN;
+  const bornesMax = DUREE_MAX;
   const personnalisee = Number(dureePersonnalisee);
   const personnaliseeValide =
     dureePersonnalisee.length > 0 &&
@@ -60,12 +57,12 @@ export default function DureePage() {
     enregistrerDuree(
       selection === AUTRE ? personnalisee : (selection as number),
     );
-    router.push("/recapitulatif");
+    router.push("/situation-economique");
   }
 
   return (
     <EcranEtape
-      etape={7}
+      etape={6}
       titre="Sur combien de temps ?"
       pied={
         <Button onClick={continuer} disabled={!peutContinuer}>
@@ -74,7 +71,7 @@ export default function DureePage() {
       }
     >
       <div className="flex flex-col gap-2">
-        {dureesValides.map((valeur) => (
+        {DUREES_STANDARD.map((valeur) => (
           <ChoixCarte
             key={valeur}
             libelle={`${valeur} mois`}
@@ -101,7 +98,7 @@ export default function DureePage() {
             autoFocus
           />
           <span className="text-center text-sm text-muted-foreground">
-            Durée en mois, entre {bornesMin} et {bornesMax} pour ce produit.
+            Durée en mois, entre {bornesMin} et {bornesMax}.
           </span>
         </div>
       )}

@@ -11,9 +11,11 @@ export const SCORE_MAX = 850;
 
 export const FOND_TRANCHE_JAUGE: Record<Tranche, string> = {
   refus: "bg-decision-refus",
-  comite_de_credit: "bg-decision-comite",
   accord_sous_condition: "bg-decision-conditionnel",
   accord: "bg-decision-accord",
+  // Historique uniquement : aucun nouveau segment de jauge ne produit plus cette tranche
+  // (voir zoneBounds/gaugeSegments ci-dessous, 3 zones désormais).
+  comite_de_credit: "bg-decision-comite",
 };
 
 /** Convertit un score en position (%) sur la jauge [SCORE_MIN, SCORE_MAX]. */
@@ -29,6 +31,12 @@ export function gaugePosition(score: number): number {
  * a été prise ; ces bornes reflètent la grille active aujourd'hui, pas nécessairement
  * celle utilisée au moment exact de la décision (le score lui, oui).
  */
+/**
+ * Bornes des 3 zones vivantes de la grille active. Depuis le passage à 3 tranches,
+ * l'ancienne zone d'examen (comité de crédit) est fusionnée dans refus : la frontière
+ * accord_sous_condition/refus est donc le seuil économique pur (multiplicateur implicite
+ * de 1), sans `multiplicateur_examen`.
+ */
 export function zoneBounds(configuration: ConfigurationGrilleApi) {
   const { grille, scorecard } = configuration;
   const parametresScorecard = parametresScorecardDepuisApi(scorecard);
@@ -36,27 +44,20 @@ export function zoneBounds(configuration: ConfigurationGrilleApi) {
   return {
     scoreAccord: scoreDepuisProbabilite(seuil * grille.multiplicateur_accord, parametresScorecard),
     scoreVigilance: scoreDepuisProbabilite(seuil, parametresScorecard),
-    scoreExamen: scoreDepuisProbabilite(seuil * grille.multiplicateur_examen, parametresScorecard),
   };
 }
 
 export type Zones = ReturnType<typeof zoneBounds>;
 
-/** Les 4 tranches de la jauge, bornes et légende de survol, dans l'ordre score croissant. */
+/** Les 3 tranches vivantes de la jauge, bornes et légende de survol, score croissant. */
 export function gaugeSegments(zones: Zones) {
   const arrondi = (n: number) => Math.round(n);
   return [
     {
       tranche: "refus" as const,
       gauche: 0,
-      droite: gaugePosition(zones.scoreExamen),
-      legende: `score < ${arrondi(zones.scoreExamen)}`,
-    },
-    {
-      tranche: "comite_de_credit" as const,
-      gauche: gaugePosition(zones.scoreExamen),
       droite: gaugePosition(zones.scoreVigilance),
-      legende: `score ${arrondi(zones.scoreExamen)} à ${arrondi(zones.scoreVigilance)}`,
+      legende: `score < ${arrondi(zones.scoreVigilance)}`,
     },
     {
       tranche: "accord_sous_condition" as const,

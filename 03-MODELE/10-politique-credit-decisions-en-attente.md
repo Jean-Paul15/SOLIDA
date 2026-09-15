@@ -32,10 +32,13 @@ calibration propre à la coopérative.
 
 ## Statut actuel des paramètres (rappel, détail dans `docs/backend/03-decisions-provisoires-a-revoir.md`)
 
-`marge` = 0,15, `lgd` = 0,75, multiplicateurs de zone accord/vigilance/examen = 0,6 / 1 / 1,6.
-Hérités d'un prototype de calcul retiré du dépôt (`09-lecons-prototype-simulateur.md`), pas une
-vérité mesurée — point de départ ajustable par le superviseur depuis l'onglet « Seuils » de
-l'écran Politique de crédit.
+`marge` = 0,15, `lgd` = 0,75, multiplicateur de zone d'accord = 0,6. Hérités d'un prototype de
+calcul retiré du dépôt (`09-lecons-prototype-simulateur.md`), pas une vérité mesurée — point de
+départ ajustable par le superviseur depuis l'onglet « Seuils » de l'écran Politique de crédit.
+Depuis le passage à 3 tranches (accord / accord sous condition / refus), l'ancien
+`multiplicateur_examen` (1,6) et `multiplicateur_vigilance` (1,0, jamais éditable) ont disparu :
+la frontière accord sous condition / refus est directement le seuil économique, sans
+multiplicateur.
 
 ## Décision en attente : préréglages « Prudent / Équilibré / Expansion contrôlée »
 
@@ -44,10 +47,10 @@ mais **seul « Équilibré » (= configuration active actuelle) est activable** 
 « Expansion contrôlée » sont visibles mais désactivés dans l'UI tant que ce qui suit n'est pas
 tranché :
 
-- **Ce qui manque** : trois jeux de valeurs numériques (`multiplicateur_accord`,
-  `multiplicateur_examen`, éventuellement `marge`/`lgd`) correspondant à trois points de
-  fonctionnement distincts (ex. taux d'approbation cible différent, ou taux de défaut plafond
-  différent), dérivés par rétro-test sur l'historique réel de décisions.
+- **Ce qui manque** : trois jeux de valeurs numériques (`multiplicateur_accord`, éventuellement
+  `marge`/`lgd`) correspondant à trois points de fonctionnement distincts (ex. taux d'approbation
+  cible différent, ou taux de défaut plafond différent), dérivés par rétro-test sur l'historique
+  réel de décisions.
 - **Pourquoi ce n'est pas tranché ici** : `ModeleConstant` (voir
   `docs/backend/03-decisions-provisoires-a-revoir.md`, section « Le modèle lui-même ») renvoie
   aujourd'hui une probabilité de défaut fixe — un rétro-test mené maintenant ne mesurerait rien

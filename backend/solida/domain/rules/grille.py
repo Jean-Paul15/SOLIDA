@@ -12,8 +12,9 @@ class ParametresGrille:
     marge: float
     lgd: float
     multiplicateur_accord: float = 0.6
-    multiplicateur_vigilance: float = 1.0
-    multiplicateur_examen: float = 1.6
+    """Seul multiplicateur restant depuis le passage à 3 tranches : l'ancienne zone d'examen
+    (`multiplicateur_examen`) a été fusionnée dans REFUS, dont la frontière est désormais le
+    seuil économique pur (`seuil_economique()`, multiplicateur implicite de 1)."""
     plafond_institutionnel_fcfa: int = 100_000_000
     """Maximum institutionnel unique, sans plafond par produit — décision terrain déjà
     actée (`docs/continuite/2026-09-13-constat-claude-plafonds.md`). Modifiable par la
@@ -37,11 +38,10 @@ class ParametresGrille:
             raise GrilleInvalide(
                 "La marge et la perte en cas de défaut (LGD) doivent être positives."
             )
-        croissants = (
-            self.multiplicateur_accord < self.multiplicateur_vigilance < self.multiplicateur_examen
-        )
-        if not croissants:
-            raise GrilleInvalide("Les multiplicateurs de zone doivent être strictement croissants.")
+        if not (0 < self.multiplicateur_accord < 1):
+            raise GrilleInvalide(
+                "Le multiplicateur de zone d'accord doit être strictement compris entre 0 et 1."
+            )
         if self.plafond_institutionnel_fcfa <= 0:
             raise GrilleInvalide("Le plafond institutionnel doit être positif.")
         if not (0 < self.ratio_endettement_maximal <= 1):
@@ -56,13 +56,16 @@ def decider(probabilite: ProbabiliteDefaut, parametres: ParametresGrille) -> Tra
 
     Le seuil se traduit ensuite en score par la même transformation PDO, pour
     rester affichable, mais la décision se prend sur la probabilité.
+
+    Trois tranches : ACCORD sous le seuil réduit par `multiplicateur_accord`,
+    ACCORD_SOUS_CONDITION jusqu'au seuil économique pur, REFUS au-delà. L'ancienne zone
+    d'examen (comité de crédit) a été fusionnée dans REFUS — le comité valide de toute
+    façon chaque tranche, ce n'était pas une zone de décision distincte.
     """
     seuil = parametres.seuil_economique()
     p = probabilite.valeur
     if p < seuil * parametres.multiplicateur_accord:
         return TrancheDecision.ACCORD
-    if p < seuil * parametres.multiplicateur_vigilance:
+    if p < seuil:
         return TrancheDecision.ACCORD_SOUS_CONDITION
-    if p < seuil * parametres.multiplicateur_examen:
-        return TrancheDecision.COMITE_DE_CREDIT
     return TrancheDecision.REFUS

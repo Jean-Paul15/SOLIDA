@@ -93,6 +93,7 @@ export function NouvelleDemandeSheet({
           <RefreshFields
             objet={objet}
             onChangeObjet={setObjet}
+            objetImplicite={produit?.objet_implicite ?? null}
             refreshOpen={refreshOpen}
             onToggleActualisation={() => setRefreshOpen((v) => !v)}
             revenu={revenu}

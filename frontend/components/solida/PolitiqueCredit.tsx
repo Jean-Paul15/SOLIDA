@@ -36,9 +36,6 @@ export function PolitiqueCredit({
   const [approvalMultiplier, setApprovalMultiplier] = useState(
     initialConfiguration.grille.multiplicateur_accord
   );
-  const [reviewMultiplier, setReviewMultiplier] = useState(
-    initialConfiguration.grille.multiplicateur_examen
-  );
   const [preset, setPreset] = useState<PolicyPreset>("equilibre");
 
   const scorecardParameters = { pdo, scoreReference, oddsReference };
@@ -46,7 +43,6 @@ export function PolitiqueCredit({
     marge: margin,
     lgd,
     multiplicateurAccord: approvalMultiplier,
-    multiplicateurExamen: reviewMultiplier,
   };
   const threshold = seuilEconomique(gridParameters);
 
@@ -56,7 +52,6 @@ export function PolitiqueCredit({
     const counts: Record<string, number> = {
       accord: 0,
       accord_sous_condition: 0,
-      comite_de_credit: 0,
       refus: 0,
     };
     for (const score of historicalScores) {
@@ -65,7 +60,7 @@ export function PolitiqueCredit({
     }
     return counts;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historicalScores, margin, lgd, approvalMultiplier, reviewMultiplier]);
+  }, [historicalScores, margin, lgd, approvalMultiplier]);
 
   function count(tranche: string): number {
     return distribution[tranche] ?? 0;
@@ -91,8 +86,6 @@ export function PolitiqueCredit({
           onLgdChange={setLgd}
           approvalMultiplier={approvalMultiplier}
           onApprovalMultiplierChange={setApprovalMultiplier}
-          reviewMultiplier={reviewMultiplier}
-          onReviewMultiplierChange={setReviewMultiplier}
           threshold={threshold}
           scorecardParameters={scorecardParameters}
           onSave={() =>
@@ -100,7 +93,6 @@ export function PolitiqueCredit({
               margin,
               lgd,
               approvalMultiplier,
-              reviewMultiplier,
               productCaps: initialConfiguration.progressif.plafonds_produits,
             })
           }

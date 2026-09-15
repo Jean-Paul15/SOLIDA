@@ -15,6 +15,8 @@ interface ScoringResultViewProps {
   onConfirm?: () => void;
   onCancel?: () => void;
   confirmationInProgress?: boolean;
+  /** Voir `FactorsPanel` : consultation par un rôle qui ne tranche pas (superviseur). */
+  readOnly?: boolean;
 }
 
 export function ScoringResultView({
@@ -23,6 +25,7 @@ export function ScoringResultView({
   onConfirm,
   onCancel,
   confirmationInProgress = false,
+  readOnly = false,
 }: ScoringResultViewProps) {
   const configurationGrille = useConfigurationGrille();
   const zones = useMemo(
@@ -43,6 +46,7 @@ export function ScoringResultView({
             onConfirm={onConfirm}
             onCancel={onCancel}
             confirmationInProgress={confirmationInProgress}
+            readOnly={readOnly}
           />
         </div>
       </div>

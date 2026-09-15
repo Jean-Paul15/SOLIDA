@@ -3,31 +3,37 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { EcranEtape } from "@/components/parcours/ecran-etape";
 import { useDemande } from "@/lib/demande-context";
 import { formaterFcfa } from "@/lib/format";
 import { useEtapeProtegee } from "@/lib/use-etape-protegee";
 
-// Plage et repères : plafond du catalogue produits documenté
-// (PLAN 72H/SOLIDA_Complements_et_Strategie.md, PLAN 72H/SOLIDA_Schema_Donnees_a_valider.md
-// section 9.2 : "plafond 3 000 000"). Le simulateur tire des montants jusqu'à 5,5M pour
-// varier le jeu d'entraînement, mais ce n'est pas le plafond produit réel présenté au
-// sociétaire — à confirmer si un praticien valide un autre plafond.
-const MONTANT_MIN = 50_000;
-const MONTANT_MAX = 3_000_000;
-const PAS = 10_000;
-const REPERES = [50_000, 500_000, 1_500_000, 3_000_000];
+// Saisie libre du montant (section 3 de SOLIDA_Flux_Societaire.md : "aucune saisie libre en
+// dehors du numéro de compte et du montant" -- le montant est l'une des deux exceptions
+// documentées). Aucun plancher ni plafond affiché ou imposé côté client au-delà de "non nul" :
+// le serveur applique toujours la grille active, seule source de vérité. MONTANT_SEUIL_ALERTE
+// reprend le plafond institutionnel par défaut (backend/solida/domain/rules/grille.py,
+// "plafond_institutionnel_fcfa") uniquement pour avertir d'une saisie inhabituelle, jamais pour
+// bloquer la saisie.
+const MONTANT_SEUIL_ALERTE = 100_000_000;
 
 export default function MontantPage() {
   const router = useRouter();
-  const { jetonSession, enregistrerMontant } = useDemande();
-  const [montant, setMontant] = React.useState(200_000);
+  const { jetonSession, montant: montantExistant, enregistrerMontant } = useDemande();
+  const [montantSaisi, setMontantSaisi] = React.useState(
+    montantExistant ? String(montantExistant) : ""
+  );
   const pret = useEtapeProtegee(jetonSession);
 
   if (!pret) return null;
 
+  const montant = Number(montantSaisi);
+  const valide = montantSaisi.length > 0 && montant > 0;
+  const montantInhabituel = valide && montant >= MONTANT_SEUIL_ALERTE;
+
   function continuer() {
+    if (!valide) return;
     enregistrerMontant(montant);
     router.push("/objet");
   }
@@ -36,28 +42,27 @@ export default function MontantPage() {
     <EcranEtape
       etape={4}
       titre="Combien souhaitez-vous ?"
-      pied={<Button onClick={continuer}>Continuer</Button>}
+      pied={
+        <Button onClick={continuer} disabled={!valide}>
+          Continuer
+        </Button>
+      }
     >
-      <p className="text-center font-mono text-2xl font-semibold text-solida-teal-800">
-        {formaterFcfa(montant)}
-      </p>
-
-      <div className="mt-8">
-        <Slider
-          value={[montant]}
-          onValueChange={([valeur]) => setMontant(valeur)}
-          min={MONTANT_MIN}
-          max={MONTANT_MAX}
-          step={PAS}
+      <div className="flex flex-col gap-1.5">
+        <NumericInput
+          value={montantSaisi}
+          onChange={(e) => setMontantSaisi(e.target.value.replace(/\D/g, ""))}
+          placeholder="Montant en FCFA"
+          maxLength={9}
+          autoFocus
           aria-label="Montant souhaité"
         />
-        <div className="mt-2 flex justify-between text-sm text-muted-foreground">
-          {REPERES.map((repere) => (
-            <span key={repere}>
-              {new Intl.NumberFormat("fr-FR").format(repere)}
-            </span>
-          ))}
-        </div>
+        {montantInhabituel && (
+          <span className="text-center text-sm text-amber-600" role="alert">
+            Montant inhabituel ({formaterFcfa(montant)}) : vérifiez votre saisie avant de
+            continuer.
+          </span>
+        )}
       </div>
     </EcranEtape>
   );

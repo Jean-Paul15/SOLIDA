@@ -66,7 +66,7 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
               }}
               formatter={(v) => {
                 const n = Math.round(Number(v));
-                return n > 0 ? `+${n}` : n;
+                return n > 0 ? `+${n} pts` : `${n} pts`;
               }}
             />
             <Bar dataKey="points" barSize={26} animationDuration={200} isAnimationActive>
@@ -88,7 +88,7 @@ export function ContributionsChart({ decomposition }: { decomposition: Contribut
                 position="right"
                 formatter={(v) => {
                   const n = Math.round(Number(v));
-                  return n > 0 ? `+${n}` : String(n);
+                  return n > 0 ? `+${n} pts` : `${n} pts`;
                 }}
                 style={{
                   fontFamily: "var(--font-mono)",

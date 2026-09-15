@@ -11,7 +11,15 @@ interface FicheApercuProps {
   produits: ProduitCreditApi[];
 }
 
-function FactorsBlock({ title, factors }: { title: string; factors: ContributionVariable[] }) {
+function FactorsBlock({
+  title,
+  factors,
+  nbMasques,
+}: {
+  title: string;
+  factors: ContributionVariable[];
+  nbMasques: number;
+}) {
   return (
     <div className="flex flex-1 flex-col gap-2">
       <span className="text-[11px] font-medium tracking-wide text-neutre-500 uppercase">
@@ -28,6 +36,11 @@ function FactorsBlock({ title, factors }: { title: string; factors: Contribution
           </li>
         ))}
       </ul>
+      {nbMasques > 0 && (
+        <span className="text-[10px] text-neutre-500 italic">
+          + {nbMasques} élément(s) d&rsquo;impact mineur non affiché(s)
+        </span>
+      )}
     </div>
   );
 }
@@ -45,7 +58,7 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
       <div className="flex items-center justify-between border-b border-neutre-200 pb-3">
         <div>
           <h1 className="font-serif-title text-base font-semibold">
-            Fiche de justification de décision de crédit
+            Synthèse d&rsquo;aide à la décision
           </h1>
           <span className="text-[11px] text-neutre-500">
             Référence {fiche.fiche_id} · édité le{" "}
@@ -108,14 +121,24 @@ export function FicheApercu({ fiche, versionApplication, produits }: FicheApercu
       )}
 
       <div className="flex gap-6 border-t border-neutre-200 pt-3">
-        <FactorsBlock title="Éléments favorables" factors={fiche.facteurs_favorables} />
-        <FactorsBlock title="Points de vigilance" factors={fiche.facteurs_defavorables} />
+        <FactorsBlock
+          title="Éléments favorables"
+          factors={fiche.facteurs_favorables}
+          nbMasques={fiche.nb_facteurs_favorables_masques}
+        />
+        <FactorsBlock
+          title="Points de vigilance"
+          factors={fiche.facteurs_defavorables}
+          nbMasques={fiche.nb_facteurs_defavorables_masques}
+        />
       </div>
 
-      {fiche.conditions_reexamen.length > 0 && result.tranche !== "accord" && (
+      {fiche.conditions_reexamen.length > 0 && (
         <div className="flex flex-col gap-1 border-t border-neutre-200 pt-3">
           <span className="text-[11px] font-medium text-neutre-500 uppercase">
-            Conditions de réexamen
+            {result.tranche === "accord"
+              ? "Recommandations pour consolider votre profil"
+              : "Conditions de réexamen"}
           </span>
           <ConditionsReexamen conditions={fiche.conditions_reexamen} compact />
         </div>

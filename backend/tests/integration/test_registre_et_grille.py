@@ -25,8 +25,6 @@ def _payload_grille(version_grille: str, **surcharges_grille: float) -> dict[str
         "marge": 0.15,
         "lgd": 0.75,
         "multiplicateur_accord": 0.6,
-        "multiplicateur_vigilance": 1.0,
-        "multiplicateur_examen": 1.6,
         **surcharges_grille,
     }
     return {
@@ -84,8 +82,6 @@ def test_modification_grille_refusee_a_lagent() -> None:
                 "marge": 0.15,
                 "lgd": 0.75,
                 "multiplicateur_accord": 0.6,
-                "multiplicateur_vigilance": 1.0,
-                "multiplicateur_examen": 1.6,
             },
             "progressif": {
                 "coefficient_progression": 1.5,

@@ -44,4 +44,7 @@ class AuthenticateSocietaire:
 
 
 def _prenom(societaire: Societaire) -> str:
-    return societaire.nom_complet.split(" ")[0]
+    # Convention du générateur (simulateur/simulateur/pipeline.py::noms) : le patronyme
+    # (nom de famille) précède toujours le ou les prénoms dans `nom_complet`.
+    parties = societaire.nom_complet.split(" ")
+    return parties[1] if len(parties) > 1 else parties[0]

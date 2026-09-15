@@ -20,8 +20,8 @@ def test_une_probabilite_moderee_est_un_accord_sous_condition() -> None:
     assert decider(ProbabiliteDefaut(0.12), PARAMETRES) == TrancheDecision.ACCORD_SOUS_CONDITION
 
 
-def test_une_probabilite_elevee_passe_en_comite_de_credit() -> None:
-    assert decider(ProbabiliteDefaut(0.20), PARAMETRES) == TrancheDecision.COMITE_DE_CREDIT
+def test_une_probabilite_au_dela_du_seuil_economique_est_un_refus() -> None:
+    assert decider(ProbabiliteDefaut(0.20), PARAMETRES) == TrancheDecision.REFUS
 
 
 def test_une_probabilite_tres_elevee_est_un_refus() -> None:
@@ -44,8 +44,8 @@ def test_une_marge_ou_une_lgd_non_positive_leve_grille_invalide() -> None:
         ParametresGrille(marge=0.15, lgd=0.0)
 
 
-def test_des_multiplicateurs_non_croissants_levent_grille_invalide() -> None:
+def test_un_multiplicateur_accord_hors_bornes_leve_grille_invalide() -> None:
     with pytest.raises(GrilleInvalide):
-        ParametresGrille(
-            marge=0.15, lgd=0.75, multiplicateur_accord=1.0, multiplicateur_vigilance=0.5
-        )
+        ParametresGrille(marge=0.15, lgd=0.75, multiplicateur_accord=1.0)
+    with pytest.raises(GrilleInvalide):
+        ParametresGrille(marge=0.15, lgd=0.75, multiplicateur_accord=0.0)

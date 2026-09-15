@@ -68,6 +68,7 @@ def _produit(**overrides: object) -> ProduitCredit:
     values: dict[str, object] = {
         "produit_id": "PROD-1",
         "libelle": "Produit test",
+        "segment": "individuel",
         "type_garantie": "individuelle",
         "montant_min": 50000,
         "montant_max": 1000000,
@@ -402,6 +403,17 @@ def test_confirmer_accord_persiste_et_journalise() -> None:
     assert decision.tranche == "accord"
     assert len(decision_repository.decisions_enregistrees) == 1
     assert audit_log.evenements[-1][0] == "scoring_confirme"
+
+
+def test_previsualiser_objet_autre_porte_un_avertissement_de_revue_obligatoire() -> None:
+    use_case, _, _ = _build_use_case(probabilite=0.05)
+
+    decision = use_case.preview(
+        _demande(objet_credit="autre"), {}, "agent-1", "Agent", "CAI-00"
+    )
+
+    assert decision.tranche == "accord"
+    assert any("comité de crédit" in a for a in decision.avertissements)
 
 
 def test_previsualiser_leve_modele_indisponible_si_le_modele_echoue() -> None:

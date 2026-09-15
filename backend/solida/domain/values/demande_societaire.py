@@ -19,6 +19,10 @@ class DemandeSocietaireACreer:
     resultat: DecisionAEnregistrer
     """La sérialisation HTTP (ScoringResult) se fait dans l'adaptateur de
     persistance, pas ici : le domaine ne connaît pas les schémas HTTP."""
+    assigne_a_agent_id: str | None = None
+    """L'agent habituel du sociétaire (`DecisionRepository.dernier_agent_reel`), affecté dès la
+    création quand il existe. `None` sinon : la demande reste non assignée, le superviseur
+    choisit, comme pour un sociétaire sans historique."""
 
 
 @dataclass(frozen=True)

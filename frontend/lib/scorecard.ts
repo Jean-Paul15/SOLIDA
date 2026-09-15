@@ -10,7 +10,6 @@ export interface ParametresGrille {
   marge: number;
   lgd: number;
   multiplicateurAccord: number;
-  multiplicateurExamen: number;
 }
 
 export function parametresScorecardDepuisApi(api: ScorecardParametersApi): ParametresScorecard {
@@ -22,7 +21,6 @@ export function parametresGrilleDepuisApi(api: GridParametersApi): ParametresGri
     marge: api.marge,
     lgd: api.lgd,
     multiplicateurAccord: api.multiplicateur_accord,
-    multiplicateurExamen: api.multiplicateur_examen,
   };
 }
 
@@ -50,10 +48,11 @@ export function seuilEconomique(parametres: ParametresGrille): number {
   return parametres.marge / (parametres.marge + parametres.lgd);
 }
 
+/** 3 tranches vivantes : l'ancienne zone d'examen (comité de crédit) est fusionnée dans
+ * refus depuis le passage à 3 tranches — la frontière est le seuil économique pur. */
 export function trancheDepuisProbabilite(p: number, parametres: ParametresGrille): Tranche {
   const seuil = seuilEconomique(parametres);
   if (p < seuil * parametres.multiplicateurAccord) return "accord";
   if (p < seuil) return "accord_sous_condition";
-  if (p < seuil * parametres.multiplicateurExamen) return "comite_de_credit";
   return "refus";
 }
