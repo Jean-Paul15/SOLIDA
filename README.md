@@ -1,8 +1,43 @@
-# SOLIDA
+<div align="center">
+  <h1>SOLIDA</h1>
+  <p><b>Aide une coopérative d'épargne et de crédit à décider d'un microcrédit : probabilité de défaut à 30 jours, facteurs explicatifs, décision proposée, sous contrôle humain et dans un journal non réécrivable.</b></p>
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  <br/>
+  <img src="https://img.shields.io/badge/Licence-Tous%20droits%20r%C3%A9serv%C3%A9s-lightgrey?style=flat-square" alt="Licence : tous droits réservés"/>
+  <img src="https://img.shields.io/badge/Python%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12"/>
+  <img src="https://img.shields.io/github/actions/workflow/status/Jean-Paul15/SOLIDA/frontend-ci.yml?style=flat-square&label=frontend-ci" alt="Statut du workflow frontend-ci"/>
+  <img src="https://img.shields.io/github/actions/workflow/status/Jean-Paul15/SOLIDA/frontend-societaire-ci.yml?style=flat-square&label=frontend-societaire-ci" alt="Statut du workflow frontend-societaire-ci"/>
+  <br/>
+  <p>
+    <a href="#démarrer-en-cinq-minutes">Démarrer</a> ·
+    <a href="#architecture">Architecture</a> ·
+    <a href="#stack-technique">Stack</a> ·
+    <a href="#structure-du-dépôt">Structure</a> ·
+    <a href="#tests">Tests</a>
+  </p>
+</div>
 
 SOLIDA aide une coopérative d'épargne et de crédit à décider d'un microcrédit : une probabilité de défaut à 30 jours, les facteurs qui l'expliquent, une décision proposée, le tout sous contrôle humain et consigné dans un journal qu'on ne peut pas réécrire.
 
 Le difficile : noter un emprunteur qui n'a presque aucun papier, et un groupe en caution solidaire que l'on n'a pas toujours le droit de juger.
+
+## Sommaire
+
+- [Ce que ça apporte](#ce-que-ça-apporte)
+- [Le problème](#le-problème)
+- [Démarrer en cinq minutes](#démarrer-en-cinq-minutes)
+- [Architecture](#architecture)
+- [Stack technique](#stack-technique)
+- [Structure du dépôt](#structure-du-dépôt)
+- [Tests](#tests)
+- [Limites et suite](#limites-et-suite)
+- [Licence](#licence)
+- [Contact](#contact)
 
 ## Ce que ça apporte
 
@@ -29,7 +64,7 @@ make back-test
 
 Le script vérifie Docker, génère un `.env` local avec des secrets aléatoires s'il manque, construit les images et attend que l'API réponde. L'interface agents et superviseurs ouvre sur `http://localhost`, le portail sociétaire sur `http://localhost:8080`. Les comptes de démonstration, réservés à l'usage local, sont documentés dans `docs/backend/04-authentification.md`.
 
-## Comment ça marche
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -63,17 +98,16 @@ Trois choix portent le projet.
 
 La cascade se joue sur quatre conditions, dans l'ordre de leur dépendance : appartenir à un groupe, compter au moins 5 membres, avoir au moins 3 crédits antérieurs soldés, disposer de variables vieilles de moins de 7 jours. Ces seuils sont des paramètres, pas des constantes.
 
-## Stack
+## Stack technique
 
-| Couche | Technologies |
-|---|---|
-| API | Python 3.12, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic, psycopg 3, fastapi-users |
-| Modèle | interpret (EBM), scikit-learn, pandas, DVC, MLflow |
-| PDF | WeasyPrint |
-| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, Recharts, Vitest |
-| Données | PostgreSQL (base applicative et base CORE-SIM), SeaweedFS |
-| Infrastructure | Docker Compose, nginx |
-| Qualité | pytest, ruff, mypy, import-linter, GitHub Actions (frontends), Dependabot |
+| Domaine | Technologies | Rôle dans le projet |
+|---|---|---|
+| Données | <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL"/> <img src="https://img.shields.io/badge/SeaweedFS-5B5B5B?style=flat-square" alt="SeaweedFS"/> <img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="pandas"/> <img src="https://img.shields.io/badge/DVC-945DD6?style=flat-square&logo=dvc&logoColor=white" alt="DVC"/> | Base applicative en insertion seule, base CORE-SIM en lecture seule, stockage objet, versionnage des données et du pipeline |
+| IA | <img src="https://img.shields.io/badge/interpret%20(EBM)-6A1B9A?style=flat-square" alt="interpret (EBM)"/> <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white" alt="scikit-learn"/> <img src="https://img.shields.io/badge/MLflow-0194E2?style=flat-square&logo=mlflow&logoColor=white" alt="MLflow"/> | Modèles EBM explicables, calibration, alias de modèle et artefacts |
+| Backend | <img src="https://img.shields.io/badge/Python%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12"/> <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"/> <img src="https://img.shields.io/badge/Pydantic%202-E92063?style=flat-square&logo=pydantic&logoColor=white" alt="Pydantic 2"/> <img src="https://img.shields.io/badge/SQLAlchemy%202-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy 2"/> <img src="https://img.shields.io/badge/Alembic-6BA81E?style=flat-square" alt="Alembic"/> <img src="https://img.shields.io/badge/WeasyPrint-4A4A4A?style=flat-square" alt="WeasyPrint"/> | API, migrations, accès aux données, authentification (fastapi-users), fiche de justification en PDF |
+| Interface | <img src="https://img.shields.io/badge/Next.js%2016-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js 16"/> <img src="https://img.shields.io/badge/React%2019-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19"/> <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/> <img src="https://img.shields.io/badge/Tailwind%20CSS%204-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4"/> <img src="https://img.shields.io/badge/Recharts-22B5BF?style=flat-square" alt="Recharts"/> | Interface agents et superviseurs, portail sociétaire |
+| Infrastructure | <img src="https://img.shields.io/badge/Docker%20Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose"/> <img src="https://img.shields.io/badge/nginx-009639?style=flat-square&logo=nginx&logoColor=white" alt="nginx"/> | Orchestration de la pile, reverse proxy sur les ports 80 et 8080 |
+| Qualité et CI | <img src="https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white" alt="pytest"/> <img src="https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest"/> <img src="https://img.shields.io/badge/Ruff-D7FF64?style=flat-square&logo=ruff&logoColor=black" alt="Ruff"/> <img src="https://img.shields.io/badge/mypy-2A6DB2?style=flat-square" alt="mypy"/> <img src="https://img.shields.io/badge/import--linter-4B5563?style=flat-square" alt="import-linter"/> <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions"/> <img src="https://img.shields.io/badge/Dependabot-025E8C?style=flat-square&logo=dependabot&logoColor=white" alt="Dependabot"/> | Tests, lint, typage, contrat d'architecture, intégration continue des frontends, mise à jour des dépendances |
 
 ## Structure du dépôt
 
@@ -92,6 +126,8 @@ dvc.yaml              pipeline : génération, features, entraînement
 Makefile              cibles back-* et front-* exécutées via Docker
 ```
 
+## Tests
+
 Pour la qualité, `make back-lint`, `make back-typecheck`, `make back-imports` et `make front-test` complètent `make back-test`. Hors Docker, `uv sync --locked` puis `uv run pytest tests/domain` depuis `backend/` lance les tests de domaine sans aucune base.
 
 ## Limites et suite
@@ -109,7 +145,7 @@ La suite naturelle : valider les seuils avec une coopérative, rejouer l'entraî
 
 ## Licence
 
-Le fichier `LICENSE` du dépôt applique l'Apache License 2.0. Le fichier `NOTICE` précise le périmètre et `THIRD_PARTY_NOTICES.md` liste les composants tiers.
+Tous droits réservés. Le fichier `LICENSE` interdit la copie, la modification, la distribution et l'usage commercial sans autorisation écrite de l'auteur. La consultation du code à des fins d'évaluation est permise. `THIRD_PARTY_NOTICES.md` liste les composants tiers et leurs licences propres.
 
 ## Contact
 
