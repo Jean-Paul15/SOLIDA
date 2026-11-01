@@ -1,46 +1,67 @@
 # SOLIDA
 
-Aide à la décision d'octroi de microcrédit pour coopératives financières : un score de risque explicable, calculé à partir de la trajectoire d'épargne et du comportement de remboursement, avec un modèle enrichi pour les crédits à caution solidaire.
+SOLIDA aide une coopérative d'épargne et de crédit à décider d'un microcrédit : une probabilité de défaut à 30 jours, les facteurs qui l'expliquent, une décision proposée, le tout sous contrôle humain et consigné dans un journal qu'on ne peut pas réécrire.
 
-Projet conçu pour le Hackathon National d'Innovation CIF / DigiCoop-WA+ (thématique 02, Lomé, 11-13 septembre 2026). Il fonctionne sur des données synthétiques.
+Le difficile : noter un emprunteur qui n'a presque aucun papier, et un groupe en caution solidaire que l'on n'a pas toujours le droit de juger.
 
-## Problème traité
+## Ce que ça apporte
 
-Un agent de coopérative décide d'un crédit avec peu d'éléments formalisés. SOLIDA remplace cette décision isolée par une recommandation qui reste sous contrôle humain : une probabilité de défaut à 30 jours, les facteurs qui l'expliquent, une décision selon une grille paramétrable, et un journal des décisions qui ne peut qu'être complété. Pour un crédit dont l'emprunteur est un groupe (caution solidaire), le système bascule vers un second modèle qui utilise des variables de groupe, uniquement si le groupe est jugeable.
+- **Un score qu'on peut défendre.** Deux modèles EBM (Explainable Boosting Machine), un socle individuel et un modèle enrichi pour les groupes. Chaque décision sort avec ses contributions par variable et une fiche de justification exportable en PDF.
+- **Un choix de modèle qui s'explique.** Une règle de cascade du domaine décide entre socle et enrichi et enregistre le motif de bascule : sans groupe, groupe trop petit, groupe sans historique, variables périmées.
+- **Un historique protégé contre la réécriture.** Les décisions et le journal d'audit sont protégés par des triggers PostgreSQL en insertion seule. Un trigger bloque la modification, y compris pour le propriétaire de la table.
 
-## Fonctionnalités
+## Le problème
 
-- Scoring en deux temps : `preview` (calcul sans écriture) puis `confirm` (décision enregistrée).
-- Deux modèles de type EBM (Explainable Boosting Machine, bibliothèque `interpret`) : un socle individuel et un modèle enrichi pour les groupes. Le choix est fait par une règle de cascade du domaine (appartenance à un groupe, taille minimale de 5 membres, nombre de crédits antérieurs soldés, fraîcheur des variables), avec un motif de bascule enregistré.
-- Fiche de justification par décision, exportable en PDF (WeasyPrint).
-- Plafond de crédit progressif selon la trajectoire du sociétaire.
-- Grille de décision paramétrable par le rôle autorisé.
-- Registre des décisions, notifications (archivage, assignation à un agent), recherche et dossier d'un sociétaire.
-- Authentification par session (fastapi-users), contrôle par rôle (`agent`, `superviseur`), journal d'audit en insertion seule, détection de lectures anormales.
-- Portail sociétaire séparé : vérification de compte et dépôt d'une demande avec pré-vérification.
-- Simulateur CORE-SIM : génère les données synthétiques d'une coopérative, lues par le backend en lecture seule.
-- Chargement du modèle par alias MLflow, puis cache vérifié, puis bundle versionné avec DVC.
+Une agente de coopérative à Lomé reçoit une demande de crédit d'un commerçant. Il a une épargne régulière, pas de fiche de paie, parfois un groupe de caution derrière lui. Elle décide seule, avec peu d'éléments formalisés. Rien ne garantit que deux agentes jugent le même dossier de la même façon, ni qu'on retrouve plus tard pourquoi.
 
-## Architecture
+SOLIDA remplace cette décision isolée par une recommandation chiffrée et motivée. Elle part de la trajectoire d'épargne et du comportement de remboursement. La personne garde la main : elle prévisualise, puis confirme.
+
+## Démarrer en cinq minutes
+
+Prérequis : Docker, Docker Compose et un shell bash (sous Windows, `scripts/demarrer.ps1` joue le même rôle).
+
+```bash
+git clone https://github.com/Jean-Paul15/SOLIDA.git && cd SOLIDA
+./scripts/demarrer.sh
+curl http://localhost/api/v1/health
+make back-test
+```
+
+Le script vérifie Docker, génère un `.env` local avec des secrets aléatoires s'il manque, construit les images et attend que l'API réponde. L'interface agents et superviseurs ouvre sur `http://localhost`, le portail sociétaire sur `http://localhost:8080`. Les comptes de démonstration, réservés à l'usage local, sont documentés dans `docs/backend/04-authentification.md`.
+
+## Comment ça marche
 
 ```mermaid
 flowchart LR
+    SIM[Simulateur CORE-SIM] -->|données synthétiques| PC[(PostgreSQL coresim, lecture seule)]
+    MOD[Modélisation EBM, pipeline DVC] -->|bundles versionnés| M[MLflow alias, cache, bundle DVC]
+
     U1[Agent / superviseur] --> N[nginx :80]
     U2[Sociétaire] --> N2[nginx :8080]
     N --> F[frontend Next.js]
     N2 --> FS[frontend-societaire Next.js]
-    N --> A[API FastAPI]
-    N2 --> A
-    F --> A
+    F --> A[API FastAPI]
     FS --> A
-    A --> PS[(PostgreSQL solida)]
-    A --> PC[(PostgreSQL coresim, lecture seule)]
+    N --> A
+    N2 --> A
+
+    A -->|preview, confirm| D{Cascade du domaine}
+    D -->|socle| M
+    D -->|enrichi, groupe jugeable| M
+    A --> PC
+    A --> PS[(PostgreSQL solida, insertion seule)]
     A --> S[SeaweedFS]
-    A --> M[MLflow / bundle DVC]
-    SIM[simulateur CORE-SIM] --> PC
 ```
 
-Le backend suit une Clean Architecture : `domain` (règles pures), `application` (cas d'usage), `adapters` (persistance, CORE-SIM, ML, PDF, stockage, notifications), `infrastructure` (routeurs HTTP, configuration, injection). Un contrat `import-linter` impose le sens des dépendances et interdit au domaine d'importer une bibliothèque tierce hors Pydantic.
+Trois choix portent le projet.
+
+**Le domaine ne connaît ni la base ni le web.** Le backend suit une Clean Architecture : `domain`, `application`, `adapters`, `infrastructure`. Un contrat `import-linter` impose le sens des dépendances et interdit au domaine d'importer FastAPI, SQLAlchemy, psycopg ou toute autre bibliothèque de ce type. Les règles de crédit (cascade, grille, plafond progressif, capacité de remboursement) se testent sans base de données.
+
+**Le modèle se charge par repli.** L'adaptateur `EBMScoringModel` essaie d'abord l'alias MLflow, puis un cache vérifié, puis le bundle versionné avec DVC. L'API démarre avec un modèle vérifié même quand MLflow est absent. L'entraînement ne pose jamais lui-même l'alias champion : une revue humaine l'active après contrôle de la calibration, de l'AUC et des écarts par zone.
+
+**Aucune fuite du futur.** Pour chaque feature, le pipeline de modélisation ne lit que les événements antérieurs à la date de déblocage. La cible est construite à part, depuis les échéances : bon de 0 à 14 jours de retard, indéterminé de 15 à 29, défaut dès 30. Une échéance n'est évaluée qu'à 90 jours après son émission.
+
+La cascade se joue sur quatre conditions, dans l'ordre de leur dépendance : appartenir à un groupe, compter au moins 5 membres, avoir au moins 3 crédits antérieurs soldés, disposer de variables vieilles de moins de 7 jours. Ces seuils sont des paramètres, pas des constantes.
 
 ## Stack
 
@@ -48,92 +69,47 @@ Le backend suit une Clean Architecture : `domain` (règles pures), `application`
 |---|---|
 | API | Python 3.12, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic, psycopg 3, fastapi-users |
 | Modèle | interpret (EBM), scikit-learn, pandas, DVC, MLflow |
+| PDF | WeasyPrint |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, Recharts, Vitest |
 | Données | PostgreSQL (base applicative et base CORE-SIM), SeaweedFS |
 | Infrastructure | Docker Compose, nginx |
 | Qualité | pytest, ruff, mypy, import-linter, GitHub Actions (frontends), Dependabot |
 
-## Installation
-
-Prérequis : Docker et Docker Compose.
-
-```bash
-git clone https://github.com/Jean-Paul15/SOLIDA.git
-cd SOLIDA
-cp .env.example .env
-```
-
-Éditez `.env` et remplacez chaque valeur marquée comme à remplacer (mots de passe de bases, clés SeaweedFS, `SECRET_AUTH`). Le fichier `.env` n'est pas versionné.
-
-Démarrage de la pile :
-
-```bash
-docker compose up --build
-```
-
-Le script `scripts/demarrer.sh` (ou `scripts/demarrer.ps1` sous Windows) fait la même chose en une commande : il vérifie Docker, génère un `.env` local s'il manque, construit les images et attend que l'API réponde.
-
-## Usage
-
-| Service | Adresse |
-|---|---|
-| Interface agents et superviseurs | http://localhost |
-| Portail sociétaire | http://localhost:8080 |
-| Santé de l'API | http://localhost/api/v1/health |
-
-Principaux groupes de routes de l'API (préfixe `/api/v1`) : `auth`, `scoring` (`preview`, `confirm`, `{id}`, `{id}/fiche`, `{id}/fiche/pdf`, `{id}/archive`), `societaires` (`search`, `recent`, `{id}/dossier`, `{id}/groupe`), `registre`, `parametrage/grille`, `notifications`, `produits`, `portail`.
-
-Des comptes de démonstration sont créés par une migration Alembic ; leurs identifiants sont documentés dans `docs/backend/04-authentification.md`. Ils sont réservés à un usage local.
-
-Développement via le Makefile (les commandes passent par Docker) :
-
-```bash
-make back-install      # dépendances backend
-make front-dev         # frontend en mode développement
-make front-societaire-dev
-```
-
-## Tests
-
-```bash
-make back-test         # pytest
-make back-lint         # ruff
-make back-typecheck    # mypy
-make back-imports      # contrats import-linter
-make front-test        # Vitest
-make front-lint front-typecheck
-```
-
-Hors Docker, depuis `backend/` : `uv sync --locked` puis `uv run pytest tests/domain` (les tests de domaine ne demandent aucune base). Les tests d'intégration exigent les bases PostgreSQL de la pile. Les modules `modelisation/` et `simulateur/` ont chacun leur dossier `tests/`.
-
 ## Structure du dépôt
 
 ```
-backend/            API FastAPI, migrations Alembic, tests
-frontend/           interface agents et superviseurs (Next.js)
-frontend-societaire/ portail sociétaire (Next.js)
-modelisation/       entraînement, évaluation et model cards des modèles EBM (pipeline DVC)
-simulateur/         générateur CORE-SIM de données synthétiques
-infra/              configuration nginx et scripts d'initialisation PostgreSQL
-scripts/            démarrage en une commande
-docs/               documentation technique (backend, frontend, infra, formules)
-03-MODELE/          notes de conception du modèle et de la politique de crédit
-docker-compose.yml  orchestration de la pile
-dvc.yaml            pipeline de données et de modèle
+backend/              API FastAPI, migrations Alembic, tests (domain, application, adapters, integration)
+frontend/             interface agents et superviseurs (Next.js)
+frontend-societaire/  portail sociétaire (Next.js)
+modelisation/         features, entraînement, évaluation et model cards des modèles EBM
+simulateur/           générateur CORE-SIM de données synthétiques
+infra/                configuration nginx et scripts d'initialisation PostgreSQL
+scripts/              démarrage en une commande (bash et PowerShell)
+docs/                 documentation technique : backend, frontend, infra, formules
+03-MODELE/            notes de conception du modèle et de la politique de crédit
+docker-compose.yml    orchestration de la pile
+dvc.yaml              pipeline : génération, features, entraînement
+Makefile              cibles back-* et front-* exécutées via Docker
 ```
 
-## Limites connues
+Pour la qualité, `make back-lint`, `make back-typecheck`, `make back-imports` et `make front-test` complètent `make back-test`. Hors Docker, `uv sync --locked` puis `uv run pytest tests/domain` depuis `backend/` lance les tests de domaine sans aucune base.
 
-- Les données sont synthétiques ; aucune performance sur données réelles n'est établie.
-- Les modèles servent d'aide à la décision : la décision finale reste humaine.
-- Les comptes de démonstration et leur mot de passe commun sont destinés au développement local uniquement ; ils ne doivent pas être déployés tels quels.
-- L'intégration continue ne couvre que les frontends ; le backend est vérifié via les cibles `make`.
-- Certains seuils métier (grille, cascade) sont des valeurs de départ à valider avec la coopérative, voir `docs/backend/03-decisions-provisoires-a-revoir.md`.
-- Des documents de `docs/backend/` évoquent encore un modèle de substitution `ModeleConstant` absent du code actuel, qui charge les modèles EBM.
+## Limites et suite
+
+Le périmètre est un choix : un prototype de hackathon (Hackathon National d'Innovation CIF / DigiCoop-WA+, thématique 02, Lomé, septembre 2026), construit pour montrer la chaîne complète sur des données synthétiques.
+
+- Les données viennent du simulateur. Aucune performance sur données réelles n'est établie, et rien ici n'en revendique.
+- Le modèle recommande, l'humain décide.
+- Certains seuils métier (grille, cascade) sont des valeurs de départ à valider avec la coopérative. Ils sont listés dans `docs/backend/03-decisions-provisoires-a-revoir.md`.
+- L'intégration continue couvre les frontends. Le backend se vérifie avec les cibles `make`.
+- Les comptes de démonstration ne se déploient pas tels quels.
+- Certains documents de `docs/backend/` mentionnent encore un modèle de substitution `ModeleConstant`. Le code actuel charge les modèles EBM.
+
+La suite naturelle : valider les seuils avec une coopérative, rejouer l'entraînement sur des données réelles anonymisées, étendre la CI au backend.
 
 ## Licence
 
-Apache License 2.0, voir le fichier `LICENSE`.
+Le fichier `LICENSE` du dépôt applique l'Apache License 2.0. Le fichier `NOTICE` précise le périmètre et `THIRD_PARTY_NOTICES.md` liste les composants tiers.
 
 ## Contact
 
