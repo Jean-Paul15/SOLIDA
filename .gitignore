@@ -1,6 +1,5 @@
 # ===========================================================
 # SOLIDA — .gitignore
-# À copier à la racine du dépôt de code sous le nom .gitignore
 # ===========================================================
 
 _archive-instructions/
@@ -81,23 +80,50 @@ graphify-out/graph.html
 # --- Sorties générées ---
 exports/
 *.pdf
-!docs/formules/formules.pdf
 reports/
 
 # --- Documents internes, hors code (non versionnés) ---
-PLAN 72H/*
-!PLAN 72H/DISCOURS_NATIONAL_SOLIDA_8_MINUTES.md
+PLAN 72H/
 .agents/
+précision.txt
+Togo_Sophos_DeclarationPI.tex
+docs/continuite/
+CLAUDE.md
+AGENTS.md
+graphify-out/
+.api-notes.md
 
 # --- Éditeurs et OS ---
 .vscode/
-!.vscode/extensions.json
-!.vscode/settings.shared.json
 .idea/
 .claude/
 .DS_Store
 Thumbs.db
 *.swp
+
+# --- Archives, documents et fichiers lourds ---
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*.docx
+*.pptx
+*.xlsx
+*.pkl
+*.joblib
+*.onnx
+*.ipynb_checkpoints
+.ipynb_checkpoints/
+sorties/
+
+# --- Clés et identifiants ---
+*.crt
+*.pfx
+id_rsa*
+credentials*.json
+.aws/
 
 # --- Divers ---
 *.log
